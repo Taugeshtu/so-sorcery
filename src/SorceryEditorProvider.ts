@@ -1,5 +1,6 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
+import * as fs from 'fs';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 
@@ -34,29 +35,75 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
       .get<string[]>('includeFileExtensions') || [];
     
     try {
-      // First, get ALL files using VSCode (this finds everything)
-      const includeGlob = `**/*{${exts.join(',')}}`;
-      const uris = await vscode.workspace.findFiles(includeGlob, `.sorcery/**`);
-      const allFiles = uris.map(u => path.relative(folder.uri.fsPath, u.fsPath));
+      // Find all git repos (main + subrepos)
+      const gitRepos = await this.findAllGitRepos(folder.uri.fsPath);
+      console.log('Found git repos:', gitRepos);
       
-      // Now filter each file through git check-ignore
-      const filteredFiles: string[] = [];
-      for (const file of allFiles) {
-        try {
-          // Check if git ignores this file (respects ALL nested .gitignore files)
-          await execAsync(`git check-ignore "${file}"`, { cwd: folder.uri.fsPath });
-          // If check-ignore succeeds, file IS ignored, so skip it
-          console.log(`Ignoring: ${file}`);
-        } catch {
-          // If check-ignore fails, file is NOT ignored, so include it
-          filteredFiles.push(file);
-        }
+      const allFiles: string[] = [];
+      
+      // Get files from each git repo
+      for (const repoPath of gitRepos) {
+        const repoFiles = await this.getGitFilesFromRepo(repoPath, exts, folder.uri.fsPath);
+        allFiles.push(...repoFiles);
       }
       
-      return filteredFiles.sort();
+      return [...new Set(allFiles)].sort(); // Remove duplicates and sort
     } catch (error) {
-      console.error('Git command failed, falling back to VSCode API:', error);
+      console.error('Git repo discovery failed, falling back:', error);
       return this.fallbackFileList();
+    }
+  }
+
+  private async findAllGitRepos(rootPath: string): Promise<string[]> {
+    try {
+      let findCommand: string;
+      if (process.platform === 'win32') {
+        // Windows version using dir command
+        findCommand = `dir /s /b /a:d .git & dir /s /b /a:-d .git`;
+      } else {
+        // Unix version
+        findCommand = `find . -name ".git" -type d -o -name ".git" -type f`;
+      }
+      
+      const { stdout } = await execAsync(findCommand, { cwd: rootPath });
+      
+      const gitPaths = stdout.trim().split(/\r?\n/).filter(p => p);
+      const repoPaths: string[] = [];
+      
+      for (const gitPath of gitPaths) {
+        const repoPath = process.platform === 'win32' 
+          ? path.dirname(gitPath)  // Windows gives full path
+          : path.dirname(path.resolve(rootPath, gitPath)); // Unix gives relative
+        
+        repoPaths.push(repoPath);
+      }
+      
+      return [...new Set(repoPaths)]; // Remove duplicates
+    } catch (error) {
+      console.warn('Git repo discovery failed, checking root only:', error);
+      return [rootPath];
+    }
+  }
+
+  private async getGitFilesFromRepo(repoPath: string, exts: string[], workspaceRoot: string): Promise<string[]> {
+    try {
+      // Get all tracked files from this specific repo
+      const extPattern = exts.map(e => e.replace('.', '')).join('|');
+      const { stdout } = await execAsync(
+        `git ls-files | grep -E "\\.(${extPattern})$"`,
+        { cwd: repoPath }
+      );
+      
+      const files = stdout.trim().split('\n').filter(f => f);
+      
+      // Convert to paths relative to workspace root
+      return files.map(file => {
+        const fullPath = path.resolve(repoPath, file);
+        return path.relative(workspaceRoot, fullPath);
+      });
+    } catch (error) {
+      console.warn(`Failed to get files from repo ${repoPath}:`, error);
+      return [];
     }
   }
 
