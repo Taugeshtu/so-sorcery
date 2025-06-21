@@ -25,7 +25,28 @@
           { "filenamePattern": "*.sorcery" }
         ]
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Sorcery",
+      "properties": {
+        "sorcery.openAIApiKey": {
+          "type": "string",
+          "description": "OpenAI API key (e.g. starts with sk-…)",
+          "default": ""
+        },
+        "sorcery.claudeApiKey": {
+          "type": "string",
+          "description": "Anthropic Claude API key",
+          "default": ""
+        },
+        "sorcery.includeFileExtensions": {
+          "type": "array",
+          "description": "White-list of file extensions",
+          "items": { "type": "string" },
+          "default": [".cs", ".txt", ".md", ".shader", ".compute", ".hlsl", ".glsl", ".c", ".cpp", ".h", ".hpp", ".ts", ".js", ".css"]
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
