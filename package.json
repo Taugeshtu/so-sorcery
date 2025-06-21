@@ -4,18 +4,20 @@
   "description": "Bring LLMs into your workspace, control the context, do useful work",
   "version": "0.0.1",
   "engines": {
-    "vscode": "^1.101.0"
+    "vscode": "^1.100.0"
   },
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onCommand:sorcery.newContext"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "sorcery.helloWorld",
-        "title": "Hello World"
+        "command": "sorcery.newContext",
+        "title": "Sorcery: New Context File"
       }
     ]
   },
@@ -28,7 +30,7 @@
     "test": "vscode-test"
   },
   "devDependencies": {
-    "@types/vscode": "^1.101.0",
+    "@types/vscode": "^1.100.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "20.x",
     "@typescript-eslint/eslint-plugin": "^8.31.1",

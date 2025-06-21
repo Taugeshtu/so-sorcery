@@ -1,26 +1,42 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
+import * as path from 'path';
 import * as vscode from 'vscode';
+import { SorceryEditorProvider } from './SorceryEditorProvider';
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext) {
+export function activate(ctx: vscode.ExtensionContext) {
+  ctx.subscriptions.push(
+    vscode.commands.registerCommand('sorcery.newContext', async () => {
+      const ws = vscode.workspace.workspaceFolders?.[0];
+      if (!ws) { return vscode.window.showErrorMessage('Open a folder first.'); }
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "sorcery" is now active!');
+      // 1. .sorcery folder
+      const folderUri = ws.uri.with({ path: path.posix.join(ws.uri.path, '.sorcery') });
+      await vscode.workspace.fs.createDirectory(folderUri);
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	const disposable = vscode.commands.registerCommand('sorcery.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from Sorcery!');
-	});
+      // 2. New file name
+      const fileName = await vscode.window.showInputBox({ prompt: 'File name, no extension' });
+      if (!fileName) { return; }
 
-	context.subscriptions.push(disposable);
+      const fileUri = folderUri.with({ path: folderUri.path + `/${fileName}.sorcery` });
+      // 3. Write starter content
+      const starter = Buffer.from(JSON.stringify({ files: [], notes: '' }, null, 2));
+      await vscode.workspace.fs.writeFile(fileUri, starter);
+
+      // 4. Open with our custom editor
+      await vscode.commands.executeCommand(
+        'vscode.openWith',
+        fileUri,
+        SorceryEditorProvider.viewType
+      );
+    })
+  );
+
+  // 5. Register your custom editor
+  const provider = new SorceryEditorProvider(ctx);
+  ctx.subscriptions.push(
+    vscode.window.registerCustomEditorProvider(
+      SorceryEditorProvider.viewType,
+      provider,
+      { webviewOptions: { retainContextWhenHidden: true } }
+    )
+  );
 }
-
-// This method is called when your extension is deactivated
-export function deactivate() {}
