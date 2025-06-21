@@ -9,15 +9,21 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [
-    "onCommand:sorcery.newContext"
-  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
         "command": "sorcery.newContext",
         "title": "Sorcery: New Context File"
+      }
+    ],
+    "customEditors": [
+      {
+        "viewType": "sorcery.contextEditor",
+        "displayName": "Sorcery Context Editor",
+        "selector": [
+          { "filenamePattern": "*.sorcery" }
+        ]
       }
     ]
   },

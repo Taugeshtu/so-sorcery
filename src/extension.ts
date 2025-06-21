@@ -2,26 +2,25 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { SorceryEditorProvider } from './SorceryEditorProvider';
 
-export function activate(ctx: vscode.ExtensionContext) {
-  ctx.subscriptions.push(
+export function activate(context: vscode.ExtensionContext) {
+  context.subscriptions.push(
     vscode.commands.registerCommand('sorcery.newContext', async () => {
-      const ws = vscode.workspace.workspaceFolders?.[0];
-      if (!ws) { return vscode.window.showErrorMessage('Open a folder first.'); }
+      const wsFolder = vscode.workspace.workspaceFolders?.[0];
+      if (!wsFolder) {
+        return vscode.window.showErrorMessage('Please open a folder first.');
+      }
 
-      // 1. .sorcery folder
-      const folderUri = ws.uri.with({ path: path.posix.join(ws.uri.path, '.sorcery') });
-      await vscode.workspace.fs.createDirectory(folderUri);
+      const sorceryDir = vscode.Uri.joinPath(wsFolder.uri, '.sorcery');
+      await vscode.workspace.fs.createDirectory(sorceryDir);
 
-      // 2. New file name
-      const fileName = await vscode.window.showInputBox({ prompt: 'File name, no extension' });
-      if (!fileName) { return; }
+      const existing = await vscode.workspace.findFiles('.sorcery/*.sorcery');
+      const sessionNum = existing.length + 1;
+      const fileName = `Session_${sessionNum}.sorcery`;
+      const fileUri = vscode.Uri.joinPath(sorceryDir, fileName);
 
-      const fileUri = folderUri.with({ path: folderUri.path + `/${fileName}.sorcery` });
-      // 3. Write starter content
-      const starter = Buffer.from(JSON.stringify({ files: [], notes: '' }, null, 2));
-      await vscode.workspace.fs.writeFile(fileUri, starter);
+      const initial = JSON.stringify({ chat: '' }, null, 2);
+      await vscode.workspace.fs.writeFile(fileUri, Buffer.from(initial, 'utf8'));
 
-      // 4. Open with our custom editor
       await vscode.commands.executeCommand(
         'vscode.openWith',
         fileUri,
@@ -30,13 +29,14 @@ export function activate(ctx: vscode.ExtensionContext) {
     })
   );
 
-  // 5. Register your custom editor
-  const provider = new SorceryEditorProvider(ctx);
-  ctx.subscriptions.push(
+  context.subscriptions.push(
     vscode.window.registerCustomEditorProvider(
       SorceryEditorProvider.viewType,
-      provider,
-      { webviewOptions: { retainContextWhenHidden: true } }
+      new SorceryEditorProvider(context),
+      {
+        webviewOptions: { retainContextWhenHidden: true },
+        supportsMultipleEditorsPerDocument: true
+      }
     )
   );
 }
