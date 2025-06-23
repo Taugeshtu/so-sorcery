@@ -59,17 +59,15 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
     });
   }
   
-   private async handleWebviewMessage(
+  private async handleWebviewMessage(
     message: any, 
     contextHolder: ContextHolder, 
     panel: vscode.WebviewPanel
   ) {
     switch (message.command) {
       case 'addFileToContext':
-        const added = contextHolder.addFileKnowledge(message.filePath);
-        if (added) {
-          this.updateWebviewState(panel, contextHolder);
-        }
+        const added = contextHolder.addKnowledge('file', message.filePath, [], message.filePath);
+        this.updateWebviewState(panel, contextHolder);
         break;
       
       case 'removeKnowledge':

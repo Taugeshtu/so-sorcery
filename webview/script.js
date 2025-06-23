@@ -205,9 +205,9 @@ function updateIncludedFilesList() {
         fileKnowledges.forEach(knowledge => {
             const li = document.createElement('li');
             li.className = 'included-file-item';
-            li.textContent = getFileName(knowledge.metadata?.filePath);
-            li.title = knowledge.metadata?.filePath;
-            li.onclick = () => removeKnowledge(knowledge.id); // Now we have the ID!
+            li.textContent = getFileName(knowledge.content); // content is now just the file path
+            li.title = knowledge.content; // full path in tooltip
+            li.onclick = () => removeKnowledge(knowledge.id);
             includedFilesList.appendChild(li);
         });
     } else {
@@ -222,7 +222,7 @@ function updateAvailableFilesTree(searchTerm = '') {
     const availableFilesTree = document.getElementById('availableFilesTree');
     availableFilesTree.innerHTML = '';
     
-    const includedFilePaths = fileKnowledges.map(k => k.metadata?.filePath).filter(Boolean);
+    const includedFilePaths = fileKnowledges.map(k => k.content).filter(Boolean); // content is the file path
     const availableFiles = allAvailableFiles.filter(filePath => !includedFilePaths.includes(filePath));
     
     // Apply search filter

@@ -47,7 +47,7 @@ export class ContextHolder {
 
     return context;
   }
-  
+
   private validateKnowledge(k: any): Knowledge {
     return {
       id: k.id || 0,
@@ -55,8 +55,8 @@ export class ContextHolder {
       source: k.source || 'user',
       content: k.content || '',
       references: Array.isArray(k.references) ? k.references : [],
-      collapsed: typeof k.collapsed === 'boolean' ? k.collapsed : true, // Default to collapsed
-      metadata: k.metadata || {}
+      collapsed: typeof k.collapsed === 'boolean' ? k.collapsed : true,
+      timestamp: k.timestamp || k.metadata?.timestamp || Date.now()
     };
   }
 
@@ -65,17 +65,31 @@ export class ContextHolder {
     this.saveToDocument();
   }
 
-  public addKnowledge(source: Knowledge['source'], content: string, references?: number[]): Knowledge {
+  public addKnowledge(
+    source: Knowledge['source'], 
+    content: string, 
+    references?: number[],
+    filePath?: string // Optional, only for file type
+  ): Knowledge {
+    // For file knowledge, check if it already exists
+    if (source === 'file' && filePath) {
+      const existing = this.context.knowledges.find(
+        k => k.source === 'file' && k.content === filePath
+      );
+      
+      if (existing) {
+        return existing; // Return existing instead of null
+      }
+    }
+
     const knowledge: Knowledge = {
       id: this.context.nextKnowledgeId,
-      name: `${source}_${this.context.nextKnowledgeId}`,
+      name: this.generateKnowledgeName(source, filePath),
       source,
       content,
-      references,
-      collapsed: false, // New knowledge starts expanded
-      metadata: {
-        timestamp: Date.now()
-      }
+      references: references || [],
+      collapsed: source === 'file' ? true : false, // Files start collapsed, others expanded
+      timestamp: Date.now()
     };
 
     this.context.nextKnowledgeId++;
@@ -84,48 +98,35 @@ export class ContextHolder {
     return knowledge;
   }
 
-  public addFileKnowledge(filePath: string): Knowledge | null {
-    // Check if already exists
-    const existing = this.context.knowledges.find(
-      k => k.source === 'file' && k.metadata?.filePath === filePath
-    );
-    
-    if (existing) {
-      return null; // Already exists
+  private generateKnowledgeName(source: Knowledge['source'], filePath?: string): string {
+    if (source === 'file' && filePath) {
+      const fileName = filePath.split('/').pop() || filePath;
+      return `file_${fileName}`;
     }
-
-    const fileName = filePath.split('/').pop() || filePath;
-    const knowledge: Knowledge = {
-      id: this.context.nextKnowledgeId,
-      name: `file_${fileName}`,
-      source: 'file',
-      content: `File: ${filePath}`,
-      references: [],
-      collapsed: true,
-      metadata: {
-        filePath,
-        timestamp: Date.now()
-      }
-    };
-
-    this.context.nextKnowledgeId++;
-    this.context.knowledges.push(knowledge);
-    this.saveToDocument();
-    return knowledge;
+    return `${source}_${this.context.nextKnowledgeId}`;
   }
 
   public removeKnowledge(id: number): boolean {
     const initialLength = this.context.knowledges.length;
+    
+    // Remove the knowledge
     this.context.knowledges = this.context.knowledges.filter(k => k.id !== id);
     
     if (this.context.knowledges.length < initialLength) {
+      // Clean up references to the removed knowledge
+      this.context.knowledges.forEach(knowledge => {
+        if (knowledge.references) {
+          knowledge.references = knowledge.references.filter(refId => refId !== id);
+        }
+      });
+      
       this.saveToDocument();
       return true;
     }
     
     return false;
   }
-  
+
   public toggleKnowledgeCollapse(id: number): boolean {
     const knowledge = this.context.knowledges.find(k => k.id === id);
     if (knowledge) {

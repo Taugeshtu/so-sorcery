@@ -4,12 +4,9 @@ export interface Knowledge {
   name: string;
   source: 'user' | 'agent' | 'file';
   content: string;
-  references?: number[]; // IDs of other knowledges this references
+  references?: number[];
   collapsed?: boolean;
-  metadata?: {
-    filePath?: string; // for file type knowledges
-    timestamp?: number;
-  };
+  timestamp: number; // Always present, no more metadata object
 }
 
 export interface SorceryContext {
