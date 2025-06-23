@@ -1,6 +1,6 @@
 export interface Knowledge {
   id: number;
-  type: 'user-generated' | 'ai-generated' | 'file';
+  source: 'user' | 'agent' | 'file';
   content: string;
   references?: number[]; // IDs of other knowledges this references
   metadata?: {

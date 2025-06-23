@@ -8,41 +8,21 @@ export class ContextHolder {
 
   constructor(document: vscode.TextDocument, workspaceName: string) {
     this.document = document;
-    
-    // Try to parse existing content, or create new context
+    this.context = this.loadFromDocument(workspaceName);
+  }
+
+  private loadFromDocument(workspaceName: string): SorceryContext {
     try {
-      const existingContent = document.getText();
-      if (existingContent.trim()) {
-        const parsed = JSON.parse(existingContent);
-        this.context = this.validateAndFixContext(parsed, workspaceName);
-      } else {
-        this.context = this.createNewContext(workspaceName);
+      const content = this.document.getText().trim();
+      if (content) {
+        const parsed = JSON.parse(content);
+        return this.validateContext(parsed, workspaceName);
       }
     } catch (error) {
-      console.warn('Failed to parse existing .sorcery file, creating new context:', error);
-      this.context = this.createNewContext(workspaceName);
+      console.warn('Failed to parse .sorcery file, creating new context:', error);
     }
-  }
-
-  private validateAndFixContext(parsed: any, workspaceName: string): SorceryContext {
-    // Ensure we have a valid context structure
-    const context: SorceryContext = {
-      workspaceName: parsed.workspaceName || workspaceName,
-      availableFiles: Array.isArray(parsed.availableFiles) ? parsed.availableFiles : [],
-      knowledges: Array.isArray(parsed.knowledges) ? parsed.knowledges : [],
-      nextKnowledgeId: typeof parsed.nextKnowledgeId === 'number' ? parsed.nextKnowledgeId : 1
-    };
-
-    // Ensure nextKnowledgeId is at least 1 more than the highest existing ID
-    if (context.knowledges.length > 0) {
-      const maxId = Math.max(...context.knowledges.map(k => k.id || 0));
-      context.nextKnowledgeId = Math.max(context.nextKnowledgeId, maxId + 1);
-    }
-
-    return context;
-  }
-
-  private createNewContext(workspaceName: string): SorceryContext {
+    
+    // Create empty context
     return {
       workspaceName,
       availableFiles: [],
@@ -51,51 +31,32 @@ export class ContextHolder {
     };
   }
 
+  private validateContext(parsed: any, workspaceName: string): SorceryContext {
+    const context: SorceryContext = {
+      workspaceName: parsed.workspaceName || workspaceName,
+      availableFiles: Array.isArray(parsed.availableFiles) ? parsed.availableFiles : [],
+      knowledges: Array.isArray(parsed.knowledges) ? parsed.knowledges : [],
+      nextKnowledgeId: typeof parsed.nextKnowledgeId === 'number' ? parsed.nextKnowledgeId : 1
+    };
+
+    // Ensure nextKnowledgeId is correct
+    if (context.knowledges.length > 0) {
+      const maxId = Math.max(...context.knowledges.map(k => k.id || 0));
+      context.nextKnowledgeId = Math.max(context.nextKnowledgeId, maxId + 1);
+    }
+
+    return context;
+  }
+
   public updateAvailableFiles(files: string[]): void {
     this.context.availableFiles = files;
     this.saveToDocument();
   }
 
-  public addFileKnowledge(filePath: string): boolean {
-    // Ensure knowledges is an array
-    if (!Array.isArray(this.context.knowledges)) {
-      this.context.knowledges = [];
-    }
-
-    // Check if file knowledge already exists
-    const existingFileKnowledge = this.context.knowledges.find(
-      k => k.type === 'file' && k.metadata?.filePath === filePath
-    );
-
-    if (existingFileKnowledge) {
-      return false; // Already exists
-    }
-
-    // Create new file knowledge
-    const newKnowledge: Knowledge = {
+  public addKnowledge(source: Knowledge['source'], content: string, references?: number[]): Knowledge {
+    const knowledge: Knowledge = {
       id: this.context.nextKnowledgeId++,
-      type: 'file',
-      content: `File: ${filePath}`,
-      metadata: {
-        filePath,
-        timestamp: Date.now()
-      }
-    };
-
-    this.context.knowledges.push(newKnowledge);
-    this.saveToDocument();
-    return true; // Successfully added
-  }
-
-  public addKnowledge(type: Knowledge['type'], content: string, references?: number[]): Knowledge {
-    // Ensure knowledges is an array
-    if (!Array.isArray(this.context.knowledges)) {
-      this.context.knowledges = [];
-    }
-
-    const newKnowledge: Knowledge = {
-      id: this.context.nextKnowledgeId++,
-      type,
+      source,
       content,
       references,
       metadata: {
@@ -103,27 +64,63 @@ export class ContextHolder {
       }
     };
 
-    this.context.knowledges.push(newKnowledge);
+    this.context.knowledges.push(knowledge);
     this.saveToDocument();
-    return newKnowledge;
+    return knowledge;
+  }
+
+  public addFileKnowledge(filePath: string): Knowledge | null {
+    // Check if already exists
+    const existing = this.context.knowledges.find(
+      k => k.source === 'file' && k.metadata?.filePath === filePath
+    );
+    
+    if (existing) {
+      return null; // Already exists
+    }
+
+    const knowledge: Knowledge = {
+      id: this.context.nextKnowledgeId++,
+      source: 'file',
+      content: `File: ${filePath}`,
+      references: [],
+      metadata: {
+        filePath,
+        timestamp: Date.now()
+      }
+    };
+
+    this.context.knowledges.push(knowledge);
+    this.saveToDocument();
+    return knowledge;
+  }
+
+  public removeKnowledge(id: number): boolean {
+    const initialLength = this.context.knowledges.length;
+    this.context.knowledges = this.context.knowledges.filter(k => k.id !== id);
+    
+    if (this.context.knowledges.length < initialLength) {
+      this.saveToDocument();
+      return true;
+    }
+    
+    return false;
   }
 
   public getContext(): SorceryContext {
-    return { ...this.context }; // Return a copy
+    return { ...this.context };
   }
 
   public getKnowledges(): Knowledge[] {
-    // Ensure we always return an array
-    if (!Array.isArray(this.context.knowledges)) {
-      console.warn('knowledges was not an array, fixing it');
-      this.context.knowledges = [];
-    }
-    return [...this.context.knowledges]; // Return a copy
+    return [...this.context.knowledges];
+  }
+
+  public getAvailableFiles(): string[] {
+    return [...this.context.availableFiles];
   }
 
   public getFileKnowledges(): Knowledge[] {
-    const knowledges = this.getKnowledges(); // This will ensure it's an array
-    return knowledges.filter(k => k.type === 'file');
+    return this.context.knowledges.filter(k => k.source === 'file');
   }
 
   private async saveToDocument(): Promise<void> {
