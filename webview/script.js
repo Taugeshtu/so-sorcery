@@ -1,34 +1,32 @@
 // webview/script.js
 const vscode = acquireVsCodeApi();
 
-// Resizer functionality
 let isResizing = false;
+let allAvailableFiles = [];
+let fileKnowledges = []; // Store full knowledge objects instead of just paths
+let currentContext = null; // Store the full context
 
 document.addEventListener('DOMContentLoaded', () => {
     const resizer = document.getElementById('resizer');
     const sidebar = document.getElementById('sidebar');
     const container = document.getElementById('container');
+    const searchInput = document.getElementById('fileSearchInput');
 
+    // Resizer logic (unchanged)
     resizer.addEventListener('mousedown', (e) => {
         isResizing = true;
         document.body.style.cursor = 'col-resize';
         document.body.style.userSelect = 'none';
-        
-        // Prevent text selection during resize
         e.preventDefault();
     });
 
     document.addEventListener('mousemove', (e) => {
         if (!isResizing) return;
-
         const containerRect = container.getBoundingClientRect();
         const newSidebarWidth = containerRect.right - e.clientX;
-        
-        // Enforce min/max constraints
         const minWidth = 200;
         const maxWidth = Math.min(600, containerRect.width * 0.7);
         const constrainedWidth = Math.max(minWidth, Math.min(maxWidth, newSidebarWidth));
-        
         sidebar.style.width = constrainedWidth + 'px';
     });
 
@@ -39,9 +37,13 @@ document.addEventListener('DOMContentLoaded', () => {
             document.body.style.userSelect = '';
         }
     });
+
+    // Search functionality
+    searchInput.addEventListener('input', (e) => {
+        filterAvailableFiles(e.target.value);
+    });
 });
 
-// Add message listener to see what we're receiving
 window.addEventListener('message', event => {
     const message = event.data;
     
@@ -53,52 +55,115 @@ window.addEventListener('message', event => {
 });
 
 function updateUI(context) {
-    // Update files list
-    const filesList = document.getElementById('filesList');
-    filesList.innerHTML = '';
+    currentContext = context; // Store for use in other functions
+    allAvailableFiles = context.availableFiles || [];
+    fileKnowledges = context.knowledges.filter(k => k.source === 'file');
     
-    if (context.availableFiles && context.availableFiles.length > 0) {
-        console.log(`Rendering ${context.availableFiles.length} files`);
-        context.availableFiles.forEach(filePath => {
-            const li = document.createElement('li');
-            li.textContent = filePath;
-            li.onclick = () => addFileToContext(filePath);
-            filesList.appendChild(li);
-        });
-    } else {
-        const li = document.createElement('li');
-        li.textContent = 'No files found';
-        li.style.fontStyle = 'italic';
-        filesList.appendChild(li);
-    }
-    
-    // Update context files list
-    updateContextFilesList(context.knowledges);
+    updateIncludedFilesList();
+    updateAvailableFilesTree();
 }
 
-function updateContextFilesList(knowledges) {
-    const contextFilesList = document.getElementById('contextFilesList');
-    contextFilesList.innerHTML = '';
-    
-    const fileKnowledges = knowledges.filter(k => k.source === 'file');
+function updateIncludedFilesList() {
+    const includedFilesList = document.getElementById('includedFilesList');
+    includedFilesList.innerHTML = '';
     
     if (fileKnowledges.length > 0) {
         fileKnowledges.forEach(knowledge => {
             const li = document.createElement('li');
-            li.textContent = knowledge.metadata?.filePath || knowledge.content;
-            li.onclick = () => removeKnowledge(knowledge.id);
-            contextFilesList.appendChild(li);
+            li.className = 'included-file-item';
+            li.textContent = getFileName(knowledge.metadata?.filePath);
+            li.title = knowledge.metadata?.filePath;
+            li.onclick = () => removeKnowledge(knowledge.id); // Now we have the ID!
+            includedFilesList.appendChild(li);
         });
     } else {
         const li = document.createElement('li');
-        li.textContent = 'No files in context';
-        li.style.fontStyle = 'italic';
-        contextFilesList.appendChild(li);
+        li.textContent = 'No files included';
+        li.className = 'empty-state';
+        includedFilesList.appendChild(li);
     }
 }
 
+function updateAvailableFilesTree(searchTerm = '') {
+    const availableFilesTree = document.getElementById('availableFilesTree');
+    availableFilesTree.innerHTML = '';
+    
+    const includedFilePaths = fileKnowledges.map(k => k.metadata?.filePath).filter(Boolean);
+    const availableFiles = allAvailableFiles.filter(filePath => !includedFilePaths.includes(filePath));
+    
+    // Apply search filter
+    const filteredFiles = searchTerm 
+        ? availableFiles.filter(filePath => 
+            filePath.toLowerCase().includes(searchTerm.toLowerCase()))
+        : availableFiles;
+    
+    if (filteredFiles.length > 0) {
+        // Build tree structure
+        const tree = buildFileTree(filteredFiles);
+        renderFileTree(tree, availableFilesTree);
+    } else {
+        const div = document.createElement('div');
+        div.textContent = searchTerm ? 'No matching files' : 'No available files';
+        div.className = 'empty-state';
+        availableFilesTree.appendChild(div);
+    }
+}
+
+function buildFileTree(filePaths) {
+    const tree = {};
+    
+    filePaths.forEach(filePath => {
+        const parts = filePath.split('/');
+        let current = tree;
+        
+        parts.forEach((part, index) => {
+            if (index === parts.length - 1) {
+                // It's a file
+                current[part] = { _isFile: true, _fullPath: filePath };
+            } else {
+                // It's a directory
+                if (!current[part]) {
+                    current[part] = { _isFile: false };
+                }
+                current = current[part];
+            }
+        });
+    });
+    
+    return tree;
+}
+
+function renderFileTree(tree, container, depth = 0) {
+    Object.keys(tree).sort().forEach(key => {
+        if (key.startsWith('_')) return; // Skip metadata
+        
+        const item = tree[key];
+        const div = document.createElement('div');
+        div.className = item._isFile ? 'file-item' : 'folder-item';
+        div.style.paddingLeft = (depth * 20) + 'px';
+        
+        if (item._isFile) {
+            div.textContent = key;
+            div.title = item._fullPath;
+            div.onclick = () => addFileToContext(item._fullPath);
+        } else {
+            div.textContent = `[${key}]`;
+            div.className += ' folder';
+        }
+        
+        container.appendChild(div);
+        
+        if (!item._isFile) {
+            renderFileTree(item, container, depth + 1);
+        }
+    });
+}
+
+function filterAvailableFiles(searchTerm) {
+    updateAvailableFilesTree(searchTerm);
+}
+
 function addFileToContext(filePath) {
-    console.log('Adding file to context:', filePath);
     vscode.postMessage({
         command: 'addFileToContext',
         filePath: filePath
@@ -113,17 +178,6 @@ function removeKnowledge(id) {
     });
 }
 
-function toggleSection(sectionId) {
-  const content = document.getElementById(sectionId + '-content');
-  const arrow = document.getElementById(sectionId + '-arrow');
-  
-  if (content.classList.contains('collapsed')) {
-    content.classList.remove('collapsed');
-    arrow.classList.remove('collapsed');
-    content.style.maxHeight = content.scrollHeight + 'px';
-  } else {
-    content.classList.add('collapsed');
-    arrow.classList.add('collapsed');
-    content.style.maxHeight = '0';
-  }
+function getFileName(filePath) {
+    return filePath.split('/').pop() || filePath;
 }

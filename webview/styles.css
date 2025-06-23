@@ -41,63 +41,101 @@ body {
   padding: 16px;
   overflow-y: auto;
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
 }
 
-/* Rest of your existing styles... */
-.collapsible-section {
+.included-files-section {
   margin-bottom: 20px;
 }
 
-.collapsible-header {
-  cursor: pointer;
-  user-select: none;
+.included-files-section h3 {
   margin: 0 0 10px 0;
   font-size: 14px;
   font-weight: 600;
+  color: var(--vscode-foreground);
 }
 
-.arrow {
-  display: inline-block;
-  transition: transform 0.2s ease;
-  margin-right: 8px;
-}
-
-.arrow.collapsed {
-  transform: rotate(-90deg);
-}
-
-.collapsible-content {
-  overflow: hidden;
-  transition: max-height 0.3s ease-out;
-}
-
-.collapsible-content.collapsed {
-  max-height: 0 !important;
-}
-
-#filesList, #contextFilesList {
+#includedFilesList {
   list-style: none;
   padding: 0;
   margin: 0;
+  max-height: 150px;
+  overflow-y: auto;
 }
 
-#filesList li, #contextFilesList li {
+.included-file-item {
   padding: 4px 8px;
   cursor: pointer;
   border-radius: 3px;
   margin-bottom: 2px;
+  background-color: var(--vscode-badge-background);
+  color: var(--vscode-badge-foreground);
+  font-size: 12px;
 }
 
-#filesList li:hover, #contextFilesList li:hover {
+.included-file-item:hover {
   background-color: var(--vscode-list-hoverBackground);
+  color: var(--vscode-foreground);
 }
 
-.context-files-section {
-  margin-top: 20px;
+.search-section {
+  margin-bottom: 20px;
 }
 
-.files-header {
+#fileSearchInput {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--vscode-input-border);
+  background-color: var(--vscode-input-background);
+  color: var(--vscode-input-foreground);
+  border-radius: 3px;
+  font-size: 13px;
+}
+
+#fileSearchInput:focus {
+  outline: none;
+  border-color: var(--vscode-inputOption-activeBorder);
+}
+
+.available-files-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.available-files-section h3 {
   margin: 0 0 10px 0;
   font-size: 14px;
   font-weight: 600;
+  color: var(--vscode-foreground);
+}
+
+#availableFilesTree {
+  flex: 1;
+  overflow-y: auto;
+  font-size: 13px;
+}
+
+.file-item, .folder-item {
+  padding: 2px 4px;
+  cursor: pointer;
+  border-radius: 2px;
+  line-height: 1.4;
+}
+
+.file-item:hover {
+  background-color: var(--vscode-list-hoverBackground);
+}
+
+.folder-item.folder {
+  color: var(--vscode-directory-foreground, var(--vscode-foreground));
+  cursor: default;
+}
+
+.empty-state {
+  color: var(--vscode-descriptionForeground);
+  font-style: italic;
+  padding: 8px 4px;
+  font-size: 12px;
 }
