@@ -54,8 +54,8 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
     const context = contextHolder.getContext();
     
     panel.webview.postMessage({
-      command: 'updateState',
-      context
+        command: 'updateState',
+        context
     });
   }
   

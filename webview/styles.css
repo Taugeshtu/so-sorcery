@@ -93,3 +93,15 @@ body {
   border-radius: 4px;
   background-color: var(--vscode-editor-background, white);
 }
+
+.collapsible-content.collapsed {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+
+.collapsible-content {
+    max-height: 1000px; /* or some large value */
+    overflow: hidden;
+    transition: max-height 0.3s ease-in;
+}
