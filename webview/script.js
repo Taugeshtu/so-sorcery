@@ -1,6 +1,45 @@
 // webview/script.js
 const vscode = acquireVsCodeApi();
 
+// Resizer functionality
+let isResizing = false;
+
+document.addEventListener('DOMContentLoaded', () => {
+    const resizer = document.getElementById('resizer');
+    const sidebar = document.getElementById('sidebar');
+    const container = document.getElementById('container');
+
+    resizer.addEventListener('mousedown', (e) => {
+        isResizing = true;
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+        
+        // Prevent text selection during resize
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isResizing) return;
+
+        const containerRect = container.getBoundingClientRect();
+        const newSidebarWidth = containerRect.right - e.clientX;
+        
+        // Enforce min/max constraints
+        const minWidth = 200;
+        const maxWidth = Math.min(600, containerRect.width * 0.7);
+        const constrainedWidth = Math.max(minWidth, Math.min(maxWidth, newSidebarWidth));
+        
+        sidebar.style.width = constrainedWidth + 'px';
+    });
+
+    document.addEventListener('mouseup', () => {
+        if (isResizing) {
+            isResizing = false;
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+        }
+    });
+});
 
 // Add message listener to see what we're receiving
 window.addEventListener('message', event => {

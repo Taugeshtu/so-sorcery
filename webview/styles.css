@@ -1,55 +1,65 @@
-body { 
-  margin: 0; 
-  padding: 0; 
-  height: 100vh; 
-  display: flex; 
-  font-family: sans-serif; 
+/* webview/styles.css */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--vscode-font-family);
+  height: 100vh;
+  overflow: hidden;
 }
 
-#main { 
-  flex: 1; 
-  padding: 10px; 
-  overflow-y: auto; 
-  min-width: 0; /* Important: prevents flex item from overflowing */
-}
-
-#sidebar { 
-  width: 300px; 
-  min-width: 300px; /* Prevents shrinking */
-  border-left: 1px solid #ddd; 
-  padding: 10px; 
-  box-sizing: border-box; 
-  overflow-y: auto; 
-  background-color: var(--vscode-sideBar-background, #f3f3f3);
-}
-
-.collapsible-section { 
-  margin-bottom: 20px; 
-}
-
-.context-files-section { 
-  margin-bottom: 20px; 
-}
-
-.collapsible-header { 
-  margin: 0; 
-  font-size: 1.1em; 
-  cursor: pointer; 
-  user-select: none;
+#container {
   display: flex;
-  align-items: center;
-  padding: 8px 4px;
-  border-bottom: 1px solid #eee;
-  background-color: var(--vscode-sideBarSectionHeader-background, #e7e7e7);
+  height: 100vh;
+  width: 100%;
 }
 
-.collapsible-header:hover { 
-  background-color: var(--vscode-list-hoverBackground, rgba(0,0,0,0.1)); 
+#main {
+  flex: 1;
+  min-width: 200px;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+#resizer {
+  width: 4px;
+  background-color: var(--vscode-panel-border);
+  cursor: col-resize;
+  flex-shrink: 0;
+  transition: background-color 0.2s ease;
+}
+
+#resizer:hover {
+  background-color: var(--vscode-focusBorder);
+}
+
+#sidebar {
+  width: 300px;
+  min-width: 200px;
+  max-width: 600px;
+  background-color: var(--vscode-sideBar-background);
+  border-left: 1px solid var(--vscode-panel-border);
+  padding: 16px;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+/* Rest of your existing styles... */
+.collapsible-section {
+  margin-bottom: 20px;
+}
+
+.collapsible-header {
+  cursor: pointer;
+  user-select: none;
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .arrow {
-  margin-right: 8px;
+  display: inline-block;
   transition: transform 0.2s ease;
+  margin-right: 8px;
 }
 
 .arrow.collapsed {
@@ -57,15 +67,12 @@ body {
 }
 
 .collapsible-content {
-  padding: 8px 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
 }
 
-.files-header {
-  margin: 0 0 10px 0;
-  font-size: 1.1em;
-  padding: 8px 4px;
-  background-color: var(--vscode-sideBarSectionHeader-background, #e7e7e7);
-  border-bottom: 1px solid #eee;
+.collapsible-content.collapsed {
+  max-height: 0 !important;
 }
 
 #filesList, #contextFilesList {
@@ -78,30 +85,19 @@ body {
   padding: 4px 8px;
   cursor: pointer;
   border-radius: 3px;
-  margin: 1px 0;
+  margin-bottom: 2px;
 }
 
 #filesList li:hover, #contextFilesList li:hover {
-  background-color: var(--vscode-list-hoverBackground, rgba(0,0,0,0.1));
+  background-color: var(--vscode-list-hoverBackground);
 }
 
-/* Knowledge items in main area */
-.knowledge-item {
-  margin-bottom: 15px;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background-color: var(--vscode-editor-background, white);
+.context-files-section {
+  margin-top: 20px;
 }
 
-.collapsible-content.collapsed {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.3s ease-out;
-}
-
-.collapsible-content {
-    max-height: 1000px; /* or some large value */
-    overflow: hidden;
-    transition: max-height 0.3s ease-in;
+.files-header {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  font-weight: 600;
 }

@@ -11,22 +11,25 @@ export function getWebviewHtml(webview: vscode.Webview, cssUri: vscode.Uri, jsUr
       <link rel="stylesheet" href="${cssUri}">
     </head>
     <body>
-      <div id="main">
-        <div id="knowledgesList"></div>
-      </div>
-      <div id="sidebar">
-        <div class="collapsible-section">
-          <h2 class="collapsible-header" onclick="toggleSection('projectFiles')">
-            <span class="arrow" id="projectFiles-arrow">▼</span>
-            Project Files
-          </h2>
-          <div class="collapsible-content" id="projectFiles-content">
-            <ul id="filesList"></ul>
-          </div>
+      <div id="container">
+        <div id="main">
+          <div id="knowledgesList"></div>
         </div>
-        <div class="context-files-section">
-          <h2 class="files-header">Files in Context</h2>
-          <ul id="contextFilesList"></ul>
+        <div id="resizer"></div>
+        <div id="sidebar">
+          <div class="collapsible-section">
+            <h2 class="collapsible-header" onclick="toggleSection('projectFiles')">
+              <span class="arrow" id="projectFiles-arrow">▼</span>
+              Project Files
+            </h2>
+            <div class="collapsible-content" id="projectFiles-content">
+              <ul id="filesList"></ul>
+            </div>
+          </div>
+          <div class="context-files-section">
+            <h2 class="files-header">Files in Context</h2>
+            <ul id="contextFilesList"></ul>
+          </div>
         </div>
       </div>
       <script src="${jsUri}"></script>
