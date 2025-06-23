@@ -35,7 +35,7 @@ export class ContextHolder {
     const context: SorceryContext = {
       workspaceName: parsed.workspaceName || workspaceName,
       availableFiles: Array.isArray(parsed.availableFiles) ? parsed.availableFiles : [],
-      knowledges: Array.isArray(parsed.knowledges) ? parsed.knowledges : [],
+      knowledges: Array.isArray(parsed.knowledges) ? parsed.knowledges.map(this.validateKnowledge) : [],
       nextKnowledgeId: typeof parsed.nextKnowledgeId === 'number' ? parsed.nextKnowledgeId : 1
     };
 
@@ -47,6 +47,18 @@ export class ContextHolder {
 
     return context;
   }
+  
+  private validateKnowledge(k: any): Knowledge {
+    return {
+      id: k.id || 0,
+      name: k.name || `${k.source || 'unknown'}_${k.id || 0}`,
+      source: k.source || 'user',
+      content: k.content || '',
+      references: Array.isArray(k.references) ? k.references : [],
+      collapsed: typeof k.collapsed === 'boolean' ? k.collapsed : true, // Default to collapsed
+      metadata: k.metadata || {}
+    };
+  }
 
   public updateAvailableFiles(files: string[]): void {
     this.context.availableFiles = files;
@@ -55,15 +67,18 @@ export class ContextHolder {
 
   public addKnowledge(source: Knowledge['source'], content: string, references?: number[]): Knowledge {
     const knowledge: Knowledge = {
-      id: this.context.nextKnowledgeId++,
+      id: this.context.nextKnowledgeId,
+      name: `${source}_${this.context.nextKnowledgeId}`,
       source,
       content,
       references,
+      collapsed: false, // New knowledge starts expanded
       metadata: {
         timestamp: Date.now()
       }
     };
 
+    this.context.nextKnowledgeId++;
     this.context.knowledges.push(knowledge);
     this.saveToDocument();
     return knowledge;
@@ -79,17 +94,21 @@ export class ContextHolder {
       return null; // Already exists
     }
 
+    const fileName = filePath.split('/').pop() || filePath;
     const knowledge: Knowledge = {
-      id: this.context.nextKnowledgeId++,
+      id: this.context.nextKnowledgeId,
+      name: `file_${fileName}`,
       source: 'file',
       content: `File: ${filePath}`,
       references: [],
+      collapsed: true,
       metadata: {
         filePath,
         timestamp: Date.now()
       }
     };
 
+    this.context.nextKnowledgeId++;
     this.context.knowledges.push(knowledge);
     this.saveToDocument();
     return knowledge;
@@ -104,6 +123,16 @@ export class ContextHolder {
       return true;
     }
     
+    return false;
+  }
+  
+  public toggleKnowledgeCollapse(id: number): boolean {
+    const knowledge = this.context.knowledges.find(k => k.id === id);
+    if (knowledge) {
+      knowledge.collapsed = !knowledge.collapsed;
+      this.saveToDocument();
+      return true;
+    }
     return false;
   }
 

@@ -79,6 +79,13 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
         }
         break;
       
+      case 'toggleKnowledgeCollapse':
+        const toggled = contextHolder.toggleKnowledgeCollapse(message.id);
+        if (toggled) {
+          this.updateWebviewState(panel, contextHolder);
+        }
+        break;
+      
       case 'addUserKnowledge':
         contextHolder.addKnowledge('user', message.content, message.references);
         this.updateWebviewState(panel, contextHolder);

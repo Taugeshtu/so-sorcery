@@ -16,17 +16,16 @@ export function getWebviewHtml(webview: vscode.Webview, cssUri: vscode.Uri, jsUr
           <div id="knowledgesList"></div>
           
           <div id="inputSection">
-            <div id="textareaContainer">
-              <div id="lineNumbers"></div>
-              <textarea 
-                id="userInput" 
-                placeholder="Add your knowledge here..."
-                rows="6"
-              ></textarea>
-            </div>
             <div id="buttonContainer">
               <button id="addButton" class="secondary-button">Add Knowledge</button>
               <button id="addRunButton" class="primary-button">Add & Run Agent</button>
+            </div>
+            <div id="textareaContainer">
+              <textarea 
+                id="userInput" 
+                placeholder="Add your knowledge here..."
+                rows="8"
+              ></textarea>
             </div>
           </div>
         </div>

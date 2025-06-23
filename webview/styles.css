@@ -16,6 +16,13 @@ body {
 #main {
   flex: 1;
   min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#knowledgesList {
+  flex: 1;
   padding: 16px;
   overflow-y: auto;
 }
@@ -140,35 +147,27 @@ body {
   font-size: 12px;
 }
 
-
 #inputSection {
-  margin-top: 20px;
-  border: 1px solid var(--vscode-panel-border);
-  border-radius: 4px;
+  border-top: 1px solid var(--vscode-panel-border);
   background-color: var(--vscode-editor-background);
+  flex-shrink: 0;
+}
+
+#buttonContainer {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding: 12px 16px 8px 16px;
+  border-bottom: 1px solid var(--vscode-panel-border);
 }
 
 #textareaContainer {
   position: relative;
-  display: flex;
-}
-
-#lineNumbers {
-  background-color: var(--vscode-editorGutter-background, var(--vscode-editor-background));
-  border-right: 1px solid var(--vscode-editorGutter-border, var(--vscode-panel-border));
-  color: var(--vscode-editorLineNumber-foreground);
-  font-family: var(--vscode-editor-font-family, 'Courier New', monospace);
-  font-size: var(--vscode-editor-font-size, 13px);
-  line-height: 1.4;
-  padding: 8px 8px 8px 4px;
-  text-align: right;
-  user-select: none;
-  min-width: 40px;
-  white-space: pre;
 }
 
 #userInput {
-  flex: 1;
+  width: 100%; /* Add this to make it full width */
+  box-sizing: border-box; /* Add this to include padding in width calculation */
   border: none;
   outline: none;
   background-color: transparent;
@@ -177,8 +176,8 @@ body {
   font-size: var(--vscode-editor-font-size, 13px);
   line-height: 1.4;
   padding: 8px 12px;
-  resize: vertical;
-  min-height: 120px;
+  resize: none;
+  height: 120px;
   overflow-y: auto;
 }
 
@@ -188,15 +187,6 @@ body {
 
 #userInput::placeholder {
   color: var(--vscode-input-placeholderForeground);
-}
-
-#buttonContainer {
-  display: flex;
-  gap: 8px;
-  padding: 12px;
-  border-top: 1px solid var(--vscode-panel-border);
-  background-color: var(--vscode-editor-background);
-  border-radius: 0 0 4px 4px;
 }
 
 .primary-button, .secondary-button {
@@ -236,4 +226,138 @@ body {
 .secondary-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+#knowledgesList {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  position: relative; /* For arrow positioning */
+}
+
+.knowledge-card {
+  border: 1px solid var(--vscode-panel-border);
+  margin-bottom: 16px;
+  font-family: var(--vscode-editor-font-family, 'Courier New', monospace);
+  position: relative;
+  z-index: 2; /* Above arrows */
+}
+
+.user-knowledge {
+  margin-right: 20px; /* Push left by reducing right margin */
+}
+
+.agent-knowledge {
+  margin-left: 20px; /* Push right */
+}
+
+.knowledge-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: var(--vscode-editor-background);
+  border-bottom: 1px solid var(--vscode-panel-border);
+  cursor: pointer;
+  user-select: none;
+}
+
+.knowledge-header:hover {
+  background-color: var(--vscode-list-hoverBackground);
+}
+
+.knowledge-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.collapse-indicator {
+  font-size: 12px;
+  color: var(--vscode-foreground);
+  width: 12px;
+  text-align: center;
+}
+
+.knowledge-name {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--vscode-foreground);
+}
+
+.knowledge-source {
+  font-size: 11px;
+  color: var(--vscode-descriptionForeground);
+  font-weight: normal;
+}
+
+.delete-button {
+  background: none;
+  border: none;
+  color: var(--vscode-descriptionForeground);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+}
+
+.delete-button:hover {
+  background-color: var(--vscode-errorBackground);
+  color: var(--vscode-errorForeground);
+}
+
+.knowledge-content {
+  padding: 12px;
+  background-color: var(--vscode-editor-background);
+  font-size: var(--vscode-editor-font-size, 13px);
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  color: var(--vscode-editor-foreground);
+}
+
+.knowledge-card.collapsed .knowledge-content {
+  max-height: calc(1.4em * 8); /* 8 lines */
+  overflow: hidden;
+}
+
+.knowledge-spacer {
+  height: 8px;
+}
+
+.arrow-container {
+  position: relative;
+  height: 20px;
+  z-index: 1; /* Under cards */
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding-right: 50px;
+  margin-bottom: 8px;
+}
+
+.reference-arrow {
+  font-size: 18px;
+  color: var(--vscode-charts-blue);
+  margin-left: 8px;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.reference-arrow:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.empty-state {
+  color: var(--vscode-descriptionForeground);
+  font-style: italic;
+  padding: 20px;
+  text-align: center;
+  font-size: 14px;
 }
