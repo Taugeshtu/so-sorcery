@@ -1,10 +1,13 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as fs from 'fs';
-import { exec } from 'child_process';
-import { promisify } from 'util';
 
-const execAsync = promisify(exec);
+interface GitIgnoreRule {
+  pattern: string;
+  isNegation: boolean;
+  isDirectory: boolean;
+  repoRoot: string;
+}
 
 export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
   public static readonly viewType = 'sorcery.contextEditor';
@@ -19,10 +22,7 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
     webviewPanel.webview.options = { enableScripts: true };
     webviewPanel.webview.html = this.getHtml(webviewPanel.webview);
     
-    // Load and send the file list
     this.updateFileList(webviewPanel);
-    // No document change handling for test
-    // No message handling for test
   }
   
   private async getFilteredFilePaths(): Promise<string[]> {
@@ -35,111 +35,239 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
       .get<string[]>('includeFileExtensions') || [];
     
     try {
-      // Find all git repos (main + subrepos)
-      const gitRepos = await this.findAllGitRepos(folder.uri.fsPath);
-      console.log('Found git repos:', gitRepos);
+      // Find all .gitignore files and their repo roots
+      const gitIgnoreRules = await this.loadAllGitIgnoreRules(folder.uri.fsPath);
       
-      const allFiles: string[] = [];
-      
-      // Get files from each git repo
-      for (const repoPath of gitRepos) {
-        const repoFiles = await this.getGitFilesFromRepo(repoPath, exts, folder.uri.fsPath);
-        allFiles.push(...repoFiles);
-      }
-      
-      return [...new Set(allFiles)].sort(); // Remove duplicates and sort
-    } catch (error) {
-      console.error('Git repo discovery failed, falling back:', error);
-      return this.fallbackFileList();
-    }
-  }
-
-  private async findAllGitRepos(rootPath: string): Promise<string[]> {
-    try {
-      let findCommand: string;
-      if (process.platform === 'win32') {
-        // Windows: Use forfiles to find only .git directories/files, not their contents
-        findCommand = `forfiles /S /M .git /C "cmd /c echo @path" 2>nul || echo No .git found`;
-      } else {
-        // Unix version
-        findCommand = `find . -name ".git" -type d -o -name ".git" -type f`;
-      }
-      
-      const { stdout } = await execAsync(findCommand, { cwd: rootPath });
-      
-      if (stdout.includes('No .git found')) {
-        return [rootPath];
-      }
-      
-      const gitPaths = stdout.trim().split(/\r?\n/)
-        .filter(p => p && !p.includes('No .git found'))
-        .map(p => p.replace(/"/g, '')); // Remove quotes from forfiles output
-      
-      const repoPaths: string[] = [];
-      
-      for (const gitPath of gitPaths) {
-        let repoPath: string;
-        if (process.platform === 'win32') {
-          // gitPath is full path, get parent directory
-          repoPath = path.dirname(gitPath);
-        } else {
-          repoPath = path.dirname(path.resolve(rootPath, gitPath));
-        }
-        repoPaths.push(repoPath);
-      }
-      
-      return [...new Set(repoPaths)];
-    } catch (error) {
-      console.warn('Git repo discovery failed, checking root only:', error);
-      return [rootPath];
-    }
-  }
-
-  private async getGitFilesFromRepo(repoPath: string, exts: string[], workspaceRoot: string): Promise<string[]> {
-    try {
-      // Get all tracked files from this specific repo
-      const extPattern = exts.map(e => e.replace('.', '')).join('|');
-      const { stdout } = await execAsync(
-        `git ls-files | grep -E "\\.(${extPattern})$"`,
-        { cwd: repoPath }
+      // Walk filesystem and apply filters
+      const allFiles = await this.walkDirectory(
+        folder.uri.fsPath, 
+        folder.uri.fsPath, 
+        exts, 
+        gitIgnoreRules
       );
       
-      const files = stdout.trim().split('\n').filter(f => f);
-      
-      // Convert to paths relative to workspace root
-      return files.map(file => {
-        const fullPath = path.resolve(repoPath, file);
-        return path.relative(workspaceRoot, fullPath);
-      });
+      return allFiles.sort();
     } catch (error) {
-      console.warn(`Failed to get files from repo ${repoPath}:`, error);
+      console.error('File discovery failed:', error);
       return [];
     }
   }
 
-  private async fallbackFileList(): Promise<string[]> {
-    // Your current implementation as fallback
-    const folder = vscode.workspace.workspaceFolders?.[0];
-    if (!folder) return [];
+  private async loadAllGitIgnoreRules(rootPath: string): Promise<GitIgnoreRule[]> {
+    const rules: GitIgnoreRule[] = [];
     
-    const exts = vscode.workspace.getConfiguration('sorcery')
-      .get<string[]>('includeFileExtensions') || [];
-    const includeGlob = `**/*{${exts.join(',')}}`;
-    const excludeGlob = `.sorcery/**`;
+    // Find all .gitignore files recursively
+    const gitIgnoreFiles = await this.findGitIgnoreFiles(rootPath);
     
-    const uris = await vscode.workspace.findFiles(includeGlob, excludeGlob);
-    return uris
-      .map(u => path.relative(folder.uri.fsPath, u.fsPath))
-      .sort();
+    for (const gitIgnoreFile of gitIgnoreFiles) {
+      const repoRoot = path.dirname(gitIgnoreFile);
+      const gitIgnoreRules = await this.parseGitIgnoreFile(gitIgnoreFile, repoRoot);
+      rules.push(...gitIgnoreRules);
+    }
+    
+    return rules;
+  }
+
+  private async findGitIgnoreFiles(rootPath: string): Promise<string[]> {
+    const gitIgnoreFiles: string[] = [];
+    
+    const walkForGitIgnore = async (dirPath: string) => {
+      try {
+        const entries = await fs.promises.readdir(dirPath, { withFileTypes: true });
+        
+        for (const entry of entries) {
+          const fullPath = path.join(dirPath, entry.name);
+          
+          if (entry.isDirectory()) {
+            // Skip common non-repo directories to avoid deep recursion
+            if (!['node_modules', '.git', 'build', 'dist', 'out'].includes(entry.name)) {
+              await walkForGitIgnore(fullPath);
+            }
+          } else if (entry.name === '.gitignore') {
+            gitIgnoreFiles.push(fullPath);
+          }
+        }
+      } catch (error) {
+        // Skip directories we can't read
+        console.warn(`Cannot read directory ${dirPath}:`, error);
+      }
+    };
+    
+    await walkForGitIgnore(rootPath);
+    return gitIgnoreFiles;
+  }
+
+  private async parseGitIgnoreFile(gitIgnoreFile: string, repoRoot: string): Promise<GitIgnoreRule[]> {
+    try {
+      const content = await fs.promises.readFile(gitIgnoreFile, 'utf8');
+      const rules: GitIgnoreRule[] = [];
+      
+      for (let line of content.split(/\r?\n/)) {
+        line = line.trim();
+        
+        // Skip empty lines and comments
+        if (!line || line.startsWith('#')) {
+          continue;
+        }
+        
+        const isNegation = line.startsWith('!');
+        if (isNegation) {
+          line = line.substring(1);
+        }
+        
+        const isDirectory = line.endsWith('/');
+        if (isDirectory) {
+          line = line.substring(0, line.length - 1);
+        }
+        
+        rules.push({
+          pattern: line,
+          isNegation,
+          isDirectory,
+          repoRoot
+        });
+      }
+      
+      return rules;
+    } catch (error) {
+      console.warn(`Failed to parse .gitignore file ${gitIgnoreFile}:`, error);
+      return [];
+    }
+  }
+
+  private async walkDirectory(
+    dirPath: string, 
+    workspaceRoot: string, 
+    extensions: string[], 
+    gitIgnoreRules: GitIgnoreRule[]
+  ): Promise<string[]> {
+    const files: string[] = [];
+    
+    const walkRecursive = async (currentPath: string) => {
+      try {
+        const entries = await fs.promises.readdir(currentPath, { withFileTypes: true });
+        
+        for (const entry of entries) {
+          const fullPath = path.join(currentPath, entry.name);
+          const relativePath = path.relative(workspaceRoot, fullPath);
+          
+          // Skip .git directories entirely
+          if (entry.name === '.git') {
+            continue;
+          }
+          
+          if (entry.isDirectory()) {
+            // Check if directory should be ignored
+            if (!this.isIgnored(relativePath + '/', gitIgnoreRules, workspaceRoot, true)) {
+              await walkRecursive(fullPath);
+            }
+          } else if (entry.isFile()) {
+            // Check file extension
+            const ext = path.extname(entry.name);
+            if (extensions.includes(ext)) {
+              // Check if file should be ignored
+              if (!this.isIgnored(relativePath, gitIgnoreRules, workspaceRoot, false)) {
+                files.push(relativePath);
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.warn(`Cannot read directory ${currentPath}:`, error);
+      }
+    };
+    
+    await walkRecursive(dirPath);
+    return files;
+  }
+
+  private isIgnored(
+    filePath: string, 
+    gitIgnoreRules: GitIgnoreRule[], 
+    workspaceRoot: string,
+    isDirectory: boolean
+  ): boolean {
+    let ignored = false;
+    
+    // Convert to forward slashes for consistent matching
+    const normalizedPath = filePath.replace(/\\/g, '/');
+    
+    for (const rule of gitIgnoreRules) {
+      // Check if this rule applies to this file's location
+      const fileFullPath = path.resolve(workspaceRoot, filePath);
+      const ruleApplies = fileFullPath.startsWith(rule.repoRoot);
+      
+      if (!ruleApplies) {
+        continue;
+      }
+      
+      // Get path relative to this rule's repo root
+      const pathFromRepoRoot = path.relative(rule.repoRoot, fileFullPath).replace(/\\/g, '/');
+      
+      if (this.matchesGitIgnorePattern(pathFromRepoRoot, rule.pattern, rule.isDirectory, isDirectory)) {
+        if (rule.isNegation) {
+          ignored = false; // Negation rules un-ignore
+        } else {
+          ignored = true;  // Normal rules ignore
+        }
+      }
+    }
+    
+    return ignored;
+  }
+
+  private matchesGitIgnorePattern(filePath: string, pattern: string, ruleIsDirectory: boolean, fileIsDirectory: boolean): boolean {
+    // If rule is for directories only, but file is not a directory, no match
+    if (ruleIsDirectory && !fileIsDirectory) {
+      return false;
+    }
+    
+    // Convert gitignore pattern to regex-like matching
+    // This is a simplified version - full gitignore matching is quite complex
+    
+    // Handle absolute patterns (starting with /)
+    if (pattern.startsWith('/')) {
+      pattern = pattern.substring(1);
+      // Match from root only
+      return this.simpleGlobMatch(filePath, pattern);
+    }
+    
+    // Handle patterns that should match anywhere in the path
+    const pathParts = filePath.split('/');
+    
+    // Try matching the pattern against the full path
+    if (this.simpleGlobMatch(filePath, pattern)) {
+      return true;
+    }
+    
+    // Try matching against each path segment and its trailing path
+    for (let i = 0; i < pathParts.length; i++) {
+      const subPath = pathParts.slice(i).join('/');
+      if (this.simpleGlobMatch(subPath, pattern)) {
+        return true;
+      }
+    }
+    
+    return false;
+  }
+
+  private simpleGlobMatch(text: string, pattern: string): boolean {
+    // Convert glob pattern to regex
+    // This is simplified - doesn't handle all gitignore edge cases
+    const regexPattern = pattern
+      .replace(/\./g, '\\.')  // Escape dots
+      .replace(/\*/g, '[^/]*') // * matches anything except /
+      .replace(/\?/g, '[^/]')  // ? matches single char except /
+      .replace(/\\\*\\\*/g, '.*'); // ** matches anything including /
+    
+    const regex = new RegExp(`^${regexPattern}$`);
+    return regex.test(text);
   }
 
   private async updateFileList(panel: vscode.WebviewPanel) {
-    // Build the file paths array
     const filePaths = await this.getFilteredFilePaths();
-    // Build a separate string of <li> items
     const listItems = filePaths.map(p => `<li>${p}</li>`).join('\n');
 
-    // Post both the raw array and the HTML fragment
     panel.webview.postMessage({
       command: 'loadFiles',
       filePaths,
@@ -148,7 +276,6 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
   }
 
   private getHtml(webview: vscode.Webview): string {
-    // Extract sidebar HTML into a separate variable for clarity
     const sidebarHtml = `
       <div id="sidebar">
         <h2>Files</h2>
@@ -156,7 +283,6 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
       </div>
     `;
 
-    // Main HTML template
     return `
       <!DOCTYPE html>
       <html lang="en">
@@ -182,7 +308,6 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
           window.addEventListener('message', event => {
             const msg = event.data;
             if (msg.command === 'loadFiles') {
-              // msg.filePaths is the raw array, msg.listItems is the HTML fragment
               document.getElementById('filesList').innerHTML = msg.listItems;
             }
           });
