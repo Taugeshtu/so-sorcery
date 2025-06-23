@@ -82,6 +82,11 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
       case 'addUserKnowledge':
         contextHolder.addKnowledge('user', message.content, message.references);
         this.updateWebviewState(panel, contextHolder);
+        
+        if (message.runAgent) {
+          // TODO: Implement agent runner
+          vscode.window.showInformationMessage('Agent runner not implemented yet!');
+        }
         break;
     }
   }

@@ -11,6 +11,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const sidebar = document.getElementById('sidebar');
     const container = document.getElementById('container');
     const searchInput = document.getElementById('fileSearchInput');
+    const userInput = document.getElementById('userInput');
+    const addButton = document.getElementById('addButton');
+    const addRunButton = document.getElementById('addRunButton');
+    const lineNumbers = document.getElementById('lineNumbers');
 
     // Resizer logic (unchanged)
     resizer.addEventListener('mousedown', (e) => {
@@ -42,6 +46,36 @@ document.addEventListener('DOMContentLoaded', () => {
     searchInput.addEventListener('input', (e) => {
         filterAvailableFiles(e.target.value);
     });
+    
+    // Handle textarea input and line numbers
+    function updateLineNumbers() {
+        const lines = userInput.value.split('\n');
+        const lineCount = Math.max(lines.length, parseInt(userInput.rows) || 6);
+        lineNumbers.textContent = Array.from({length: lineCount}, (_, i) => i + 1).join('\n');
+    }
+
+    userInput.addEventListener('input', updateLineNumbers);
+    userInput.addEventListener('scroll', () => {
+        lineNumbers.scrollTop = userInput.scrollTop;
+    });
+
+    // Handle keyboard shortcuts
+    userInput.addEventListener('keydown', (e) => {
+        if (e.altKey && e.key === 'Enter') {
+            e.preventDefault();
+            addKnowledge(false);
+        } else if (e.ctrlKey && e.key === 'Enter') {
+            e.preventDefault();
+            addKnowledge(true);
+        }
+    });
+
+    // Button handlers
+    addButton.addEventListener('click', () => addKnowledge(false));
+    addRunButton.addEventListener('click', () => addKnowledge(true));
+
+    // Initialize line numbers
+    updateLineNumbers();
 });
 
 window.addEventListener('message', event => {
@@ -61,6 +95,14 @@ function updateUI(context) {
     
     updateIncludedFilesList();
     updateAvailableFilesTree();
+}
+
+function updateLineNumbers() {
+    const userInput = document.getElementById('userInput');
+    const lineNumbers = document.getElementById('lineNumbers');
+    const lines = userInput.value.split('\n');
+    const lineCount = Math.max(lines.length, parseInt(userInput.rows) || 6);
+    lineNumbers.textContent = Array.from({length: lineCount}, (_, i) => i + 1).join('\n');
 }
 
 function updateIncludedFilesList() {
@@ -168,6 +210,37 @@ function addFileToContext(filePath) {
         command: 'addFileToContext',
         filePath: filePath
     });
+}
+
+function addKnowledge(runAgent = false) {
+    const userInput = document.getElementById('userInput');
+    const content = userInput.value.trim();
+    
+    if (!content) {
+        return;
+    }
+
+    // Disable buttons while processing
+    const addButton = document.getElementById('addButton');
+    const addRunButton = document.getElementById('addRunButton');
+    addButton.disabled = true;
+    addRunButton.disabled = true;
+
+    vscode.postMessage({
+        command: 'addUserKnowledge',
+        content: content,
+        runAgent: runAgent
+    });
+
+    // Clear input
+    userInput.value = '';
+    updateLineNumbers();
+    
+    // Re-enable buttons (they'll be disabled again if agent is running)
+    setTimeout(() => {
+        addButton.disabled = false;
+        addRunButton.disabled = false;
+    }, 100);
 }
 
 function removeKnowledge(id) {

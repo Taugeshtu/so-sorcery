@@ -139,3 +139,101 @@ body {
   padding: 8px 4px;
   font-size: 12px;
 }
+
+
+#inputSection {
+  margin-top: 20px;
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 4px;
+  background-color: var(--vscode-editor-background);
+}
+
+#textareaContainer {
+  position: relative;
+  display: flex;
+}
+
+#lineNumbers {
+  background-color: var(--vscode-editorGutter-background, var(--vscode-editor-background));
+  border-right: 1px solid var(--vscode-editorGutter-border, var(--vscode-panel-border));
+  color: var(--vscode-editorLineNumber-foreground);
+  font-family: var(--vscode-editor-font-family, 'Courier New', monospace);
+  font-size: var(--vscode-editor-font-size, 13px);
+  line-height: 1.4;
+  padding: 8px 8px 8px 4px;
+  text-align: right;
+  user-select: none;
+  min-width: 40px;
+  white-space: pre;
+}
+
+#userInput {
+  flex: 1;
+  border: none;
+  outline: none;
+  background-color: transparent;
+  color: var(--vscode-editor-foreground);
+  font-family: var(--vscode-editor-font-family, 'Courier New', monospace);
+  font-size: var(--vscode-editor-font-size, 13px);
+  line-height: 1.4;
+  padding: 8px 12px;
+  resize: vertical;
+  min-height: 120px;
+  overflow-y: auto;
+}
+
+#userInput:focus {
+  background-color: var(--vscode-editor-background);
+}
+
+#userInput::placeholder {
+  color: var(--vscode-input-placeholderForeground);
+}
+
+#buttonContainer {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid var(--vscode-panel-border);
+  background-color: var(--vscode-editor-background);
+  border-radius: 0 0 4px 4px;
+}
+
+.primary-button, .secondary-button {
+  padding: 6px 12px;
+  border: 1px solid;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.primary-button {
+  background-color: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  border-color: var(--vscode-button-background);
+}
+
+.primary-button:hover {
+  background-color: var(--vscode-button-hoverBackground);
+}
+
+.primary-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.secondary-button {
+  background-color: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+  border-color: var(--vscode-button-border, var(--vscode-panel-border));
+}
+
+.secondary-button:hover {
+  background-color: var(--vscode-button-secondaryHoverBackground);
+}
+
+.secondary-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
