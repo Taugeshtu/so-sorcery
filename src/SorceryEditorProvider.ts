@@ -58,8 +58,8 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
     try {
       let findCommand: string;
       if (process.platform === 'win32') {
-        // Windows version using dir command
-        findCommand = `dir /s /b /a:d .git & dir /s /b /a:-d .git`;
+        // Windows: Use forfiles to find only .git directories/files, not their contents
+        findCommand = `forfiles /S /M .git /C "cmd /c echo @path" 2>nul || echo No .git found`;
       } else {
         // Unix version
         findCommand = `find . -name ".git" -type d -o -name ".git" -type f`;
@@ -67,18 +67,28 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
       
       const { stdout } = await execAsync(findCommand, { cwd: rootPath });
       
-      const gitPaths = stdout.trim().split(/\r?\n/).filter(p => p);
+      if (stdout.includes('No .git found')) {
+        return [rootPath];
+      }
+      
+      const gitPaths = stdout.trim().split(/\r?\n/)
+        .filter(p => p && !p.includes('No .git found'))
+        .map(p => p.replace(/"/g, '')); // Remove quotes from forfiles output
+      
       const repoPaths: string[] = [];
       
       for (const gitPath of gitPaths) {
-        const repoPath = process.platform === 'win32' 
-          ? path.dirname(gitPath)  // Windows gives full path
-          : path.dirname(path.resolve(rootPath, gitPath)); // Unix gives relative
-        
+        let repoPath: string;
+        if (process.platform === 'win32') {
+          // gitPath is full path, get parent directory
+          repoPath = path.dirname(gitPath);
+        } else {
+          repoPath = path.dirname(path.resolve(rootPath, gitPath));
+        }
         repoPaths.push(repoPath);
       }
       
-      return [...new Set(repoPaths)]; // Remove duplicates
+      return [...new Set(repoPaths)];
     } catch (error) {
       console.warn('Git repo discovery failed, checking root only:', error);
       return [rootPath];
