@@ -1,16 +1,11 @@
-import * as path from 'path';
+// sorceryEditorProvider.ts
 import * as vscode from 'vscode';
-import * as fs from 'fs';
-
-interface GitIgnoreRule {
-  pattern: string;
-  isNegation: boolean;
-  isDirectory: boolean;
-  repoRoot: string;
-}
+import { getFilteredFilePaths } from './fileDiscovery';
+import { ContextHolder } from './contextHolder';
 
 export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
   public static readonly viewType = 'sorcery.contextEditor';
+  private contextHolders = new Map<string, ContextHolder>();
 
   constructor(private readonly context: vscode.ExtensionContext) {}
 
@@ -19,254 +14,55 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
     webviewPanel: vscode.WebviewPanel,
     _token: vscode.CancellationToken
   ) {
+    // Get workspace name
+    const workspaceName = vscode.workspace.name || 'Unknown Workspace';
+    
+    // Create or get context holder for this document
+    const contextHolder = new ContextHolder(document, workspaceName);
+    this.contextHolders.set(document.uri.toString(), contextHolder);
+
     webviewPanel.webview.options = { enableScripts: true };
     webviewPanel.webview.html = this.getHtml(webviewPanel.webview);
     
-    this.updateFileList(webviewPanel);
-  }
-  
-  private async getFilteredFilePaths(): Promise<string[]> {
-    const folder = vscode.workspace.workspaceFolders?.[0];
-    if (!folder) {
-      return [];
-    }
+    // Set up message handling
+    webviewPanel.webview.onDidReceiveMessage(
+      message => this.handleWebviewMessage(message, contextHolder, webviewPanel),
+      undefined,
+      this.context.subscriptions
+    );
 
-    const exts = vscode.workspace.getConfiguration('sorcery')
-      .get<string[]>('includeFileExtensions') || [];
-    
-    try {
-      // Find all .gitignore files and their repo roots
-      const gitIgnoreRules = await this.loadAllGitIgnoreRules(folder.uri.fsPath);
-      
-      // Walk filesystem and apply filters
-      const allFiles = await this.walkDirectory(
-        folder.uri.fsPath, 
-        folder.uri.fsPath, 
-        exts, 
-        gitIgnoreRules
-      );
-      
-      return allFiles.sort();
-    } catch (error) {
-      console.error('File discovery failed:', error);
-      return [];
-    }
+    // Clean up on dispose
+    webviewPanel.onDidDispose(() => {
+      this.contextHolders.delete(document.uri.toString());
+    });
+
+    await this.updateFileList(webviewPanel, contextHolder);
+    this.updateKnowledgesList(webviewPanel, contextHolder);
   }
 
-  private async loadAllGitIgnoreRules(rootPath: string): Promise<GitIgnoreRule[]> {
-    const rules: GitIgnoreRule[] = [];
-    
-    // Find all .gitignore files recursively
-    const gitIgnoreFiles = await this.findGitIgnoreFiles(rootPath);
-    
-    for (const gitIgnoreFile of gitIgnoreFiles) {
-      const repoRoot = path.dirname(gitIgnoreFile);
-      const gitIgnoreRules = await this.parseGitIgnoreFile(gitIgnoreFile, repoRoot);
-      rules.push(...gitIgnoreRules);
-    }
-    
-    return rules;
-  }
-
-  private async findGitIgnoreFiles(rootPath: string): Promise<string[]> {
-    const gitIgnoreFiles: string[] = [];
-    
-    const walkForGitIgnore = async (dirPath: string) => {
-      try {
-        const entries = await fs.promises.readdir(dirPath, { withFileTypes: true });
-        
-        for (const entry of entries) {
-          const fullPath = path.join(dirPath, entry.name);
-          
-          if (entry.isDirectory()) {
-            // Skip common non-repo directories to avoid deep recursion
-            if (!['node_modules', '.git', 'build', 'dist', 'out'].includes(entry.name)) {
-              await walkForGitIgnore(fullPath);
-            }
-          } else if (entry.name === '.gitignore') {
-            gitIgnoreFiles.push(fullPath);
-          }
-        }
-      } catch (error) {
-        // Skip directories we can't read
-        console.warn(`Cannot read directory ${dirPath}:`, error);
-      }
-    };
-    
-    await walkForGitIgnore(rootPath);
-    return gitIgnoreFiles;
-  }
-
-  private async parseGitIgnoreFile(gitIgnoreFile: string, repoRoot: string): Promise<GitIgnoreRule[]> {
-    try {
-      const content = await fs.promises.readFile(gitIgnoreFile, 'utf8');
-      const rules: GitIgnoreRule[] = [];
-      
-      for (let line of content.split(/\r?\n/)) {
-        line = line.trim();
-        
-        // Skip empty lines and comments
-        if (!line || line.startsWith('#')) {
-          continue;
-        }
-        
-        const isNegation = line.startsWith('!');
-        if (isNegation) {
-          line = line.substring(1);
-        }
-        
-        const isDirectory = line.endsWith('/');
-        if (isDirectory) {
-          line = line.substring(0, line.length - 1);
-        }
-        
-        rules.push({
-          pattern: line,
-          isNegation,
-          isDirectory,
-          repoRoot
-        });
-      }
-      
-      return rules;
-    } catch (error) {
-      console.warn(`Failed to parse .gitignore file ${gitIgnoreFile}:`, error);
-      return [];
-    }
-  }
-
-  private async walkDirectory(
-    dirPath: string, 
-    workspaceRoot: string, 
-    extensions: string[], 
-    gitIgnoreRules: GitIgnoreRule[]
-  ): Promise<string[]> {
-    const files: string[] = [];
-    
-    const walkRecursive = async (currentPath: string) => {
-      try {
-        const entries = await fs.promises.readdir(currentPath, { withFileTypes: true });
-        
-        for (const entry of entries) {
-          const fullPath = path.join(currentPath, entry.name);
-          const relativePath = path.relative(workspaceRoot, fullPath);
-          
-          // Skip .git directories entirely
-          if (entry.name === '.git') {
-            continue;
-          }
-          
-          if (entry.isDirectory()) {
-            // Check if directory should be ignored
-            if (!this.isIgnored(relativePath + '/', gitIgnoreRules, workspaceRoot, true)) {
-              await walkRecursive(fullPath);
-            }
-          } else if (entry.isFile()) {
-            // Check file extension
-            const ext = path.extname(entry.name);
-            if (extensions.includes(ext)) {
-              // Check if file should be ignored
-              if (!this.isIgnored(relativePath, gitIgnoreRules, workspaceRoot, false)) {
-                files.push(relativePath);
-              }
-            }
-          }
-        }
-      } catch (error) {
-        console.warn(`Cannot read directory ${currentPath}:`, error);
-      }
-    };
-    
-    await walkRecursive(dirPath);
-    return files;
-  }
-
-  private isIgnored(
-    filePath: string, 
-    gitIgnoreRules: GitIgnoreRule[], 
-    workspaceRoot: string,
-    isDirectory: boolean
-  ): boolean {
-    let ignored = false;
-    
-    // Convert to forward slashes for consistent matching
-    const normalizedPath = filePath.replace(/\\/g, '/');
-    
-    for (const rule of gitIgnoreRules) {
-      // Check if this rule applies to this file's location
-      const fileFullPath = path.resolve(workspaceRoot, filePath);
-      const ruleApplies = fileFullPath.startsWith(rule.repoRoot);
-      
-      if (!ruleApplies) {
-        continue;
-      }
-      
-      // Get path relative to this rule's repo root
-      const pathFromRepoRoot = path.relative(rule.repoRoot, fileFullPath).replace(/\\/g, '/');
-      
-      if (this.matchesGitIgnorePattern(pathFromRepoRoot, rule.pattern, rule.isDirectory, isDirectory)) {
-        if (rule.isNegation) {
-          ignored = false; // Negation rules un-ignore
+  private async handleWebviewMessage(
+    message: any, 
+    contextHolder: ContextHolder, 
+    panel: vscode.WebviewPanel
+  ) {
+    switch (message.command) {
+      case 'addFileToContext':
+        const success = contextHolder.addFileKnowledge(message.filePath);
+        if (success) {
+          this.updateKnowledgesList(panel, contextHolder);
+          vscode.window.showInformationMessage(`Added ${message.filePath} to context`);
         } else {
-          ignored = true;  // Normal rules ignore
+          vscode.window.showWarningMessage(`${message.filePath} is already in context`);
         }
-      }
+        break;
     }
-    
-    return ignored;
   }
 
-  private matchesGitIgnorePattern(filePath: string, pattern: string, ruleIsDirectory: boolean, fileIsDirectory: boolean): boolean {
-    // If rule is for directories only, but file is not a directory, no match
-    if (ruleIsDirectory && !fileIsDirectory) {
-      return false;
-    }
+  private async updateFileList(panel: vscode.WebviewPanel, contextHolder: ContextHolder) {
+    const filePaths = await getFilteredFilePaths();
+    contextHolder.updateAvailableFiles(filePaths);
     
-    // Convert gitignore pattern to regex-like matching
-    // This is a simplified version - full gitignore matching is quite complex
-    
-    // Handle absolute patterns (starting with /)
-    if (pattern.startsWith('/')) {
-      pattern = pattern.substring(1);
-      // Match from root only
-      return this.simpleGlobMatch(filePath, pattern);
-    }
-    
-    // Handle patterns that should match anywhere in the path
-    const pathParts = filePath.split('/');
-    
-    // Try matching the pattern against the full path
-    if (this.simpleGlobMatch(filePath, pattern)) {
-      return true;
-    }
-    
-    // Try matching against each path segment and its trailing path
-    for (let i = 0; i < pathParts.length; i++) {
-      const subPath = pathParts.slice(i).join('/');
-      if (this.simpleGlobMatch(subPath, pattern)) {
-        return true;
-      }
-    }
-    
-    return false;
-  }
-
-  private simpleGlobMatch(text: string, pattern: string): boolean {
-    // Convert glob pattern to regex
-    // This is simplified - doesn't handle all gitignore edge cases
-    const regexPattern = pattern
-      .replace(/\./g, '\\.')  // Escape dots
-      .replace(/\*/g, '[^/]*') // * matches anything except /
-      .replace(/\?/g, '[^/]')  // ? matches single char except /
-      .replace(/\\\*\\\*/g, '.*'); // ** matches anything including /
-    
-    const regex = new RegExp(`^${regexPattern}$`);
-    return regex.test(text);
-  }
-
-  private async updateFileList(panel: vscode.WebviewPanel) {
-    const filePaths = await this.getFilteredFilePaths();
-    const listItems = filePaths.map(p => `<li>${p}</li>`).join('\n');
+    const listItems = filePaths.map(p => `<li onclick="addFileToContext('${p}')">${p}</li>`).join('\n');
 
     panel.webview.postMessage({
       command: 'loadFiles',
@@ -275,11 +71,37 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
     });
   }
 
+  private updateKnowledgesList(panel: vscode.WebviewPanel, contextHolder: ContextHolder) {
+    const knowledges = contextHolder.getKnowledges();
+    
+    panel.webview.postMessage({
+      command: 'loadKnowledges',
+      knowledges
+    });
+  }
+
   private getHtml(webview: vscode.Webview): string {
     const sidebarHtml = `
       <div id="sidebar">
-        <h2>Files</h2>
-        <ul id="filesList"></ul>
+        <div class="collapsible-section">
+          <h2 class="collapsible-header" onclick="toggleSection('projectFiles')">
+            <span class="arrow" id="projectFiles-arrow">▼</span>
+            Project Files
+          </h2>
+          <div class="collapsible-content" id="projectFiles-content">
+            <ul id="filesList"></ul>
+          </div>
+        </div>
+
+        <div class="collapsible-section">
+          <h2 class="collapsible-header" onclick="toggleSection('contextFiles')">
+            <span class="arrow" id="contextFiles-arrow">▼</span>
+            Files in Context
+          </h2>
+          <div class="collapsible-content" id="contextFiles-content">
+            <ul id="contextFilesList"></ul>
+          </div>
+        </div>
       </div>
     `;
 
@@ -290,26 +112,160 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
         <meta charset="UTF-8" />
         <style>
           body { margin: 0; padding: 0; height: 100vh; display: flex; font-family: sans-serif; }
-          #main { flex: 1; padding: 10px; }
-          #sidebar { width: 250px; border-left: 1px solid #ddd; padding: 10px; box-sizing: border-box; }
-          #sidebar h2 { margin-top: 0; font-size: 1.2em; }
-          #filesList { list-style: none; padding-left: 0; }
-          #filesList li { padding: 4px 0; }
+          #main { flex: 1; padding: 10px; overflow-y: auto; }
+          #sidebar { width: 300px; border-left: 1px solid #ddd; padding: 10px; box-sizing: border-box; overflow-y: auto; }
+          
+          .collapsible-section { margin-bottom: 20px; }
+          
+          .collapsible-header { 
+            margin: 0; 
+            font-size: 1.1em; 
+            cursor: pointer; 
+            user-select: none;
+            display: flex;
+            align-items: center;
+            padding: 4px 0;
+            border-bottom: 1px solid #eee;
+          }
+          .collapsible-header:hover { background-color: rgba(0,0,0,0.05); }
+          
+          .arrow { 
+            margin-right: 8px; 
+            transition: transform 0.2s ease;
+            font-size: 0.8em;
+          }
+          .arrow.collapsed { transform: rotate(-90deg); }
+          
+          .collapsible-content { 
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+          }
+          .collapsible-content.collapsed { 
+            max-height: 0; 
+          }
+          
+          #filesList, #contextFilesList { 
+            list-style: none; 
+            padding-left: 0; 
+            margin: 8px 0;
+          }
+          #filesList li, #contextFilesList li { 
+            padding: 6px 8px; 
+            cursor: pointer;
+            border-radius: 3px;
+            margin: 2px 0;
+            font-size: 0.9em;
+          }
+          #filesList li:hover { 
+            background-color: rgba(0,120,215,0.1); 
+            border: 1px solid rgba(0,120,215,0.3);
+          }
+          #contextFilesList li {
+            background-color: rgba(0,120,215,0.1);
+            color: #333;
+          }
+
+          .knowledge-item {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 10px 0;
+            padding: 10px;
+          }
+          .knowledge-header {
+            font-weight: bold;
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+          }
+          .knowledge-content {
+            background-color: #f9f9f9;
+            padding: 8px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 0.9em;
+          }
         </style>
       </head>
       <body>
         <div id="main">
-          <h1>Custom Editor Test</h1>
-          <p>Main editor area.</p>
+          <h1>Sorcery Context</h1>
+          <div id="knowledgesList"></div>
         </div>
         ${sidebarHtml}
         <script nonce="${Date.now().toString()}">
           const vscode = acquireVsCodeApi();
+          
+          function toggleSection(sectionId) {
+            const content = document.getElementById(sectionId + '-content');
+            const arrow = document.getElementById(sectionId + '-arrow');
+            
+            if (content.classList.contains('collapsed')) {
+              content.classList.remove('collapsed');
+              arrow.classList.remove('collapsed');
+              content.style.maxHeight = content.scrollHeight + 'px';
+            } else {
+              content.classList.add('collapsed');
+              arrow.classList.add('collapsed');
+              content.style.maxHeight = '0';
+            }
+          }
+
+          function addFileToContext(filePath) {
+            vscode.postMessage({
+              command: 'addFileToContext',
+              filePath: filePath
+            });
+          }
+          
           window.addEventListener('message', event => {
             const msg = event.data;
             if (msg.command === 'loadFiles') {
-              document.getElementById('filesList').innerHTML = msg.listItems;
+              const filesList = document.getElementById('filesList');
+              filesList.innerHTML = msg.listItems;
+              
+              // Update max-height for the animation
+              const content = document.getElementById('projectFiles-content');
+              if (!content.classList.contains('collapsed')) {
+                content.style.maxHeight = content.scrollHeight + 'px';
+              }
+            } else if (msg.command === 'loadKnowledges') {
+              updateKnowledgesDisplay(msg.knowledges);
             }
+          });
+
+          function updateKnowledgesDisplay(knowledges) {
+            const knowledgesList = document.getElementById('knowledgesList');
+            const contextFilesList = document.getElementById('contextFilesList');
+            
+            // Update main knowledges list
+            knowledgesList.innerHTML = knowledges.map(k => \`
+              <div class="knowledge-item">
+                <div class="knowledge-header">
+                  #\${k.id} - \${k.type}\${k.metadata?.timestamp ? ' (' + new Date(k.metadata.timestamp).toLocaleTimeString() + ')' : ''}
+                </div>
+                <div class="knowledge-content">\${k.content}</div>
+              </div>
+            \`).join('');
+
+            // Update context files sidebar
+            const fileKnowledges = knowledges.filter(k => k.type === 'file');
+            contextFilesList.innerHTML = fileKnowledges.map(k => 
+              \`<li>\${k.metadata?.filePath || k.content}</li>\`
+            ).join('');
+
+            // Update max-height for animations
+            const content = document.getElementById('contextFiles-content');
+            if (!content.classList.contains('collapsed')) {
+              content.style.maxHeight = content.scrollHeight + 'px';
+            }
+          }
+          
+          // Initialize sections as expanded
+          document.addEventListener('DOMContentLoaded', () => {
+            ['projectFiles', 'contextFiles'].forEach(sectionId => {
+              const content = document.getElementById(sectionId + '-content');
+              content.style.maxHeight = content.scrollHeight + 'px';
+            });
           });
         </script>
       </body>
