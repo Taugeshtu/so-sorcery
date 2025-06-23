@@ -1,3 +1,4 @@
+// src/types.ts
 export interface Knowledge {
   id: number;
   source: 'user' | 'agent' | 'file';

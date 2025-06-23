@@ -1,3 +1,4 @@
+// src/webview/htmlTemplate.ts
 import * as vscode from 'vscode';
 
 export function getWebviewHtml(webview: vscode.Webview, cssUri: vscode.Uri, jsUri: vscode.Uri): string {

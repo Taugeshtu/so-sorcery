@@ -1,4 +1,4 @@
-// sorceryEditorProvider.ts
+// src/SorceryEditorProvider.ts
 import * as vscode from 'vscode';
 import { getFilteredFilePaths } from './fileDiscovery';
 import { ContextHolder } from './contextHolder';

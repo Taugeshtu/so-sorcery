@@ -1,4 +1,4 @@
-// contextHolder.ts
+// src/contextHolder.ts
 import * as vscode from 'vscode';
 import { Knowledge, SorceryContext } from './types';
 

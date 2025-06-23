@@ -1,3 +1,4 @@
+// webview/script.js
 const vscode = acquireVsCodeApi();
 
 
@@ -87,5 +88,3 @@ function toggleSection(sectionId) {
     content.style.maxHeight = '0';
   }
 }
-
-// ... rest of your JS ...
