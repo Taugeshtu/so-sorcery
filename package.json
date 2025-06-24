@@ -2,6 +2,11 @@
   "name": "sorcery",
   "displayName": "Sorcery",
   "description": "Bring LLMs into your workspace, control the context, do useful work",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Taugeshtu/so-sorcery.git"
+  },
+  "homepage": "https://github.com/Taugeshtu/so-sorcery#readme",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.100.0"
@@ -9,7 +14,10 @@
   "categories": [
     "Other"
   ],
-  "main": "./out/extension.js",
+  "activationEvents": [
+    "onCommand:sorcery.newContext",
+    "onCustomEditor:sorcery.contextEditor"
+  ],
   "contributes": {
     "commands": [
       {
@@ -48,15 +56,23 @@
       }
     }
   },
+  "main": "./dist/extension.js",
   "scripts": {
+    "clean": "rimraf dist",
+    "compile": "npm run clean && node scripts/build.js",
+    "watch": "node scripts/build.js --watch",
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "package": "vsce package",
+    "publish": "vsce publish",
+    "install": "npm run compile && rimraf *.vsix && vsce package && code --install-extension *.vsix --force"
   },
   "devDependencies": {
+    "esbuild": "^0.21.0",
+    "rimraf": "^5.0.0",
+    "vsce": "^2.21.0",
     "@types/vscode": "^1.100.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "20.x",
@@ -67,4 +83,5 @@
     "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.5.2"
   }
+
 }
