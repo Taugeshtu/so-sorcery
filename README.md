@@ -72,7 +72,7 @@ Functional:
 Vusial & polish:
 - [ ] "No knowledge yet" also reacts to file knowledge. Shouldn't
 - [ ] user knowledge adds in pre-collapsed
-- [ ] Some kind of indicator (gradient into gray, transparent on top?) that the item is collapsed
+- [x] Some kind of indicator (gradient into gray, transparent on top?) that the item is collapsed
 - [ ] Remove collapse button if item is short enough to fit
 - [ ] when add & run-ing, refresh the screen
 - [ ] Cost counting and displaying

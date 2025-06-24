@@ -340,11 +340,24 @@ body {
   white-space: pre-wrap;
   word-wrap: break-word;
   color: var(--vscode-editor-foreground);
+  position: relative;
 }
 
 .knowledge-card.collapsed .knowledge-content {
   max-height: calc(1.4em * 8); /* 8 lines */
   overflow: hidden;
+}
+
+.knowledge-card.collapsed .knowledge-content::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2em;
+  background: linear-gradient(transparent, var(--vscode-editor-background));
+  pointer-events: none;
+  z-index: 1;
 }
 
 .knowledge-spacer {
