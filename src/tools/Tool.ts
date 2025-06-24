@@ -1,0 +1,76 @@
+// src/tools/Tool.ts
+import { WorkItem, Knowledge } from '../types';
+import { ContextHolder } from '../contextHolder';
+
+export interface ToolResult {
+  knowledges?: Knowledge[];
+  workItems?: WorkItem[];
+  error?: string;
+}
+
+export abstract class Tool {
+  protected context: ContextHolder;
+  
+  constructor(context: ContextHolder) {
+    this.context = context;
+  }
+
+  /**
+   * Unique identifier for this tool type
+   */
+  abstract get name(): string;
+
+  /**
+   * Human-readable description of what this tool does
+   */
+  abstract get description(): string;
+
+  /**
+   * Execute a work item using this tool
+   * @param workItem The work item to execute
+   * @returns Promise resolving to tool results
+   */
+  abstract execute(workItem: WorkItem): Promise<ToolResult>;
+
+  /**
+   * Check if this tool can handle the given work item
+   * Default implementation checks if workItem.metadata.tool matches this.name
+   */
+  canHandle(workItem: WorkItem): boolean {
+    return workItem.type === this.name;
+  }
+  
+  protected createKnowledge(content: string, source: 'system' = 'system'): Knowledge {
+    return {
+      id: 0, // Will be assigned by ContextHolder
+      source,
+      content,
+      collapsed: false,
+      references: [],
+      metadata: {
+        timestamp: Date.now(),
+        source_tool: this.name
+      }
+    };
+  }
+
+  /**
+   * Helper method to create work items
+   */
+  protected createWorkItem(
+    type: WorkItem['type'], 
+    content: string, 
+    tool?: string
+  ): WorkItem {
+    return {
+      id: 0, // Will be assigned by ContextHolder
+      type,
+      content,
+      status: 'cold',
+      metadata: {
+        timestamp: Date.now(),
+        source_tool: this.name
+      }
+    };
+  }
+}

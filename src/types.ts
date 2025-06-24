@@ -14,7 +14,7 @@ export interface Knowledge {
 
 export interface WorkItem {
   id: number;
-  type: 'file_read' | 'file_write' | 'user_task' | 'agent_task';
+  type: 'multiread' | 'file_read' | 'file_write' | 'user_task' | 'agent_task';
   content: string;
   status: 'cold' | 'wip' | 'done';
   metadata?: {

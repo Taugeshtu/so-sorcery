@@ -89,6 +89,7 @@ Vusial & polish:
 Big & faraway items:
 - [x] more robust error handling on the backend pls?
 - [ ] !! consider more detailed format for submitting knowledge, allowing UPDATING as well (is a scratchpad, you see?)
+- [ ] Parsing & making jumpable wikilinks, obsidian-style, for IDs and files
 - [ ] Forking context
 - [ ] Multiple agent types ("psyches")
 - [ ] Knowledge auto-naming & summary (Haiku to the rescue?)
