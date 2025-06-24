@@ -1,8 +1,8 @@
 // src/llm/backends/ClaudeBackend.ts
 import * as vscode from 'vscode';
-import { Backend } from '../Backend';
+import { WebBackend, WebRequest, WebResponse, ErrorInfo } from '../WebBackend';
 import { Model } from '../Model';
-import { Messages, Response, StopReason, MessageSide } from '../types';
+import { Messages, StopReason, MessageSide } from '../types';
 
 interface ClaudeResponse {
   content: Array<{ text: string }>;
@@ -19,137 +19,16 @@ interface ClaudeError {
   message: string;
 }
 
-export class ClaudeBackend extends Backend {
+export class ClaudeBackend extends WebBackend {
   private static readonly API_URL = 'https://api.anthropic.com/v1/messages';
 
-  protected async runStep(
+  protected buildRequest(
     model: Model,
     maxTokens: number,
     system: string,
     messages: Messages,
     terminators?: string[]
-  ): Promise<Response> {
-    const requestBody = this.buildRequestJSON(model, maxTokens, system, messages, terminators);
-    
-    if (Backend['logTraffic']) {
-      console.log('Request:', requestBody);
-    }
-
-    let tries = 3;
-    while (tries > 0) {
-      tries--;
-      
-      const result = await this.requestResponse(model, requestBody);
-      
-      if (result.shouldRetry && tries > 0) {
-        const delay = 5000 * (3 - tries); // exponential backoff
-        await this.sleep(delay);
-        continue;
-      }
-      
-      return {
-        content: result.response,
-        stopReason: result.stopReason,
-        terminator: result.terminator
-      };
-    }
-
-    console.error('!!!! ALARM WAKE THE FUCK UP !!!! this should never happen');
-    return { content: '', stopReason: StopReason.NetError };
-  }
-
-  private async requestResponse(
-    model: Model,
-    requestBody: any
-  ): Promise<{
-    response: string;
-    stopReason: StopReason;
-    terminator?: string;
-    shouldRetry: boolean;
-  }> {
-    const config = vscode.workspace.getConfiguration('sorcery');
-    const apiKey = config.get<string>('claudeApiKey');
-    
-    if (!apiKey) {
-      throw new Error('Claude API key not configured');
-    }
-
-    try {
-      const response = await fetch(ClaudeBackend.API_URL, {
-        method: 'POST',
-        headers: {
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestBody)
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        let parsedError: ClaudeError;
-        try {
-          parsedError = JSON.parse(errorText);
-        } catch {
-          parsedError = { type: 'unknown_error', message: errorText };
-        }
-
-        console.error(`Error: ${parsedError.type}\n'${response.statusText}': ${parsedError.message}`);
-        
-        const shouldRetry = ['rate_limit_error', 'api_error', 'overloaded_error'].includes(parsedError.type);
-        return {
-          response: '',
-          stopReason: StopReason.NetError,
-          shouldRetry
-        };
-      }
-
-      const responseText = await response.text();
-      if (Backend['logTraffic']) {
-        console.log('Response:', responseText);
-      }
-
-      const parsedResponse: ClaudeResponse = JSON.parse(responseText);
-      
-      let stopReason = StopReason.Natural;
-      let terminator: string | undefined;
-      
-      if (parsedResponse.stop_reason === 'max_tokens') {
-        stopReason = StopReason.Overflow;
-      } else if (parsedResponse.stop_reason === 'stop_sequence') {
-        stopReason = StopReason.Designed;
-        terminator = parsedResponse.stop_sequence;
-      }
-
-      model.registerUsage(
-        parsedResponse.usage.input_tokens,
-        parsedResponse.usage.output_tokens
-      );
-
-      return {
-        response: parsedResponse.content[0].text,
-        stopReason,
-        terminator,
-        shouldRetry: false
-      };
-
-    } catch (error) {
-      console.error('Network error:', error);
-      return {
-        response: '',
-        stopReason: StopReason.NetError,
-        shouldRetry: true
-      };
-    }
-  }
-
-  private buildRequestJSON(
-    model: Model,
-    maxTokens: number,
-    system: string,
-    messages: Messages,
-    terminators?: string[]
-  ): any {
+  ): WebRequest {
     const request: any = {
       model: model.name,
       max_tokens: maxTokens,
@@ -201,6 +80,68 @@ export class ClaudeBackend extends Backend {
       return { role, content };
     });
 
-    return request;
+    return {
+      url: ClaudeBackend.API_URL,
+      headers: {
+        'x-api-key': this.getApiKey(),
+        'anthropic-version': '2023-06-01',
+        'Content-Type': 'application/json'
+      },
+      body: request
+    };
+  }
+
+  protected parseResponse(responseText: string, model: Model): WebResponse {
+    const parsedResponse: ClaudeResponse = JSON.parse(responseText);
+    
+    let stopReason = StopReason.Natural;
+    let terminator: string | undefined;
+    
+    if (parsedResponse.stop_reason === 'max_tokens') {
+      stopReason = StopReason.Overflow;
+    } else if (parsedResponse.stop_reason === 'stop_sequence') {
+      stopReason = StopReason.Designed;
+      terminator = parsedResponse.stop_sequence;
+    }
+
+    return {
+      content: parsedResponse.content[0].text,
+      stopReason,
+      terminator,
+      inputTokens: parsedResponse.usage.input_tokens,
+      outputTokens: parsedResponse.usage.output_tokens
+    };
+  }
+
+  protected categorizeError(errorText: string, statusCode: number): ErrorInfo {
+    let parsedError: ClaudeError;
+    try {
+      parsedError = JSON.parse(errorText);
+    } catch {
+      parsedError = { type: 'unknown_error', message: errorText };
+    }
+
+    const isRetryable = [
+      'rate_limit_error',
+      'api_error', 
+      'overloaded_error'
+    ].includes(parsedError.type) || statusCode >= 500;
+
+    return {
+      type: parsedError.type,
+      message: parsedError.message,
+      isRetryable
+    };
+  }
+
+  protected getApiKey(): string {
+    const config = vscode.workspace.getConfiguration('sorcery');
+    const apiKey = config.get<string>('claudeApiKey');
+    
+    if (!apiKey) {
+      throw new Error('Claude API key not configured');
+    }
+    
+    return apiKey;
   }
 }
