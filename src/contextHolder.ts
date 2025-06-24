@@ -30,7 +30,6 @@ export class ContextHolder {
     return {
       workspaceName,
       availableFiles: [],
-      includedFiles: [],
       knowledges: [],
       workItems: [],
       nextKnowledgeId: 1,
@@ -42,7 +41,6 @@ export class ContextHolder {
     const context: SorceryContext = {
       workspaceName: parsed.workspaceName || workspaceName,
       availableFiles: Array.isArray(parsed.availableFiles) ? parsed.availableFiles : [],
-      includedFiles: Array.isArray(parsed.includedFiles) ? parsed.includedFiles : [],
       knowledges: Array.isArray(parsed.knowledges) ? parsed.knowledges.map(this.validateKnowledge) : [],
       workItems: Array.isArray(parsed.workItems) ? parsed.workItems.map(this.validateWorkItem) : [],
       nextKnowledgeId: typeof parsed.nextKnowledgeId === 'number' ? parsed.nextKnowledgeId : 1,
@@ -72,7 +70,6 @@ export class ContextHolder {
       collapsed: k.collapsed || false, // Add this line
       references: Array.isArray(k.references) ? k.references : [],
       metadata: {
-        filePath: k.metadata?.filePath,
         timestamp: k.metadata?.timestamp || Date.now(),
         psyche: k.metadata?.psyche
       }
@@ -104,62 +101,37 @@ export class ContextHolder {
       return null;
     }
 
-    // Check if already included
-    if (this.context.includedFiles.includes(filePath)) {
-      return this.context.knowledges.find(k => 
-        k.source === 'file' && k.metadata?.filePath === filePath
-      ) || null;
+    // Check if already included by looking for existing file knowledge
+    const existingKnowledge = this.context.knowledges.find(k => 
+      k.source === 'file' && k.content === filePath
+    );
+    
+    if (existingKnowledge) {
+      return existingKnowledge;
     }
-
-    try {
-      // Read file content
-      const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-      if (!workspaceRoot) {
-        throw new Error('No workspace found');
-      }
-
-      const fullPath = path.join(workspaceRoot, filePath);
-      const content = await fs.readFile(fullPath, 'utf-8');
-
-      // Add to included files
-      this.context.includedFiles.push(filePath);
-
-      // Create knowledge with file content
-      const knowledge = this.addKnowledge('file', content, [], filePath);
-      return knowledge;
-    } catch (error) {
-      console.error('Failed to include file in context:', error);
-      return null;
-    }
+    
+    // Add new file knowledge
+    const knowledge = this.addKnowledge('file', filePath, []);
+    return knowledge;
   }
 
   public removeFileFromContext(filePath: string): boolean {
-    // Remove from included files
-    const fileIndex = this.context.includedFiles.indexOf(filePath);
-    if (fileIndex === -1) {
-      return false;
-    }
-
-    this.context.includedFiles.splice(fileIndex, 1);
-
-    // Remove associated knowledge
+    // Find and remove the file knowledge
     const knowledge = this.context.knowledges.find(k => 
-      k.source === 'file' && k.metadata?.filePath === filePath
+      k.source === 'file' && k.content === filePath
     );
 
     if (knowledge) {
-      this.removeKnowledge(knowledge.id);
+      return this.removeKnowledge(knowledge.id);
     }
 
-    this.saveToDocument();
-    return true;
+    return false;
   }
 
   public addKnowledge(
     source: Knowledge['source'], 
     content: string, 
-    references?: number[],
-    filePath?: string
+    references?: number[]
   ): Knowledge {
     const knowledge: Knowledge = {
       id: this.context.nextKnowledgeId,
@@ -168,7 +140,6 @@ export class ContextHolder {
       collapsed: false, // Add this line
       references: references || [],
       metadata: {
-        filePath,
         timestamp: Date.now()
       }
     };
@@ -210,11 +181,13 @@ export class ContextHolder {
     }
 
     // Build context for the agent
-    const contextString = this.buildContextString();
-    const worker = new Worker(psyche, contextString);
+    const systemEnvironment = this.buildSystemEnvironment();
+    const worker = new Worker(psyche, systemEnvironment);
+    
+    const knowledgeBlob = await this.buildKnowledgeBlob();
 
     try {
-      const response = await worker.step(userInput);
+      const response = await worker.step(knowledgeBlob);
 
       // Add knowledges to context
       for (const knowledge of response.knowledges) {
@@ -236,26 +209,40 @@ export class ContextHolder {
     }
   }
 
-  private buildContextString(): string {
+  private buildSystemEnvironment(): string {
+    return `Workspace: ${this.context.workspaceName}`;
+  }
+  
+  private async buildKnowledgeBlob(): Promise<string> {
     const parts: string[] = [];
 
-    parts.push(`Workspace: ${this.context.workspaceName}`);
-    
     if (this.context.availableFiles.length > 0) {
-      parts.push(`\nAvailable files:\n${this.context.availableFiles.join('\n')}`);
-    }
-
-    if (this.context.includedFiles.length > 0) {
-      parts.push(`\nIncluded files:\n${this.context.includedFiles.join('\n')}`);
+      parts.push(`Available files:\n${this.context.availableFiles.join('\n')}`);
     }
 
     if (this.context.knowledges.length > 0) {
-      parts.push('\nKnowledge:');
+      parts.push('\n\n');
       for (const knowledge of this.context.knowledges) {
-        const source = knowledge.metadata?.psyche ? 
-          `${knowledge.source}(${knowledge.metadata.psyche})` : 
-          knowledge.source;
-        parts.push(`\n[${knowledge.id}] ${source}: ${knowledge.content}`);
+        // For file knowledge, read the current file content
+        if (knowledge.source === 'file') {
+          let content = knowledge.content;
+          try {
+            const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+            if (workspaceRoot) {
+              const fullPath = path.join(workspaceRoot, knowledge.content);
+              content = await fs.readFile(fullPath, 'utf-8');
+            }
+          } catch (error) {
+            content = `[File not found]`;
+          }
+          parts.push(`\n<knowledge>[${knowledge.id}] from: ${knowledge.content}\ncontent:\n${content}\n</knowledge>`);
+        }
+        else {
+          const source = knowledge.metadata?.psyche
+                        ? `${knowledge.source}(${knowledge.metadata.psyche})`
+                        : knowledge.source;
+          parts.push(`\n<knowledge>[${knowledge.id}] from: ${source}\ncontent:\n${knowledge.content}\n</knowledge>`);
+        }
       }
     }
 
@@ -316,10 +303,6 @@ export class ContextHolder {
 
   public getAvailableFiles(): string[] {
     return [...this.context.availableFiles];
-  }
-
-  public getIncludedFiles(): string[] {
-    return [...this.context.includedFiles];
   }
 
   private async saveToDocument(): Promise<void> {

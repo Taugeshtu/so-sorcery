@@ -249,8 +249,8 @@ function updateIncludedFilesList() {
         fileKnowledges.forEach(knowledge => {
             const li = document.createElement('li');
             li.className = 'included-file-item';
-            li.textContent = getFileName(knowledge.metadata?.filePath || 'Unknown file');
-            li.title = knowledge.metadata?.filePath || 'Unknown file';
+            li.textContent = getFileName(knowledge.content);
+            li.title = knowledge.content;
             li.onclick = () => removeKnowledge(knowledge.id);
             includedFilesList.appendChild(li);
         });
@@ -266,7 +266,7 @@ function updateAvailableFilesTree(searchTerm = '') {
     const availableFilesTree = document.getElementById('availableFilesTree');
     availableFilesTree.innerHTML = '';
     
-    const includedFilePaths = fileKnowledges.map(k => k.metadata?.filePath).filter(Boolean);
+    const includedFilePaths = fileKnowledges.map(k => k.content).filter(Boolean);
     const availableFiles = allAvailableFiles.filter(filePath => !includedFilePaths.includes(filePath));
     
     // Apply search filter

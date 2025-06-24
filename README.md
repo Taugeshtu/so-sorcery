@@ -62,9 +62,10 @@ This extension contributes the following settings:
 - [x] Copy buttons
 - [x] remove storing the whole-ass file content inside file knowledge
 - [x] Fix context builder
-- [ ] better basic bitch prompt + maybe better parsing?
+- [x] better project assistant prompt
+- [ ] maybe better parsing?
 - [ ] user knowledge adds in pre-collapsed
-- [ ] when add & run-ing, add the user message first lol
+- [ ] when add & run-ing, refresh the screen
 - [ ] Cost counting and displaying
 - [ ] Undo/Redo (VS Code's built-in document undo should work?)
 - [ ] Multiple agent types ("psyches")

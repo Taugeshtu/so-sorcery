@@ -26,7 +26,6 @@ export interface WorkItem {
 export interface SorceryContext {
   workspaceName: string;
   availableFiles: string[];
-  includedFiles: string[]; // Files actually loaded into context
   knowledges: Knowledge[];
   workItems: WorkItem[];
   nextKnowledgeId: number;

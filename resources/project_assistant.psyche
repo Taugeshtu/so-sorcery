@@ -1,0 +1,11 @@
+{
+  "name": "project_assistant",
+  "displayName": "PA",
+  "description": "Aids in generating knowledge about project and generates WorkItems",
+  "backend": 1,
+  "model": "claude-sonnet-4-20250514",
+  "maxTokens": 2048,
+  "system": null,
+  "priming": null,
+  "terminators": "</actions>"
+}

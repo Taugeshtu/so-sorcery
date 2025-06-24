@@ -1,8 +1,11 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { SorceryEditorProvider } from './SorceryEditorProvider';
+import * as psyche from './psyche'
 
 export function activate(context: vscode.ExtensionContext) {
+  psyche.initializePsyches(context.extensionUri);
+  
   context.subscriptions.push(
     vscode.commands.registerCommand('sorcery.newContext', async () => {
       const wsFolder = vscode.workspace.workspaceFolders?.[0];
