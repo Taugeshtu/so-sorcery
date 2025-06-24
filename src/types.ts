@@ -3,6 +3,7 @@ export interface Knowledge {
   id: number;
   source: 'user' | 'agent' | 'file';
   content: string;
+  collapsed: boolean;
   references?: number[];
   metadata?: {
     filePath?: string;
@@ -26,6 +27,7 @@ export interface WorkItem {
 export interface SorceryContext {
   workspaceName: string;
   availableFiles: string[];
+  includedFiles: string[]; // Files actually loaded into context
   knowledges: Knowledge[];
   workItems: WorkItem[];
   nextKnowledgeId: number;

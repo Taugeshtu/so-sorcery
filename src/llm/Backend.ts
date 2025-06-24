@@ -1,6 +1,6 @@
 // src/llm/Backend.ts
 import { Model } from './Model';
-import { Message, Messages, Response, StopReason } from './types';
+import { Message, Messages, Response, StopReason, MessageSide } from './types';
 
 export abstract class Backend {
   protected static logTraffic = false;
@@ -13,9 +13,9 @@ export abstract class Backend {
     priming?: string,
     terminators?: string[]
   ): Promise<Response> {
-    const messages: Messages = [{ side: 'user' as const, content: user }];
+    const messages: Messages = [{ side: MessageSide.User, content: user }];
     if (priming) {
-      messages.push({ side: 'agent' as const, content: priming });
+      messages.push({ side: MessageSide.Agent, content: priming });
     }
     return this.runWithMessages(model, maxTokens, system, messages, terminators);
   }
@@ -64,8 +64,8 @@ export abstract class Backend {
 
         // Append to message chain
         const lastMessage = messagesCopy[messagesCopy.length - 1];
-        if (lastMessage.side === 'user') {
-          messagesCopy.push({ side: 'agent', content: result.content });
+        if (lastMessage.side === MessageSide.User) {
+          messagesCopy.push({ side: MessageSide.Agent, content: result.content });
         } else {
           lastMessage.content += result.content;
         }
