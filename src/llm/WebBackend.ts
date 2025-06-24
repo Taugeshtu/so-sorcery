@@ -39,12 +39,15 @@ export abstract class WebBackend extends Backend {
     }
 
     let tries = 3;
+    let lastError: ErrorInfo | undefined;
+    
     while (tries > 0) {
       tries--;
       
       const result = await this.makeRequest(request, model);
       
       if (result.shouldRetry && tries > 0) {
+        lastError = result.error;
         const delay = 5000 * (3 - tries); // exponential backoff
         await this.sleep(delay);
         continue;
@@ -52,6 +55,18 @@ export abstract class WebBackend extends Backend {
       
       if (result.error) {
         console.error(`API Error: ${result.error.type} - ${result.error.message}`);
+        
+        // Show notification based on error type
+        if (result.error.isRetryable) {
+          vscode.window.showWarningMessage(
+            `${model.name} API temporarily unavailable: ${result.error.message}. All retries exhausted.`
+          );
+        } else {
+          vscode.window.showErrorMessage(
+            `${model.name} API error: ${result.error.message}`
+          );
+        }
+        
         return { content: '', stopReason: StopReason.NetError };
       }
       
@@ -62,6 +77,8 @@ export abstract class WebBackend extends Backend {
       };
     }
 
+    // This should never happen but add notification just in case
+    vscode.window.showErrorMessage(`Unexpected error in ${model.name} API handling`);
     console.error('!!!! ALARM WAKE THE FUCK UP !!!! this should never happen');
     return { content: '', stopReason: StopReason.NetError };
   }

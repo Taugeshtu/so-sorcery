@@ -76,16 +76,20 @@ Vusial & polish:
 - [ ] Remove collapse button if item is short enough to fit
 - [ ] when add & run-ing, refresh the screen
 - [ ] Cost counting and displaying
+- [ ] Add ID in the header of knowledge items?
 - [ ] remove available files list from the json?..
 - [ ] Parsing "thinking" stages of PA response and displaying them somewhere
 - [ ] Hotkey settings for "add" and "send it"
 - [ ] Add a list of agents and tools to system environment for PA
 - [ ] Move PA response parsing out of "Worker" (since worker can be NOT PA)
+- [ ] Button to just run?.. Maybe it changes text depending on whether our user input is empty or not
+- [ ] Rename main panel buttons into "+" and "& Run" (or just "Run" when no text in input)
 
 Big & faraway items:
-- [ ] more robust error handling on the backend pls?
+- [x] more robust error handling on the backend pls?
+- [ ] Forking context
 - [ ] Multiple agent types ("psyches")
-- [ ] Knowledge auto-naming
+- [ ] Knowledge auto-naming & summary (Haiku to the rescue?)
 - [ ] Reference arrows (this is the big visual feature!)
 - [ ] chuck the whole file list (respecting gitignore) into context; but UI is filtered by extension?.. So that the agent knows what's up? OR give the agent "tree" command... yeah, that might be better. On-demand stuff...
 - [ ] building PA input with graph pull
