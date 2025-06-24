@@ -69,6 +69,9 @@ window.addEventListener('message', event => {
         case 'updateState':
             updateUI(message.context);
             break;
+        case 'setAgentRunning':
+            setAgentRunning(message.running);
+            break;
     }
 });
 
@@ -197,6 +200,22 @@ function toggleKnowledge(id) {
     });
 }
 
+function setAgentRunning(running) {
+    const addButton = document.getElementById('addButton');
+    const addRunButton = document.getElementById('addRunButton');
+    const userInput = document.getElementById('userInput');
+    
+    addButton.disabled = running;
+    addRunButton.disabled = running;
+    userInput.disabled = running;
+    
+    if (running) {
+        addRunButton.textContent = 'Running...';
+    } else {
+        addRunButton.textContent = 'Add & Run Agent';
+    }
+}
+
 function updateIncludedFilesList() {
     const includedFilesList = document.getElementById('includedFilesList');
     includedFilesList.innerHTML = '';
@@ -205,8 +224,8 @@ function updateIncludedFilesList() {
         fileKnowledges.forEach(knowledge => {
             const li = document.createElement('li');
             li.className = 'included-file-item';
-            li.textContent = getFileName(knowledge.content); // content is now just the file path
-            li.title = knowledge.content; // full path in tooltip
+            li.textContent = getFileName(knowledge.metadata?.filePath || 'Unknown file');
+            li.title = knowledge.metadata?.filePath || 'Unknown file';
             li.onclick = () => removeKnowledge(knowledge.id);
             includedFilesList.appendChild(li);
         });
@@ -222,7 +241,7 @@ function updateAvailableFilesTree(searchTerm = '') {
     const availableFilesTree = document.getElementById('availableFilesTree');
     availableFilesTree.innerHTML = '';
     
-    const includedFilePaths = fileKnowledges.map(k => k.content).filter(Boolean); // content is the file path
+    const includedFilePaths = fileKnowledges.map(k => k.metadata?.filePath).filter(Boolean);
     const availableFiles = allAvailableFiles.filter(filePath => !includedFilePaths.includes(filePath));
     
     // Apply search filter

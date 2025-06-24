@@ -66,8 +66,16 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
   ) {
     switch (message.command) {
       case 'addFileToContext':
-        const added = contextHolder.addKnowledge('file', message.filePath, [], message.filePath);
-        this.updateWebviewState(panel, contextHolder);
+        try {
+          const knowledge = await contextHolder.includeFileInContext(message.filePath);
+          if (knowledge) {
+            this.updateWebviewState(panel, contextHolder);
+          } else {
+            vscode.window.showErrorMessage(`Failed to include file: ${message.filePath}`);
+          }
+        } catch (error) {
+          vscode.window.showErrorMessage(`Error including file: ${error}`);
+        }
         break;
       
       case 'removeKnowledge':
@@ -86,11 +94,35 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
       
       case 'addUserKnowledge':
         contextHolder.addKnowledge('user', message.content, message.references);
-        this.updateWebviewState(panel, contextHolder);
         
         if (message.runAgent) {
-          // TODO: Implement agent runner
-          vscode.window.showInformationMessage('Agent runner not implemented yet!');
+          try {
+            // Show progress
+            panel.webview.postMessage({
+              command: 'setAgentRunning',
+              running: true
+            });
+            
+            const response = await contextHolder.runAgent(message.content);
+            
+            panel.webview.postMessage({
+              command: 'setAgentRunning',
+              running: false
+            });
+            
+            // Context is already updated by runAgent, just refresh UI
+            this.updateWebviewState(panel, contextHolder);
+          } catch (error) {
+            panel.webview.postMessage({
+              command: 'setAgentRunning',
+              running: false
+            });
+            
+            vscode.window.showErrorMessage(`Agent failed: ${error}`);
+            console.error('Agent run failed:', error);
+          }
+        } else {
+          this.updateWebviewState(panel, contextHolder);
         }
         break;
     }
