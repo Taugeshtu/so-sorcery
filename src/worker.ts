@@ -79,19 +79,30 @@ export class Worker {
 
     // Extract <work>...</work> blocks
     const workRegex = /<work>([\s\S]*?)<\/work>/g;
-    const targetRegex = /<target>([\s\S]*?)<\/target>/g;
     while ((match = workRegex.exec(response.content)) !== null) {
+      const workContent = match[1].trim();
+      const targetMatch = workContent.match(/<target>([\s\S]*?)<\/target>/);
+      
+      let workType: 'user_task' | 'agent_task' = 'agent_task';
+      let actualContent = workContent;
+      
+      if (targetMatch) {
+        const target = targetMatch[1].trim().toLowerCase();
+        workType = target === 'user' ? 'user_task' : 'agent_task';
+        actualContent = workContent.replace(/<target>[\s\S]*?<\/target>/, '').trim();
+      }
+      
       workItems.push({
         id: 0, // Will be assigned proper ID by ContextHolder
-        type: 'agent_task',
-        content: match[1].trim(),
+        type: workType,
+        content: actualContent,
         metadata: {
           psyche: this.psyche.name,
           timestamp: Date.now()
         }
       });
     }
-
+    
     // If we didn't parse anything, fall back to raw response
     if (knowledges.length === 0 && workItems.length === 0) {
       knowledges.push({

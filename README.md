@@ -65,10 +65,9 @@ Functional:
 - [x] Fix context builder
 - [x] better project assistant prompt
 - [x] !!Handling work items!!
-- [ ] maybe better parsing?
+- [x] maybe better parsing?
 - [ ] Undo/Redo (VS Code's built-in document undo should work?)
 - [ ] File read/write tools
-- [ ] Better tool ecosystem
 
 Vusial & polish:
 - [ ] "No knowledge yet" also reacts to file knowledge. Shouldn't
@@ -76,6 +75,7 @@ Vusial & polish:
 - [ ] when add & run-ing, refresh the screen
 - [ ] Cost counting and displaying
 - [ ] remove available files list from the json?..
+- [ ] Parsing "thinking" stages of PA response and displaying them somewhere
 
 Big & faraway items:
 - [ ] more robust error handling on the backend pls?
@@ -87,6 +87,7 @@ Big & faraway items:
 - [ ] psyche editor (ideally storing them into user-global storage but not settings)
 - [ ] maybe streaming support?
 - [ ] Images handling
+- [ ] Better tool ecosystem (interpreter, tree, maybe bash/cmd?)
 
 ---
 
