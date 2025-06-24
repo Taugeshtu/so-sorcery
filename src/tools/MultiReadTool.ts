@@ -8,7 +8,11 @@ export class MultiReadTool extends Tool {
   }
   
   get description(): string {
-    return 'Add multiple files to the context from the list of available files. Provide newline-separated file paths.';
+    return 'Add multiple files to the context from the list of available files. Provide newline-separated file paths and nothing else, and they will be added to the context.';
+  }
+  
+  get autoRun(): boolean {
+    return true;
   }
 
   async execute(workItem: WorkItem): Promise<ToolResult> {

@@ -68,6 +68,7 @@ Functional:
 - [x] maybe better parsing?
 - [ ] Undo/Redo (VS Code's built-in document undo should work?)
 - [ ] File read/write tools
+    - [ ] Make multi-read actually work: improve system prompt to enable it better? or tool description?
 
 - [ ] Improve the system: agent is low on self-reflection, doesn't recognize refactoring, doesn't recognize the files are actual files it seems...
 

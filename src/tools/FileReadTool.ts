@@ -13,6 +13,10 @@ export class FileReadTool extends Tool {
   get description(): string {
     return 'Read the contents of a file from the workspace and add them as a standalone synthetic knowledge';
   }
+  
+  get autoRun(): boolean {
+    return true;
+  }
 
   async execute(workItem: WorkItem): Promise<ToolResult> {
     try {

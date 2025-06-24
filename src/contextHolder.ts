@@ -11,6 +11,7 @@ export class ContextHolder {
   private context: SorceryContext;
   private document: vscode.TextDocument;
   private tools: Tool[];
+  private pendingExecutions: Map<number, NodeJS.Timeout> = new Map();
 
   constructor(document: vscode.TextDocument, workspaceName: string) {
     this.document = document;
@@ -189,7 +190,52 @@ export class ContextHolder {
       }
     };
 
-    return this.addItem(workItem) as WorkItem;
+    const addedItem = this.addItem(workItem) as WorkItem;
+    this.scheduleAutoExecution(addedItem);
+    return addedItem;
+  }
+  
+  private scheduleAutoExecution(workItem: WorkItem): void {
+    // Find the tool that can handle this work item
+    const tool = this.tools.find(t => t.canHandle(workItem));
+    
+    if (!tool || !tool.autoRun) {
+      return; // Tool doesn't support auto-run
+    }
+
+    // Get configured delay
+    const config = vscode.workspace.getConfiguration('sorcery');
+    const delay = config.get<number>('autoRunDelay', 2000);
+
+    // Schedule execution
+    const timeout = setTimeout(async () => {
+      // Remove from pending map
+      this.pendingExecutions.delete(workItem.id);
+      
+      // Double-check item still exists
+      const currentItem = this.context.items.find(item => item.id === workItem.id);
+      if (!currentItem || !this.isWorkItem(currentItem)) {
+        return; // Item was deleted, skip execution
+      }
+
+      // Execute the tool
+      try {
+        await this.executeToolWorkItem(workItem.id);
+      } catch (error) {
+        console.error('Auto-execution failed:', error);
+      }
+    }, delay);
+
+    // Store timeout reference for potential cancellation
+    this.pendingExecutions.set(workItem.id, timeout);
+  }
+
+  private cancelPendingExecution(workItemId: number): void {
+    const timeout = this.pendingExecutions.get(workItemId);
+    if (timeout) {
+      clearTimeout(timeout);
+      this.pendingExecutions.delete(workItemId);
+    }
   }
 
   public async runAgent(userInput: string, psycheName: string = 'project_assistant'): Promise<WorkerResponse> {
@@ -268,6 +314,9 @@ export class ContextHolder {
   }
 
   public removeItem(id: number): boolean {
+    // Cancel any pending execution
+    this.cancelPendingExecution(id);
+    
     const initialLength = this.context.items.length;
     
     this.context.items = this.context.items.filter(item => item.id !== id);

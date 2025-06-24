@@ -24,6 +24,9 @@ export abstract class Tool {
    * Human-readable description of what this tool does
    */
   abstract get description(): string;
+  
+  // allows the tool to be launched automatically
+  abstract get autoRun(): boolean;
 
   /**
    * Execute a work item using this tool

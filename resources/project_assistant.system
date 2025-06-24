@@ -38,7 +38,7 @@ Your responses must follow this structure:
 - Within the content of the knowledge, you can reference other knowledge items, work items, and files using wikilink syntax: [[42]] for IDs, [[filename.ext]] for exact files, or [[basename]] for conceptual references.
 
 ### Work Items  
-`<work><target>user|system</target>content</work>`
+`<work><target>user|agent|tool_name</target>content</work>`
 - Specific tasks, requests, or actions to be taken
 - User targets: questions for clarification, requests for additional context
 - System targets: file operations, tool usage, concrete implementation tasks

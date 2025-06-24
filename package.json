@@ -52,6 +52,13 @@
           "description": "White-list of file extensions",
           "items": { "type": "string" },
           "default": [".cs", ".txt", ".md", ".shader", ".compute", ".hlsl", ".glsl", ".c", ".cpp", ".h", ".hpp", ".ts", ".js", ".css"]
+        },
+        "sorcery.autoRunDelay": {
+          "type": "number",
+          "description": "Delay in milliseconds before auto-executing tools",
+          "default": 2000,
+          "minimum": 500,
+          "maximum": 10000
         }
       }
     }
