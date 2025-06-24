@@ -79,6 +79,7 @@ export class Worker {
 
     // Extract <work>...</work> blocks
     const workRegex = /<work>([\s\S]*?)<\/work>/g;
+    const targetRegex = /<target>([\s\S]*?)<\/target>/g;
     while ((match = workRegex.exec(response.content)) !== null) {
       workItems.push({
         id: 0, // Will be assigned proper ID by ContextHolder

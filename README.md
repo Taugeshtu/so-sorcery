@@ -59,26 +59,34 @@ This extension contributes the following settings:
 
 ## TODO
 
+Functional:
 - [x] Copy buttons
 - [x] remove storing the whole-ass file content inside file knowledge
 - [x] Fix context builder
 - [x] better project assistant prompt
+- [x] !!Handling work items!!
 - [ ] maybe better parsing?
+- [ ] Undo/Redo (VS Code's built-in document undo should work?)
+- [ ] File read/write tools
+- [ ] Better tool ecosystem
+
+Vusial & polish:
+- [ ] "No knowledge yet" also reacts to file knowledge. Shouldn't
 - [ ] user knowledge adds in pre-collapsed
 - [ ] when add & run-ing, refresh the screen
 - [ ] Cost counting and displaying
-- [ ] Undo/Redo (VS Code's built-in document undo should work?)
-- [ ] Multiple agent types ("psyches")
-- [ ] File read/write tools
-- [ ] Better tool ecosystem
-- [ ] Knowledge auto-naming
 - [ ] remove available files list from the json?..
+
+Big & faraway items:
 - [ ] more robust error handling on the backend pls?
+- [ ] Multiple agent types ("psyches")
+- [ ] Knowledge auto-naming
 - [ ] Reference arrows (this is the big visual feature!)
 - [ ] chuck the whole file list (respecting gitignore) into context; but UI is filtered by extension?.. So that the agent knows what's up? OR give the agent "tree" command... yeah, that might be better. On-demand stuff...
 - [ ] building PA input with graph pull
 - [ ] psyche editor (ideally storing them into user-global storage but not settings)
 - [ ] maybe streaming support?
+- [ ] Images handling
 
 ---
 

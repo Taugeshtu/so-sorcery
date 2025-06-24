@@ -38,11 +38,14 @@ Your responses must follow this structure:
 - Within the content of the knowledge, you can reference other knowledge items, work items, and files using wikilink syntax: [[42]] for IDs, [[filename.ext]] for exact files, or [[basename]] for conceptual references.
 
 ### Work Items  
-`<work target="user|system">content</work>`
+`<work><target>user|system</target>content</work>`
 - Specific tasks, requests, or actions to be taken
 - User targets: questions for clarification, requests for additional context
 - System targets: file operations, tool usage, concrete implementation tasks
 - Be specific about what needs to happen and why
+
+**Conclusion**: You must end your response with the following, varbatim:
+=handover_protocol=
 
 ## Guidelines
 - When creating numbered lists, use monotonically increasing numbers that continue from where previous lists left off in the context. This ensures list item references remain valid even when some items are later removed. For example, if the last numbered item in the context was 8, start your next list at 9, 10, 11...

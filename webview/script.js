@@ -89,10 +89,14 @@ function updateKnowledgesList(knowledges) {
     const knowledgesList = document.getElementById('knowledgesList');
     knowledgesList.innerHTML = '';
     
-    if (knowledges.length === 0) {
+    // Get work items from current context
+    const workItems = currentContext?.workItems || [];
+    const allItems = [...knowledges, ...workItems];
+    
+    if (allItems.length === 0) {
         const emptyState = document.createElement('div');
         emptyState.className = 'empty-state';
-        emptyState.textContent = 'No knowledge yet. Add some to get started!';
+        emptyState.textContent = 'No knowledge or work items yet. Add some to get started!';
         knowledgesList.appendChild(emptyState);
         return;
     }
@@ -100,18 +104,33 @@ function updateKnowledgesList(knowledges) {
     // Filter out file knowledges for the main list
     const nonFileKnowledges = knowledges.filter(k => k.source !== 'file');
     
-    nonFileKnowledges.forEach((knowledge, index) => {
-        const knowledgeCard = createKnowledgeCard(knowledge);
-        knowledgesList.appendChild(knowledgeCard);
+    // Combine and sort by timestamp or ID
+    const displayItems = [...nonFileKnowledges, ...workItems].sort((a, b) => {
+        const aTime = a.metadata?.timestamp || 0;
+        const bTime = b.metadata?.timestamp || 0;
+        return aTime - bTime;
+    });
+    
+    displayItems.forEach((item, index) => {
+        let itemCard;
+        if ('source' in item) {
+            // It's a knowledge item
+            itemCard = createKnowledgeCard(item);
+        } else {
+            // It's a work item
+            itemCard = createWorkItemCard(item);
+        }
         
-        // Add arrows if there are references
-        if (knowledge.references && knowledge.references.length > 0) {
-            const arrowContainer = createArrowContainer(knowledge.references);
+        knowledgesList.appendChild(itemCard);
+        
+        // Add arrows if there are references (only for knowledge items)
+        if ('references' in item && item.references && item.references.length > 0) {
+            const arrowContainer = createArrowContainer(item.references);
             knowledgesList.appendChild(arrowContainer);
         }
         
         // Add spacing between cards
-        if (index < nonFileKnowledges.length - 1) {
+        if (index < displayItems.length - 1) {
             const spacer = document.createElement('div');
             spacer.className = 'knowledge-spacer';
             knowledgesList.appendChild(spacer);
@@ -185,6 +204,65 @@ function createKnowledgeCard(knowledge) {
     } else {
         content.textContent = knowledge.content;
     }
+    
+    card.appendChild(header);
+    card.appendChild(content);
+    
+    return card;
+}
+
+function createWorkItemCard(workItem) {
+    const card = document.createElement('div');
+    card.className = `work-item-card ${workItem.type}-work`;
+    card.dataset.workItemId = workItem.id;
+    
+    // Header
+    const header = document.createElement('div');
+    header.className = 'work-item-header';
+    
+    const headerLeft = document.createElement('div');
+    headerLeft.className = 'work-item-header-left';
+    
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'work-item-name';
+    nameSpan.textContent = `Work Item #${workItem.id}`;
+    
+    const typeSpan = document.createElement('span');
+    typeSpan.className = 'work-item-type';
+    typeSpan.textContent = `[${workItem.type}]`;
+    
+    headerLeft.appendChild(nameSpan);
+    headerLeft.appendChild(typeSpan);
+    
+    const headerRight = document.createElement('div');
+    headerRight.className = 'work-item-header-right';
+
+    const goButton = document.createElement('button');
+    goButton.className = 'go-button';
+    goButton.textContent = 'Go';
+    goButton.onclick = (e) => {
+        e.stopPropagation();
+        copyToClipboard(workItem.content);
+    };
+
+    const deleteButton = document.createElement('button');
+    deleteButton.className = 'delete-button';
+    deleteButton.textContent = '×';
+    deleteButton.onclick = (e) => {
+        e.stopPropagation();
+        removeWorkItem(workItem.id);
+    };
+
+    headerRight.appendChild(goButton);
+    headerRight.appendChild(deleteButton);
+    
+    header.appendChild(headerLeft);
+    header.appendChild(headerRight);
+    
+    // Content
+    const content = document.createElement('div');
+    content.className = 'work-item-content';
+    content.textContent = workItem.content;
     
     card.appendChild(header);
     card.appendChild(content);
@@ -382,6 +460,14 @@ function removeKnowledge(id) {
     console.log('Removing knowledge:', id);
     vscode.postMessage({
         command: 'removeKnowledge',
+        id: id
+    });
+}
+
+function removeWorkItem(id) {
+    console.log('Removing work item:', id);
+    vscode.postMessage({
+        command: 'removeWorkItem',
         id: id
     });
 }
