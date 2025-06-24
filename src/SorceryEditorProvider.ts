@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 import { getFilteredFilePaths } from './fileDiscovery';
 import { ContextHolder } from './contextHolder';
 import { getWebviewHtml } from './webview/htmlTemplate';
+import { Knowledge } from './types';
 
 export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
   public static readonly viewType = 'sorcery.contextEditor';
@@ -78,15 +79,15 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
         }
         break;
       
-      case 'removeKnowledge':
-        const removed = contextHolder.removeKnowledge(message.id);
+      case 'removeItem':
+        const removed = contextHolder.removeItem(message.id);
         if (removed) {
           this.updateWebviewState(panel, contextHolder);
         }
         break;
       
-      case 'toggleKnowledgeCollapse':
-        const toggled = contextHolder.toggleKnowledgeCollapse(message.id);
+      case 'toggleItemCollapse':
+        const toggled = contextHolder.toggleItemCollapse(message.id);
         if (toggled) {
           this.updateWebviewState(panel, contextHolder);
         }
@@ -97,11 +98,21 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
         break;
       
       case 'addUserKnowledge':
-        contextHolder.addKnowledge('user', message.content, message.references);
+        const knowledge: Knowledge = {
+          id: 0, // Will be set by addItem
+          collapsed: false,
+          source: 'user',
+          content: message.content,
+          references: message.references || [],
+          metadata: {
+            timestamp: Date.now()
+          }
+        };
+        
+        contextHolder.addItem(knowledge);
         
         if (message.runAgent) {
           try {
-            // Show progress
             panel.webview.postMessage({
               command: 'setAgentRunning',
               running: true
@@ -114,7 +125,6 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
               running: false
             });
             
-            // Context is already updated by runAgent, just refresh UI
             this.updateWebviewState(panel, contextHolder);
           } catch (error) {
             panel.webview.postMessage({
@@ -127,6 +137,17 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
           }
         } else {
           this.updateWebviewState(panel, contextHolder);
+        }
+        break;
+        
+      case 'executeWorkItem':
+        try {
+          const success = await contextHolder.executeToolWorkItem(message.id);
+          if (success) {
+            this.updateWebviewState(panel, contextHolder);
+          }
+        } catch (error) {
+          vscode.window.showErrorMessage(`Work item execution failed: ${error}`);
         }
         break;
     }

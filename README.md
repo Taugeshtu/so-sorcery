@@ -69,6 +69,8 @@ Functional:
 - [ ] Undo/Redo (VS Code's built-in document undo should work?)
 - [ ] File read/write tools
 
+- [ ] Improve the system: agent is low on self-reflection, doesn't recognize refactoring, doesn't recognize the files are actual files it seems...
+
 Vusial & polish:
 - [ ] "No knowledge yet" also reacts to file knowledge. Shouldn't
 - [ ] user knowledge adds in pre-collapsed

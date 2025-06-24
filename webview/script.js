@@ -78,22 +78,22 @@ window.addEventListener('message', event => {
 function updateUI(context) {
     currentContext = context;
     allAvailableFiles = context.availableFiles || [];
-    fileKnowledges = context.knowledges.filter(k => k.source === 'file');
     
-    updateKnowledgesList(context.knowledges);
+    // Filter file knowledges from the unified items array
+    fileKnowledges = context.items.filter(item => 
+        'source' in item && item.source === 'file'
+    );
+    
+    updateItemsList(context.items);
     updateIncludedFilesList();
     updateAvailableFilesTree();
 }
 
-function updateKnowledgesList(knowledges) {
+function updateItemsList(items) {
     const knowledgesList = document.getElementById('knowledgesList');
     knowledgesList.innerHTML = '';
     
-    // Get work items from current context
-    const workItems = currentContext?.workItems || [];
-    const allItems = [...knowledges, ...workItems];
-    
-    if (allItems.length === 0) {
+    if (items.length === 0) {
         const emptyState = document.createElement('div');
         emptyState.className = 'empty-state';
         emptyState.textContent = 'No knowledge or work items yet. Add some to get started!';
@@ -101,39 +101,40 @@ function updateKnowledgesList(knowledges) {
         return;
     }
 
-    // Filter out file knowledges for the main list
-    const nonFileKnowledges = knowledges.filter(k => k.source !== 'file');
-    
-    // Combine and sort by timestamp or ID
-    const displayItems = [...nonFileKnowledges, ...workItems].sort((a, b) => {
-        const aTime = a.metadata?.timestamp || 0;
-        const bTime = b.metadata?.timestamp || 0;
-        return aTime - bTime;
-    });
+    // Filter out file knowledges for the main list and sort by timestamp
+    const displayItems = items
+        .filter(item => !('source' in item && item.source === 'file'))
+        .sort((a, b) => {
+            const aTime = a.metadata?.timestamp || 0;
+            const bTime = b.metadata?.timestamp || 0;
+            return aTime - bTime;
+        });
     
     displayItems.forEach((item, index) => {
         let itemCard;
         if ('source' in item) {
             // It's a knowledge item
             itemCard = createKnowledgeCard(item);
-        } else {
+        } else if ('executor' in item) {
             // It's a work item
             itemCard = createWorkItemCard(item);
         }
         
-        knowledgesList.appendChild(itemCard);
-        
-        // Add arrows if there are references (only for knowledge items)
-        if ('references' in item && item.references && item.references.length > 0) {
-            const arrowContainer = createArrowContainer(item.references);
-            knowledgesList.appendChild(arrowContainer);
-        }
-        
-        // Add spacing between cards
-        if (index < displayItems.length - 1) {
-            const spacer = document.createElement('div');
-            spacer.className = 'knowledge-spacer';
-            knowledgesList.appendChild(spacer);
+        if (itemCard) {
+            knowledgesList.appendChild(itemCard);
+            
+            // Add arrows if there are references (only for knowledge items)
+            if ('references' in item && item.references && item.references.length > 0) {
+                const arrowContainer = createArrowContainer(item.references);
+                knowledgesList.appendChild(arrowContainer);
+            }
+            
+            // Add spacing between cards
+            if (index < displayItems.length - 1) {
+                const spacer = document.createElement('div');
+                spacer.className = 'knowledge-spacer';
+                knowledgesList.appendChild(spacer);
+            }
         }
     });
 }
@@ -229,7 +230,7 @@ function createWorkItemCard(workItem) {
     
     const typeSpan = document.createElement('span');
     typeSpan.className = 'work-item-type';
-    typeSpan.textContent = `[${workItem.type}]`;
+    typeSpan.textContent = `[${workItem.executor}]`;
     
     headerLeft.appendChild(nameSpan);
     headerLeft.appendChild(typeSpan);
@@ -298,7 +299,7 @@ function createArrowContainer(referenceIds) {
 
 function toggleKnowledge(id) {
     vscode.postMessage({
-        command: 'toggleKnowledgeCollapse',
+        command: 'toggleItemCollapse',
         id: id
     });
 }
@@ -457,17 +458,17 @@ function addKnowledge(runAgent = false) {
 }
 
 function removeKnowledge(id) {
-    console.log('Removing knowledge:', id);
+    console.log('Removing item:', id);
     vscode.postMessage({
-        command: 'removeKnowledge',
+        command: 'removeItem', // Changed from 'removeKnowledge'
         id: id
     });
 }
 
 function removeWorkItem(id) {
-    console.log('Removing work item:', id);
+    console.log('Removing item:', id);
     vscode.postMessage({
-        command: 'removeWorkItem',
+        command: 'removeItem', // Changed from 'removeWorkItem'
         id: id
     });
 }

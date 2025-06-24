@@ -83,18 +83,21 @@ export class Worker {
       const workContent = match[1].trim();
       const targetMatch = workContent.match(/<target>([\s\S]*?)<\/target>/);
       
-      let workType: 'user_task' | 'agent_task' = 'agent_task';
+      let workType: WorkItem['executor'] = 'agent';
       let actualContent = workContent;
       
       if (targetMatch) {
         const target = targetMatch[1].trim().toLowerCase();
-        workType = target === 'user' ? 'user_task' : 'agent_task';
+        // workType = target === 'user' ? 'user' : 'agent';
+        workType = target === 'user' ? 'user' : 'agent';
+        // TODO: actually parse the target here
         actualContent = workContent.replace(/<target>[\s\S]*?<\/target>/, '').trim();
       }
       
       workItems.push({
         id: 0, // Will be assigned proper ID by ContextHolder
-        type: workType,
+        collapsed: false,
+        executor: workType,
         content: actualContent,
         status: 'cold',
         metadata: {

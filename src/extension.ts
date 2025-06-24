@@ -2,9 +2,14 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { SorceryEditorProvider } from './SorceryEditorProvider';
 import * as psyche from './psyche'
+import { toolRegistry } from './tools/ToolRegistry';
+import { MultiReadTool } from './tools/MultiReadTool';
+import { FileReadTool } from './tools/FileReadTool';
 
 export function activate(context: vscode.ExtensionContext) {
   psyche.initializePsyches(context.extensionUri);
+  toolRegistry.register(MultiReadTool);
+  // toolRegistry.register(FileReadTool); // file read tool is disabled, this is future stuff
   
   context.subscriptions.push(
     vscode.commands.registerCommand('sorcery.newContext', async () => {

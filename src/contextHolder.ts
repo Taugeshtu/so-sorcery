@@ -1,18 +1,21 @@
-// src/contextHolder.ts
 import * as vscode from 'vscode';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { Knowledge, SorceryContext, WorkItem } from './types';
+import { Knowledge, SorceryContext, WorkItem, ContextItem } from './types';
 import { Worker, WorkerResponse } from './worker';
 import { getPsyche } from './psyche';
+import { toolRegistry } from './tools/ToolRegistry';
+import { Tool } from './tools/Tool';
 
 export class ContextHolder {
   private context: SorceryContext;
   private document: vscode.TextDocument;
+  private tools: Tool[];
 
   constructor(document: vscode.TextDocument, workspaceName: string) {
     this.document = document;
     this.context = this.loadFromDocument(workspaceName);
+    this.tools = toolRegistry.createTools(this);
   }
 
   private loadFromDocument(workspaceName: string): SorceryContext {
@@ -30,8 +33,7 @@ export class ContextHolder {
     return {
       workspaceName,
       availableFiles: [],
-      knowledges: [],
-      workItems: [],
+      items: [],
       nextId: 1
     };
   }
@@ -40,52 +42,68 @@ export class ContextHolder {
     const context: SorceryContext = {
       workspaceName: parsed.workspaceName || workspaceName,
       availableFiles: Array.isArray(parsed.availableFiles) ? parsed.availableFiles : [],
-      knowledges: Array.isArray(parsed.knowledges) ? parsed.knowledges.map(this.validateKnowledge) : [],
-      workItems: Array.isArray(parsed.workItems) ? parsed.workItems.map(this.validateWorkItem) : [],
+      items: [],
       nextId: typeof parsed.nextId === 'number' ? parsed.nextId : 1
     };
 
-    // Ensure nextKnowledgeId is correct
-    if (context.knowledges.length > 0) {
-      const maxId = Math.max(...context.knowledges.map(k => k.id || 0));
-      context.nextId = Math.max(context.nextId, maxId + 1);
-    }
+    // Handle legacy format with separate knowledges/workItems arrays
+    const legacyKnowledges = Array.isArray(parsed.knowledges) ? parsed.knowledges : [];
+    const legacyWorkItems = Array.isArray(parsed.workItems) ? parsed.workItems : [];
+    const newItems = Array.isArray(parsed.items) ? parsed.items : [];
 
-    // Ensure nextWorkId is correct
-    if (context.workItems.length > 0) {
-      const maxId = Math.max(...context.workItems.map(w => w.id || 0));
+    // Combine all items
+    const allItems = [...legacyKnowledges, ...legacyWorkItems, ...newItems];
+    context.items = allItems.map(this.validateItem);
+
+    // Ensure nextId is correct
+    if (context.items.length > 0) {
+      const maxId = Math.max(...context.items.map(item => item.id || 0));
       context.nextId = Math.max(context.nextId, maxId + 1);
     }
 
     return context;
   }
 
-  private validateKnowledge(k: any): Knowledge {
-    return {
-      id: k.id || 0,
-      source: k.source || 'user',
-      content: k.content || '',
-      collapsed: k.collapsed || false, // Add this line
-      references: Array.isArray(k.references) ? k.references : [],
+  private validateItem(item: any): ContextItem {
+    const baseItem: ContextItem = {
+      id: item.id || 0,
+      collapsed: item.collapsed || false,
       metadata: {
-        timestamp: k.metadata?.timestamp || Date.now(),
-        source_psyche: k.metadata?.psyche
+        timestamp: item.metadata?.timestamp || Date.now(),
+        source_psyche: item.metadata?.source_psyche,
+        source_tool: item.metadata?.source_tool,
+        error: item.metadata?.error
       }
     };
-  }
 
-  private validateWorkItem(w: any): WorkItem {
-    return {
-      id: w.id || 0,
-      type: w.type || 'user_task',
-      content: w.content || '',
-      status: w.status || 'cold',
-      metadata: {
-        timestamp: w.metadata?.timestamp || Date.now(),
-        source_psyche: w.metadata?.source_psyche,
-        source_tool: w.metadata?.source_tool
+    // Determine if it's a Knowledge or WorkItem based on properties
+    if ('source' in item || 'content' in item) {
+      if ('executor' in item || 'status' in item) {
+        // It's a WorkItem
+        return {
+          ...baseItem,
+          executor: item.executor || 'user',
+          content: item.content || '',
+          status: item.status || 'cold'
+        } as WorkItem;
+      } else {
+        // It's a Knowledge
+        return {
+          ...baseItem,
+          source: item.source || 'user',
+          content: item.content || '',
+          references: Array.isArray(item.references) ? item.references : []
+        } as Knowledge;
       }
-    };
+    }
+
+    // Default to Knowledge if unclear
+    return {
+      ...baseItem,
+      source: 'user',
+      content: '',
+      references: []
+    } as Knowledge;
   }
 
   public updateAvailableFiles(files: string[]): void {
@@ -100,9 +118,9 @@ export class ContextHolder {
     }
 
     // Check if already included by looking for existing file knowledge
-    const existingKnowledge = this.context.knowledges.find(k => 
-      k.source === 'file' && k.content === filePath
-    );
+    const existingKnowledge = this.context.items.find(item => 
+      this.isKnowledge(item) && item.source === 'file' && item.content === filePath
+    ) as Knowledge;
     
     if (existingKnowledge) {
       return existingKnowledge;
@@ -115,15 +133,22 @@ export class ContextHolder {
 
   public removeFileFromContext(filePath: string): boolean {
     // Find and remove the file knowledge
-    const knowledge = this.context.knowledges.find(k => 
-      k.source === 'file' && k.content === filePath
+    const knowledge = this.context.items.find(item => 
+      this.isKnowledge(item) && item.source === 'file' && item.content === filePath
     );
 
     if (knowledge) {
-      return this.removeKnowledge(knowledge.id);
+      return this.removeItem(knowledge.id);
     }
 
     return false;
+  }
+
+  public addItem(item: ContextItem): ContextItem {
+    item.id = this.context.nextId++;
+    this.context.items.push(item);
+    this.saveToDocument();
+    return item;
   }
 
   public addKnowledge(
@@ -133,30 +158,28 @@ export class ContextHolder {
   ): Knowledge {
     const knowledge: Knowledge = {
       id: this.context.nextId,
+      collapsed: false,
       source,
       content,
-      collapsed: false, // Add this line
       references: references || [],
       metadata: {
         timestamp: Date.now()
       }
     };
 
-    this.context.nextId++;
-    this.context.knowledges.push(knowledge);
-    this.saveToDocument();
-    return knowledge;
+    return this.addItem(knowledge) as Knowledge;
   }
 
   public addWorkItem(
-    type: WorkItem['type'],
+    executor: WorkItem['executor'],
     content: string,
     psyche?: string,
     tool?: string
   ): WorkItem {
     const workItem: WorkItem = {
       id: this.context.nextId,
-      type,
+      collapsed: false,
+      executor,
       content,
       status: 'cold',
       metadata: {
@@ -166,10 +189,7 @@ export class ContextHolder {
       }
     };
 
-    this.context.nextId++;
-    this.context.workItems.push(workItem);
-    this.saveToDocument();
-    return workItem;
+    return this.addItem(workItem) as WorkItem;
   }
 
   public async runAgent(userInput: string, psycheName: string = 'project_assistant'): Promise<WorkerResponse> {
@@ -189,14 +209,12 @@ export class ContextHolder {
 
       // Add knowledges to context
       for (const knowledge of response.knowledges) {
-        knowledge.id = this.context.nextId++;
-        this.context.knowledges.push(knowledge);
+        this.addItem(knowledge);
       }
 
       // Add work items to context
       for (const workItem of response.workItems) {
-        workItem.id = this.context.nextId++;
-        this.context.workItems.push(workItem);
+        this.addItem(workItem);
       }
 
       this.saveToDocument();
@@ -208,7 +226,8 @@ export class ContextHolder {
   }
 
   private buildSystemEnvironment(): string {
-    return `Workspace: ${this.context.workspaceName}`;
+    const toolInfo = this.tools.map(t => `- ${t.name}: ${t.description}`).join('\n');
+    return `Workspace: ${this.context.workspaceName}\n\nAvailable Tools:\n${toolInfo}`;
   }
   
   private async buildKnowledgeBlob(): Promise<string> {
@@ -217,10 +236,11 @@ export class ContextHolder {
     if (this.context.availableFiles.length > 0) {
       parts.push(`Available files:\n${this.context.availableFiles.join('\n')}`);
     }
-
-    if (this.context.knowledges.length > 0) {
+    
+    const knowledges = this.context.items.filter(this.isKnowledge) as Knowledge[];
+    if (knowledges.length > 0) {
       parts.push('\n\n');
-      for (const knowledge of this.context.knowledges) {
+      for (const knowledge of knowledges) {
         // For file knowledge, read the current file content
         if (knowledge.source === 'file') {
           let content = knowledge.content;
@@ -247,16 +267,16 @@ export class ContextHolder {
     return parts.join('');
   }
 
-  public removeKnowledge(id: number): boolean {
-    const initialLength = this.context.knowledges.length;
+  public removeItem(id: number): boolean {
+    const initialLength = this.context.items.length;
     
-    this.context.knowledges = this.context.knowledges.filter(k => k.id !== id);
+    this.context.items = this.context.items.filter(item => item.id !== id);
     
-    if (this.context.knowledges.length < initialLength) {
-      // Clean up references
-      this.context.knowledges.forEach(knowledge => {
-        if (knowledge.references) {
-          knowledge.references = knowledge.references.filter(refId => refId !== id);
+    if (this.context.items.length < initialLength) {
+      // Clean up references in knowledge items
+      this.context.items.forEach(item => {
+        if (this.isKnowledge(item) && item.references) {
+          item.references = item.references.filter(refId => refId !== id);
         }
       });
       
@@ -268,7 +288,10 @@ export class ContextHolder {
   }
 
   public completeWorkItem(id: number): boolean {
-    const workItem = this.context.workItems.find(w => w.id === id);
+    const workItem = this.context.items.find(item => 
+      this.isWorkItem(item) && item.id === id
+    ) as WorkItem;
+    
     if (workItem) {
       workItem.status = 'done';
       this.saveToDocument();
@@ -277,10 +300,71 @@ export class ContextHolder {
     return false;
   }
   
-  public toggleKnowledgeCollapse(id: number): boolean {
-    const knowledge = this.context.knowledges.find(k => k.id === id);
-    if (knowledge) {
-      knowledge.collapsed = !knowledge.collapsed;
+  public async executeToolWorkItem(workItemId: number): Promise<boolean> {
+    const workItem = this.context.items.find(item => 
+      this.isWorkItem(item) && item.id === workItemId
+    ) as WorkItem;
+    
+    if (!workItem || workItem.status === 'done') {
+      return false;
+    }
+    
+    if (!workItem.metadata) {
+      workItem.metadata = { timestamp: Date.now() };
+    }
+
+    // Find appropriate tool
+    const tool = this.tools.find(t => t.canHandle(workItem));
+    if (!tool) {
+      // Mark as failed
+      workItem.status = 'failed';
+      workItem.metadata.error = 'No tool found to handle this work item';
+      this.saveToDocument();
+      return false;
+    }
+
+    try {
+      workItem.status = 'running';
+      this.saveToDocument();
+
+      const result = await tool.execute(workItem);
+
+      // Add any items produced by the tool
+      if (result.knowledges) {
+        for (const knowledge of result.knowledges) {
+          this.addItem(knowledge);
+        }
+      }
+
+      if (result.workItems) {
+        for (const newWorkItem of result.workItems) {
+          this.addItem(newWorkItem);
+        }
+      }
+
+      // Update work item status
+      if (result.error) {
+        workItem.status = 'failed';
+        workItem.metadata.error = result.error;
+      } else {
+        workItem.status = 'done';
+      }
+
+      this.saveToDocument();
+      return true;
+
+    } catch (error) {
+      workItem.status = 'failed';
+      workItem.metadata.error = error instanceof Error ? error.message : String(error);
+      this.saveToDocument();
+      return false;
+    }
+  }
+  
+  public toggleItemCollapse(id: number): boolean {
+    const item = this.context.items.find(item => item.id === id);
+    if (item) {
+      item.collapsed = !item.collapsed;
       this.saveToDocument();
       return true;
     }
@@ -291,16 +375,32 @@ export class ContextHolder {
     return { ...this.context };
   }
 
+  public getItems(): ContextItem[] {
+    return [...this.context.items];
+  }
+
   public getKnowledges(): Knowledge[] {
-    return [...this.context.knowledges];
+    return this.context.items.filter(this.isKnowledge) as Knowledge[];
   }
 
   public getWorkItems(): WorkItem[] {
-    return [...this.context.workItems];
+    return this.context.items.filter(this.isWorkItem) as WorkItem[];
   }
 
   public getAvailableFiles(): string[] {
     return [...this.context.availableFiles];
+  }
+  
+  public getAvailableTools(): Array<{ name: string; description: string }> {
+    return this.tools.map(t => ({ name: t.name, description: t.description }));
+  }
+
+  private isKnowledge(item: ContextItem): item is Knowledge {
+    return 'source' in item;
+  }
+
+  private isWorkItem(item: ContextItem): item is WorkItem {
+    return 'executor' in item;
   }
 
   private async saveToDocument(): Promise<void> {

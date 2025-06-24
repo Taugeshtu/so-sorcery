@@ -1,33 +1,37 @@
-// src/types.ts
-export interface Knowledge {
+export interface ContextItemMetadata {
+  timestamp: number;
+  source_psyche?: string;
+  source_tool?: string;
+  error?: string;
+}
+
+export interface ContextItem {
   id: number;
+  collapsed: boolean;
+  metadata: ContextItemMetadata;
+}
+
+export interface Knowledge extends ContextItem {
   source: 'user' | 'agent' | 'file' | 'system';
   content: string;
-  collapsed: boolean;
   references?: number[];
-  metadata?: {
-    timestamp?: number;
-    source_psyche?: string; // which psyche generated this
-    source_tool?: string; // which tool generated this
+  metadata: ContextItemMetadata & {
+    // Knowledge-specific metadata can be added here if needed
   };
 }
 
-export interface WorkItem {
-  id: number;
-  type: 'multiread' | 'file_read' | 'file_write' | 'user_task' | 'agent_task';
+export interface WorkItem extends ContextItem {
+  executor: 'multiread' | 'file_read' | 'file_write' | 'user' | 'agent';
   content: string;
-  status: 'cold' | 'wip' | 'done';
-  metadata?: {
-    timestamp?: number;
-    source_psyche?: string; // which psyche generated this
-    source_tool?: string; // which tool generated this
+  status: 'cold' | 'running' | 'done' | 'failed';
+  metadata: ContextItemMetadata & {
+    // WorkItem-specific metadata can be added here if needed
   };
 }
 
 export interface SorceryContext {
   workspaceName: string;
   availableFiles: string[];
-  knowledges: Knowledge[];
-  workItems: WorkItem[];
+  items: ContextItem[]; // Unified array instead of separate knowledges/workItems
   nextId: number;
 }

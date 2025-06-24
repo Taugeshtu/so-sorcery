@@ -37,7 +37,7 @@ export abstract class Tool {
    * Default implementation checks if workItem.metadata.tool matches this.name
    */
   canHandle(workItem: WorkItem): boolean {
-    return workItem.type === this.name;
+    return workItem.executor === this.name;
   }
   
   protected createKnowledge(content: string, source: 'system' = 'system'): Knowledge {
@@ -58,13 +58,14 @@ export abstract class Tool {
    * Helper method to create work items
    */
   protected createWorkItem(
-    type: WorkItem['type'], 
+    type: WorkItem['executor'], 
     content: string, 
     tool?: string
   ): WorkItem {
     return {
       id: 0, // Will be assigned by ContextHolder
-      type,
+      collapsed: false,
+      executor: type,
       content,
       status: 'cold',
       metadata: {
