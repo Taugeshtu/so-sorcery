@@ -148,6 +148,17 @@ function createKnowledgeCard(knowledge) {
     headerLeft.appendChild(nameSpan);
     headerLeft.appendChild(sourceSpan);
     
+    const headerRight = document.createElement('div');
+    headerRight.className = 'knowledge-header-right';
+
+    const copyButton = document.createElement('button');
+    copyButton.className = 'copy-button';
+    copyButton.textContent = 'Copy';
+    copyButton.onclick = (e) => {
+        e.stopPropagation();
+        copyToClipboard(knowledge.content);
+    };
+
     const deleteButton = document.createElement('button');
     deleteButton.className = 'delete-button';
     deleteButton.textContent = '×';
@@ -155,9 +166,12 @@ function createKnowledgeCard(knowledge) {
         e.stopPropagation();
         removeKnowledge(knowledge.id);
     };
+
+    headerRight.appendChild(copyButton);
+    headerRight.appendChild(deleteButton);
     
     header.appendChild(headerLeft);
-    header.appendChild(deleteButton);
+    header.appendChild(headerRight);
     
     // Content
     const content = document.createElement('div');
@@ -176,6 +190,17 @@ function createKnowledgeCard(knowledge) {
     card.appendChild(content);
     
     return card;
+}
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        vscode.postMessage({
+            command: 'showInformationMessage',
+            text: 'Content copied to clipboard'
+        });
+    }, (err) => {
+        console.error('Could not copy text: ', err);
+    });
 }
 
 function createArrowContainer(referenceIds) {

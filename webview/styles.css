@@ -311,6 +311,27 @@ body {
   color: var(--vscode-errorForeground);
 }
 
+.copy-button {
+  background: none;
+  border: none;
+  color: var(--vscode-descriptionForeground);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px 6px;
+  margin-right: 4px;
+  border-radius: 3px;
+}
+
+.copy-button:hover {
+  background-color: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+}
+
+.knowledge-header-right {
+  display: flex;
+  align-items: center;
+}
+
 .knowledge-content {
   padding: 12px;
   background-color: var(--vscode-editor-background);

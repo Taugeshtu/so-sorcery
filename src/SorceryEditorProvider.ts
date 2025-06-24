@@ -92,6 +92,10 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
         }
         break;
       
+      case 'showInformationMessage':
+        vscode.window.showInformationMessage(message.text);
+        break;
+      
       case 'addUserKnowledge':
         contextHolder.addKnowledge('user', message.content, message.references);
         
