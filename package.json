@@ -7,7 +7,7 @@
     "url": "https://github.com/Taugeshtu/so-sorcery.git"
   },
   "homepage": "https://github.com/Taugeshtu/so-sorcery#readme",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "engines": {
     "vscode": "^1.100.0"
   },

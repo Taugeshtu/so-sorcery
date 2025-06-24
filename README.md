@@ -72,10 +72,15 @@ Functional:
 Vusial & polish:
 - [ ] "No knowledge yet" also reacts to file knowledge. Shouldn't
 - [ ] user knowledge adds in pre-collapsed
+- [ ] Some kind of indicator (gradient into gray, transparent on top?) that the item is collapsed
+- [ ] Remove collapse button if item is short enough to fit
 - [ ] when add & run-ing, refresh the screen
 - [ ] Cost counting and displaying
 - [ ] remove available files list from the json?..
 - [ ] Parsing "thinking" stages of PA response and displaying them somewhere
+- [ ] Hotkey settings for "add" and "send it"
+- [ ] Add a list of agents and tools to system environment for PA
+- [ ] Move PA response parsing out of "Worker" (since worker can be NOT PA)
 
 Big & faraway items:
 - [ ] more robust error handling on the backend pls?
