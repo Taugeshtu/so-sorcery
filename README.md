@@ -59,7 +59,7 @@ This extension contributes the following settings:
 
 ## TODO
 
-- [ ] Copy buttons
+- [x] Copy buttons
 - [ ] better basic bitch prompt + maybe better parsing?
 - [ ] Undo/Redo (VS Code's built-in document undo should work?)
 - [ ] Multiple agent types ("psyches")

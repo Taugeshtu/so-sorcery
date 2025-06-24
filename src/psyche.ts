@@ -15,8 +15,8 @@ export const BuiltInPsyches: Record<string, Psyche> = {
   project_assistant: {
     name: 'project_assistant',
     displayName: 'Project Assistant',
-    description: 'Main coding assistant for project work',
-    model: 'claude-3-5-sonnet-20240620',
+    description: 'Main assistant for project work',
+    model: 'claude-sonnet-4-20250514',
     maxTokens: 4096,
     system: `You are a project assistant. You help with code analysis, planning, and implementation.
 
