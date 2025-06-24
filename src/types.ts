@@ -28,6 +28,5 @@ export interface SorceryContext {
   availableFiles: string[];
   knowledges: Knowledge[];
   workItems: WorkItem[];
-  nextKnowledgeId: number;
-  nextWorkId: number;
+  nextId: number;
 }

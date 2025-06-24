@@ -32,8 +32,7 @@ export class ContextHolder {
       availableFiles: [],
       knowledges: [],
       workItems: [],
-      nextKnowledgeId: 1,
-      nextWorkId: 1
+      nextId: 1
     };
   }
 
@@ -43,20 +42,19 @@ export class ContextHolder {
       availableFiles: Array.isArray(parsed.availableFiles) ? parsed.availableFiles : [],
       knowledges: Array.isArray(parsed.knowledges) ? parsed.knowledges.map(this.validateKnowledge) : [],
       workItems: Array.isArray(parsed.workItems) ? parsed.workItems.map(this.validateWorkItem) : [],
-      nextKnowledgeId: typeof parsed.nextKnowledgeId === 'number' ? parsed.nextKnowledgeId : 1,
-      nextWorkId: typeof parsed.nextWorkId === 'number' ? parsed.nextWorkId : 1
+      nextId: typeof parsed.nextId === 'number' ? parsed.nextId : 1
     };
 
     // Ensure nextKnowledgeId is correct
     if (context.knowledges.length > 0) {
       const maxId = Math.max(...context.knowledges.map(k => k.id || 0));
-      context.nextKnowledgeId = Math.max(context.nextKnowledgeId, maxId + 1);
+      context.nextId = Math.max(context.nextId, maxId + 1);
     }
 
     // Ensure nextWorkId is correct
     if (context.workItems.length > 0) {
       const maxId = Math.max(...context.workItems.map(w => w.id || 0));
-      context.nextWorkId = Math.max(context.nextWorkId, maxId + 1);
+      context.nextId = Math.max(context.nextId, maxId + 1);
     }
 
     return context;
@@ -134,7 +132,7 @@ export class ContextHolder {
     references?: number[]
   ): Knowledge {
     const knowledge: Knowledge = {
-      id: this.context.nextKnowledgeId,
+      id: this.context.nextId,
       source,
       content,
       collapsed: false, // Add this line
@@ -144,7 +142,7 @@ export class ContextHolder {
       }
     };
 
-    this.context.nextKnowledgeId++;
+    this.context.nextId++;
     this.context.knowledges.push(knowledge);
     this.saveToDocument();
     return knowledge;
@@ -157,7 +155,7 @@ export class ContextHolder {
     filePath?: string
   ): WorkItem {
     const workItem: WorkItem = {
-      id: this.context.nextWorkId,
+      id: this.context.nextId,
       type,
       content,
       metadata: {
@@ -168,7 +166,7 @@ export class ContextHolder {
       }
     };
 
-    this.context.nextWorkId++;
+    this.context.nextId++;
     this.context.workItems.push(workItem);
     this.saveToDocument();
     return workItem;
@@ -191,13 +189,13 @@ export class ContextHolder {
 
       // Add knowledges to context
       for (const knowledge of response.knowledges) {
-        knowledge.id = this.context.nextKnowledgeId++;
+        knowledge.id = this.context.nextId++;
         this.context.knowledges.push(knowledge);
       }
 
       // Add work items to context
       for (const workItem of response.workItems) {
-        workItem.id = this.context.nextWorkId++;
+        workItem.id = this.context.nextId++;
         this.context.workItems.push(workItem);
       }
 
