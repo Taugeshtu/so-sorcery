@@ -6,7 +6,6 @@ export interface Knowledge {
   collapsed: boolean;
   references?: number[];
   metadata?: {
-    filePath?: string;
     timestamp?: number;
     psyche?: string; // which psyche generated this
   };

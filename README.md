@@ -60,7 +60,12 @@ This extension contributes the following settings:
 ## TODO
 
 - [x] Copy buttons
+- [x] remove storing the whole-ass file content inside file knowledge
+- [x] Fix context builder
 - [ ] better basic bitch prompt + maybe better parsing?
+- [ ] user knowledge adds in pre-collapsed
+- [ ] when add & run-ing, add the user message first lol
+- [ ] Cost counting and displaying
 - [ ] Undo/Redo (VS Code's built-in document undo should work?)
 - [ ] Multiple agent types ("psyches")
 - [ ] File read/write tools
