@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchInput = document.getElementById('fileSearchInput');
     const userInput = document.getElementById('userInput');
     const addButton = document.getElementById('addButton');
-    const addRunButton = document.getElementById('addRunButton');
+    const runButton = document.getElementById('runButton');
     
     // Resizer logic (unchanged)
     resizer.addEventListener('mousedown', (e) => {
@@ -53,13 +53,19 @@ document.addEventListener('DOMContentLoaded', () => {
             addKnowledge(false);
         } else if (e.ctrlKey && e.key === 'Enter') {
             e.preventDefault();
-            addKnowledge(true);
+            handleRunButton();
         }
     });
 
+    // Update button text when input changes
+    userInput.addEventListener('input', updateButtonText);
+    
     // Button handlers
     addButton.addEventListener('click', () => addKnowledge(false));
-    addRunButton.addEventListener('click', () => addKnowledge(true));
+    runButton.addEventListener('click', handleRunButton);
+    
+    // Initialize button text
+    updateButtonText();
 });
 
 window.addEventListener('message', event => {
@@ -304,19 +310,50 @@ function toggleKnowledge(id) {
     });
 }
 
+function updateButtonText() {
+    const userInput = document.getElementById('userInput');
+    const runButton = document.getElementById('runButton');
+    const hasContent = userInput.value.trim().length > 0;
+    
+    runButton.textContent = hasContent ? '+ & Run' : 'Run';
+}
+
+// Add this new function:
+function handleRunButton() {
+    const userInput = document.getElementById('userInput');
+    const hasContent = userInput.value.trim().length > 0;
+    
+    if (hasContent) {
+        // Add knowledge and run agent
+        addKnowledge(true);
+    } else {
+        // Just run agent with current context
+        runAgent();
+    }
+}
+
+function runAgent() {
+    const runButton = document.getElementById('runButton');
+    runButton.disabled = true;
+    
+    vscode.postMessage({
+        command: 'runAgent'
+    });
+}
+
 function setAgentRunning(running) {
     const addButton = document.getElementById('addButton');
-    const addRunButton = document.getElementById('addRunButton');
+    const runButton = document.getElementById('runButton');
     const userInput = document.getElementById('userInput');
     
     addButton.disabled = running;
-    addRunButton.disabled = running;
+    runButton.disabled = running;
     userInput.disabled = running;
     
     if (running) {
-        addRunButton.textContent = 'Running...';
+        runButton.textContent = 'Running...';
     } else {
-        addRunButton.textContent = 'Add & Run Agent';
+        updateButtonText(); // Use the new function to set correct text
     }
 }
 
@@ -437,9 +474,9 @@ function addKnowledge(runAgent = false) {
 
     // Disable buttons while processing
     const addButton = document.getElementById('addButton');
-    const addRunButton = document.getElementById('addRunButton');
+    const runButton = document.getElementById('runButton');
     addButton.disabled = true;
-    addRunButton.disabled = true;
+    runButton.disabled = true;
 
     vscode.postMessage({
         command: 'addUserKnowledge',
@@ -449,11 +486,12 @@ function addKnowledge(runAgent = false) {
 
     // Clear input
     userInput.value = '';
+    updateButtonText(); // Update button text after clearing input
     
     // Re-enable buttons (they'll be disabled again if agent is running)
     setTimeout(() => {
         addButton.disabled = false;
-        addRunButton.disabled = false;
+        runButton.disabled = false;
     }, 100);
 }
 

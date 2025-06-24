@@ -1,4 +1,3 @@
-// src/webview/htmlTemplate.ts
 import * as vscode from 'vscode';
 
 export function getWebviewHtml(webview: vscode.Webview, cssUri: vscode.Uri, jsUri: vscode.Uri): string {
@@ -17,8 +16,8 @@ export function getWebviewHtml(webview: vscode.Webview, cssUri: vscode.Uri, jsUr
           
           <div id="inputSection">
             <div id="buttonContainer">
-              <button id="addButton" class="secondary-button">Add Knowledge</button>
-              <button id="addRunButton" class="primary-button">Add & Run Agent</button>
+              <button id="addButton" class="icon-button" title="Add Knowledge">+</button>
+              <button id="runButton" class="primary-button">Run</button>
             </div>
             <div id="textareaContainer">
               <textarea 

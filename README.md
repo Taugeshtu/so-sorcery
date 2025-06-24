@@ -66,13 +66,14 @@ Functional:
 - [x] better project assistant prompt
 - [x] !!Handling work items!!
 - [x] maybe better parsing?
-- [ ] Undo/Redo (VS Code's built-in document undo should work?)
+- [ ] A way to view the full response of PA somewhere
 - [ ] File read/write tools
     - [ ] Make multi-read actually work: improve system prompt to enable it better? or tool description?
+- [ ] Undo/Redo (VS Code's built-in document undo should work?)
 
 - [ ] Improve the system: agent is low on self-reflection, doesn't recognize refactoring, doesn't recognize the files are actual files it seems...
 
-Vusial & polish:
+Visual & polish:
 - [ ] "No knowledge yet" also reacts to file knowledge. Shouldn't
 - [ ] user knowledge adds in pre-collapsed
 - [x] Some kind of indicator (gradient into gray, transparent on top?) that the item is collapsed
@@ -83,10 +84,10 @@ Vusial & polish:
 - [ ] remove available files list from the json?..
 - [ ] Parsing "thinking" stages of PA response and displaying them somewhere
 - [ ] Hotkey settings for "add" and "send it"
-- [ ] Add a list of agents and tools to system environment for PA
+- [x] Add a list of tools to system environment for PA
+- [ ] Add a list of agents to system environment for PA
 - [ ] Move PA response parsing out of "Worker" (since worker can be NOT PA)
-- [ ] Button to just run?.. Maybe it changes text depending on whether our user input is empty or not
-- [ ] Rename main panel buttons into "+" and "& Run" (or just "Run" when no text in input)
+- [x] Button to just run?.. Maybe it changes text depending on whether our user input is empty or not
 - [ ] Bring in block parser because xml extraction fails miserably lol
 
 Big & faraway items:
