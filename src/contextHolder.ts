@@ -69,7 +69,7 @@ export class ContextHolder {
       references: Array.isArray(k.references) ? k.references : [],
       metadata: {
         timestamp: k.metadata?.timestamp || Date.now(),
-        psyche: k.metadata?.psyche
+        source_psyche: k.metadata?.psyche
       }
     };
   }
@@ -79,11 +79,11 @@ export class ContextHolder {
       id: w.id || 0,
       type: w.type || 'user_task',
       content: w.content || '',
+      status: w.status || 'cold',
       metadata: {
-        filePath: w.metadata?.filePath,
         timestamp: w.metadata?.timestamp || Date.now(),
-        psyche: w.metadata?.psyche,
-        completed: w.metadata?.completed || false
+        source_psyche: w.metadata?.source_psyche,
+        source_tool: w.metadata?.source_tool
       }
     };
   }
@@ -152,17 +152,17 @@ export class ContextHolder {
     type: WorkItem['type'],
     content: string,
     psyche?: string,
-    filePath?: string
+    tool?: string
   ): WorkItem {
     const workItem: WorkItem = {
       id: this.context.nextId,
       type,
       content,
+      status: 'cold',
       metadata: {
         timestamp: Date.now(),
-        psyche,
-        filePath,
-        completed: false
+        source_psyche: psyche,
+        source_tool: tool
       }
     };
 
@@ -236,8 +236,8 @@ export class ContextHolder {
           parts.push(`\n<knowledge>[${knowledge.id}] from: ${knowledge.content}\ncontent:\n${content}\n</knowledge>`);
         }
         else {
-          const source = knowledge.metadata?.psyche
-                        ? `${knowledge.source}(${knowledge.metadata.psyche})`
+          const source = knowledge.metadata?.source_psyche
+                        ? `${knowledge.source}(${knowledge.metadata.source_psyche})`
                         : knowledge.source;
           parts.push(`\n<knowledge>[${knowledge.id}] from: ${source}\ncontent:\n${knowledge.content}\n</knowledge>`);
         }
@@ -269,8 +269,8 @@ export class ContextHolder {
 
   public completeWorkItem(id: number): boolean {
     const workItem = this.context.workItems.find(w => w.id === id);
-    if (workItem && workItem.metadata) {
-      workItem.metadata.completed = true;
+    if (workItem) {
+      workItem.status = 'done';
       this.saveToDocument();
       return true;
     }

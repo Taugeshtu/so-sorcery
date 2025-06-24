@@ -48,7 +48,7 @@ export class Worker {
           content: response.content,
           collapsed: false, // Add this
           metadata: {
-            psyche: this.psyche.name,
+            source_psyche: this.psyche.name,
             timestamp: Date.now()
           }
         }],
@@ -71,7 +71,7 @@ export class Worker {
         content: match[1].trim(),
         collapsed: false, // Add this
         metadata: {
-          psyche: this.psyche.name,
+          source_psyche: this.psyche.name,
           timestamp: Date.now()
         }
       });
@@ -96,8 +96,9 @@ export class Worker {
         id: 0, // Will be assigned proper ID by ContextHolder
         type: workType,
         content: actualContent,
+        status: 'cold',
         metadata: {
-          psyche: this.psyche.name,
+          source_psyche: this.psyche.name,
           timestamp: Date.now()
         }
       });
@@ -111,7 +112,7 @@ export class Worker {
         content: response.content,
         collapsed: false, // Add this
         metadata: {
-          psyche: this.psyche.name,
+          source_psyche: this.psyche.name,
           timestamp: Date.now()
         }
       });

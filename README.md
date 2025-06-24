@@ -84,9 +84,11 @@ Vusial & polish:
 - [ ] Move PA response parsing out of "Worker" (since worker can be NOT PA)
 - [ ] Button to just run?.. Maybe it changes text depending on whether our user input is empty or not
 - [ ] Rename main panel buttons into "+" and "& Run" (or just "Run" when no text in input)
+- [ ] Bring in block parser because xml extraction fails miserably lol
 
 Big & faraway items:
 - [x] more robust error handling on the backend pls?
+- [ ] !! consider more detailed format for submitting knowledge, allowing UPDATING as well (is a scratchpad, you see?)
 - [ ] Forking context
 - [ ] Multiple agent types ("psyches")
 - [ ] Knowledge auto-naming & summary (Haiku to the rescue?)
