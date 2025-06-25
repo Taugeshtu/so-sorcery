@@ -278,33 +278,42 @@ export class ContextHolder {
       parts.push(`Available files:\n${this.context.availableFiles.join('\n')}`);
     }
     
-    const knowledges = this.context.items.filter(this.isKnowledge) as Knowledge[];
-    if (knowledges.length > 0) {
+    const allItems = this.context.items;
+    if (allItems.length > 0) {
       parts.push('\n\n');
-      for (const knowledge of knowledges) {
-        // For file knowledge, read the current file content
-        if (knowledge.source === 'file') {
-          let content = knowledge.content;
-          try {
-            const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-            if (workspaceRoot) {
-              const fullPath = path.join(workspaceRoot, knowledge.content);
-              content = await fs.readFile(fullPath, 'utf-8');
+      for (const item of allItems) {
+        if (this.isKnowledge(item)) {
+          
+          const knowledge = item as Knowledge;
+          if (knowledge.source === 'file') {
+            let content = knowledge.content;
+            try {
+              const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+              if (workspaceRoot) {
+                const fullPath = path.join(workspaceRoot, knowledge.content);
+                content = await fs.readFile(fullPath, 'utf-8');
+              }
+            } catch (error) {
+              content = `[File not found]`;
             }
-          } catch (error) {
-            content = `[File not found]`;
+            parts.push(`\n<file>[${knowledge.id}] at: ${knowledge.content}\n${content}\n</file>`);
+          } else {
+            const source = knowledge.metadata?.source_psyche
+                          ? `${knowledge.source}(${knowledge.metadata.source_psyche})`
+                          : knowledge.source;
+            parts.push(`\n<knowledge>[${knowledge.id}] from: ${source}\ncontent:\n${knowledge.content}\n</knowledge>`);
           }
-          parts.push(`\n<knowledge>[${knowledge.id}] from: ${knowledge.content}\ncontent:\n${content}\n</knowledge>`);
-        }
-        else {
-          const source = knowledge.metadata?.source_psyche
-                        ? `${knowledge.source}(${knowledge.metadata.source_psyche})`
-                        : knowledge.source;
-          parts.push(`\n<knowledge>[${knowledge.id}] from: ${source}\ncontent:\n${knowledge.content}\n</knowledge>`);
+        } else if (this.isWorkItem(item)) {
+          const workItem = item as WorkItem;
+          const executor = workItem.metadata?.source_tool 
+                        ? `${workItem.executor}(${workItem.metadata.source_tool})`
+                        : workItem.executor;
+          // TODO: maybe do different things for different executors/statuses in the future
+          parts.push(`\n<work>[${workItem.id}] executor: ${executor}, status: ${workItem.status}\ncontent:\n${workItem.content}\n</work>`);
         }
       }
     }
-
+    
     return parts.join('');
   }
 

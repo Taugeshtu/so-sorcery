@@ -67,8 +67,6 @@ EVERYTHING. This is early days, see TODO for more info
 ## TODO
 
 Functional:
-- [ ] Add work items to the knowledge blob
-- [ ] Try different formatting when congealing knowledge blob for file knowledge? So the agent is maybe less confused?
 - [ ] Undo/Redo (VS Code's built-in document undo should work?)
 - [~] Improve the system: agent is low on self-reflection, doesn't recognize refactoring, doesn't recognize the files are actual files it seems...
 
@@ -104,14 +102,23 @@ Big & faraway items:
 
 ## Release Notes
 
+### 0.4.0
+
+Better input blob generation:
+
+- [x] Add work items to the knowledge blob
+- [x] Try different formatting when congealing knowledge blob for file knowledge? So the agent is maybe less confused?
+
 ### 0.3.1
+
+Debuggability:
 
 - [x] A way to view the full response of PA somewhere
 - [x] "Run" seems to be leading to a stuck state
 
 ### 0.2.0
 
-Initial alpha release with custom context editor, knowledge & work cards, and file context. Has a working `multiread` tool for the agent to pull up files into context by themselves:
+Initial:
 
 - [x] Copy buttons
 - [x] remove storing the whole-ass file content inside file knowledge
