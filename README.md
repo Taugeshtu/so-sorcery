@@ -2,23 +2,25 @@
 LLMs in your workspace, BUT **you control the context**.
 
 So-Sorcery: a VS Code extension that lets you create & manage persistent "contexts" for AI work, stored in `.sorcery` files and edited via a custom visual interface. Each context acts like a scratchpad of knowledge, workspace awareness, and chat history — designed to work with multiple agents, forkable state, and user-controlled tool use.
+_(trivia: majority of So-Sorcery was written using So-Sorcery)_
 
 ---
 
 ## Features
 
-- **Custom editor for `.sorcery` files**
-- **Forkable context sessions** with knowledge cards, chat, and workspace metadata
-- **Agent interaction driven by few-shot prompting + progressive prompt refinement**, not chat history
-- **Explicit tool invocation model** — the agent stops when it's done, user decides what happens next
-- **Context-aware file access**, filtered by workspace file extensions & `.gitignore`
-- **Supports OpenAI & Anthropic backends**
+- [~] **Custom editor for `.sorcery` files**
+- [ ] **Forkable context sessions** with knowledge cards, chat, and workspace metadata
+- [x] **Agent interaction driven by few-shot prompting + progressive prompt refinement**, not chat history
+- [x] **Explicit tool invocation model** — the agent stops when it's done, user decides what happens next
+- [x] **Context-aware file access**, filtered by workspace file extensions & `.gitignore`
+- [~] **Supports OpenAI & Anthropic backends**
 
 ---
 
 ## Philosophy
 
 Sorcery assumes that:
+- Typical document-based work is highly non-linear
 - AI agents are powerful but fallible
 - User context control is more important than log-style chat memory
 - Tools are constraints, not capabilities
@@ -36,22 +38,19 @@ Sorcery assumes that:
 
 ## Requirements
 
-- An OpenAI or Claude API key (can be configured via extension settings)
+- An OpenAI or Claude API key (set these via extension settings; right now only Claude is required, OpenAI option to come with psyches editor)
 
 #### Building from source
 - Have **Node.js v18+** installed (check with `node -v`)
 - Have **VSCode v1.100+**; have it in `PATH` system variable
 
 - clone the repo
-- `npm install` - installs dependencies
 - `npm run compile` - builds the extension, find it in `OUTPUT_PATH_GOES_HERE`
-- `npm run install` - builds & installs the extension into system-known VSCode (the one in the `PATH`)
+- `npm install` - builds & installs the extension into system-known VSCode (the one in the `PATH`)
 
 ---
 
 ## Extension Settings
-
-This extension contributes the following settings:
 
 - `sorcery.openAIApiKey`: OpenAI API key
 - `sorcery.claudeApiKey`: Claude API key
@@ -61,8 +60,7 @@ This extension contributes the following settings:
 
 ## Known Issues
 
-- No built-in agent or tool UI yet — everything is backend-marshaled
-- Some UI interactions are placeholder (e.g., file search, list layouts)
+EVERYTHING. This is early days, see TODO for more info
 
 ---
 
@@ -81,9 +79,10 @@ Functional:
     - [x] improve system prompt to enable it better? or tool description?
     - [x] automatically added to context things do not force view update??..
             - not just view update; despite in-memory items being present, they don't get into json either. I think there's something fucky with the file-editor-memory thing going on
+- [ ] Test that the most up-to-date content of the file is being sent! Agent reactions look sus
 - [ ] Undo/Redo (VS Code's built-in document undo should work?)
 
-- [ ] Improve the system: agent is low on self-reflection, doesn't recognize refactoring, doesn't recognize the files are actual files it seems...
+- [~] Improve the system: agent is low on self-reflection, doesn't recognize refactoring, doesn't recognize the files are actual files it seems...
 
 Visual & polish:
 - [ ] "No knowledge yet" also reacts to file knowledge. Shouldn't
@@ -95,13 +94,14 @@ Visual & polish:
 - [ ] Cost counting and displaying
 - [ ] Add ID in the header of knowledge items?
 - [ ] remove available files list from the json?..
-- [ ] Parsing "thinking" stages of PA response and displaying them somewhere
+- [ ] Parsing "thinking" stages of PA response and displaying them somewhere (couple that with streaming support?)
 - [ ] Hotkey settings for "add" and "send it"
 - [x] Add a list of tools to system environment for PA
 - [ ] Add a list of agents to system environment for PA
 - [ ] Move PA response parsing out of "Worker" (since worker can be NOT PA)
 - [x] Button to just run?.. Maybe it changes text depending on whether our user input is empty or not
-- [ ] Bring in block parser because xml extraction fails miserably lol
+- [x] Bring in block parser because xml extraction fails miserably lol
+- [ ] Move parsing from "worker" into "contextHolder" because that's PA-specific
 
 Big & faraway items:
 - [x] more robust error handling on the backend pls?
@@ -110,7 +110,7 @@ Big & faraway items:
 - [ ] !! consider more detailed format for submitting knowledge, allowing UPDATING as well (is a scratchpad, you see?)
 - [ ] Parsing & making jumpable wikilinks, obsidian-style, for IDs and files
 - [ ] Forking context
-- [ ] Multiple agent types ("psyches")
+- [ ] Multiple agent types ("psyches": autopath, patcher...)
 - [ ] Knowledge auto-naming & summary (Haiku to the rescue?)
 - [ ] Reference arrows (this is the big visual feature!)
 - [ ] chuck the whole file list (respecting gitignore) into context; but UI is filtered by extension?.. So that the agent knows what's up? OR give the agent "tree" command... yeah, that might be better. On-demand stuff...
@@ -124,6 +124,6 @@ Big & faraway items:
 
 ## Release Notes
 
-### 0.0.1
+### 0.2.0
 
-- Initial alpha release with custom editor, knowledge cards, and file context
+- Initial alpha release with custom context editor, knowledge & work cards, and file context. Has a working `multiread` tool for the agent to pull up files into context by themselves

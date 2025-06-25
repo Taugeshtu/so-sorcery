@@ -63,7 +63,7 @@ export class Worker {
     const workItems: WorkItem[] = [];
     const responseBlock = Block.fromString(response.content);
     
-    const knowledgeBlocks = responseBlock.extractAll('<knowledge>\n', '\n</knowledge>');
+    const knowledgeBlocks = responseBlock.extractAll('\n<knowledge>', '</knowledge>\n');
     for (const block of knowledgeBlocks) {
       const content = block.extracted;
       knowledges.push({
@@ -78,7 +78,7 @@ export class Worker {
       });
     }
 
-    const workBlocks = responseBlock.extractAll('<work>\n', '\n</work>');
+    const workBlocks = responseBlock.extractAll('\n<work>', '</work>\n');
     for (const block of workBlocks) {
       const target = block.extract('<target>', '</target>');
       const extractedContent = (target.length > 0)
