@@ -12,11 +12,13 @@ export class ContextHolder {
   private document: vscode.TextDocument;
   private tools: Tool[];
   private pendingExecutions: Map<number, NodeJS.Timeout> = new Map();
+  private onStateChanged?: () => void;
 
-  constructor(document: vscode.TextDocument, workspaceName: string) {
+  constructor(document: vscode.TextDocument, workspaceName: string, onStateChanged?: () => void) {
     this.document = document;
     this.context = this.loadFromDocument(workspaceName);
     this.tools = toolRegistry.createTools(this);
+    this.onStateChanged = onStateChanged;
   }
 
   private loadFromDocument(workspaceName: string): SorceryContext {
@@ -436,6 +438,8 @@ export class ContextHolder {
       
       edit.replace(this.document.uri, fullRange, JSON.stringify(this.context, null, 2));
       await vscode.workspace.applyEdit(edit);
+      this.onStateChanged?.();
+      this.document.save();
     } catch (error) {
       console.error('Failed to save context to document:', error);
       vscode.window.showErrorMessage('Failed to save context to .sorcery file');

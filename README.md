@@ -66,19 +66,22 @@ Functional:
 - [x] better project assistant prompt
 - [x] !!Handling work items!!
 - [x] maybe better parsing?
-- [ ] Work items are not being saved to json lol
+- [x] Work items are not being saved to json lol
 - [ ] A way to view the full response of PA somewhere
-- [ ] File read/write tools
-    - [ ] Make multi-read actually work: improve system prompt to enable it better? or tool description?
+- [x] Make multi-read actually work:
+    - [x] improve system prompt to enable it better? or tool description?
+    - [x] automatically added to context things do not force view update??..
+            - not just view update; despite in-memory items being present, they don't get into json either. I think there's something fucky with the file-editor-memory thing going on
 - [ ] Undo/Redo (VS Code's built-in document undo should work?)
 
 - [ ] Improve the system: agent is low on self-reflection, doesn't recognize refactoring, doesn't recognize the files are actual files it seems...
 
 Visual & polish:
 - [ ] "No knowledge yet" also reacts to file knowledge. Shouldn't
-- [ ] user knowledge adds in pre-collapsed
+- [ ] "Run" seems to be leading to a stuck state
+- [x] user knowledge adds in pre-collapsed
 - [x] Some kind of indicator (gradient into gray, transparent on top?) that the item is collapsed
-- [ ] Remove collapse button if item is short enough to fit
+- [ ] ?? Remove collapse button if item is short enough to fit
 - [ ] when add & run-ing, refresh the screen
 - [ ] Cost counting and displaying
 - [ ] Add ID in the header of knowledge items?
@@ -93,6 +96,8 @@ Visual & polish:
 
 Big & faraway items:
 - [x] more robust error handling on the backend pls?
+- [~] File read tool (done, but untested)
+- [ ] File write tool
 - [ ] !! consider more detailed format for submitting knowledge, allowing UPDATING as well (is a scratchpad, you see?)
 - [ ] Parsing & making jumpable wikilinks, obsidian-style, for IDs and files
 - [ ] Forking context

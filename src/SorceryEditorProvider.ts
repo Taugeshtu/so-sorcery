@@ -1,9 +1,7 @@
-// src/SorceryEditorProvider.ts
 import * as vscode from 'vscode';
 import { getFilteredFilePaths } from './fileDiscovery';
 import { ContextHolder } from './contextHolder';
 import { getWebviewHtml } from './webview/htmlTemplate';
-import { Knowledge } from './types';
 
 export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
   public static readonly viewType = 'sorcery.contextEditor';
@@ -20,7 +18,7 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
     const workspaceName = vscode.workspace.name || 'Unknown Workspace';
     
     // Create or get context holder for this document
-    const contextHolder = new ContextHolder(document, workspaceName);
+    const contextHolder = new ContextHolder(document, workspaceName, () => this.updateWebviewState(webviewPanel, contextHolder));
     this.contextHolders.set(document.uri.toString(), contextHolder);
 
     webviewPanel.webview.options = { enableScripts: true };
@@ -71,7 +69,6 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
           const knowledge = contextHolder.emitFileKnowledge( message.filePath );
           if (knowledge) {
             contextHolder.addItem( knowledge );
-            this.updateWebviewState(panel, contextHolder);  // TODO: investigate, do we need that??
           } else {
             vscode.window.showErrorMessage(`Failed to include file: ${message.filePath}`);
           }
@@ -81,17 +78,11 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
         break;
       
       case 'removeItem':
-        const removed = contextHolder.removeItem(message.id);
-        if (removed) {
-          this.updateWebviewState(panel, contextHolder);
-        }
+        contextHolder.removeItem(message.id);
         break;
       
       case 'toggleItemCollapse':
-        const toggled = contextHolder.toggleItemCollapse(message.id);
-        if (toggled) {
-          this.updateWebviewState(panel, contextHolder);
-        }
+        contextHolder.toggleItemCollapse(message.id);
         break;
       
       case 'showInformationMessage':
@@ -115,8 +106,6 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
               command: 'setAgentRunning',
               running: false
             });
-            
-            this.updateWebviewState(panel, contextHolder);
           } catch (error) {
             panel.webview.postMessage({
               command: 'setAgentRunning',
@@ -126,17 +115,12 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
             vscode.window.showErrorMessage(`Agent failed: ${error}`);
             console.error('Agent run failed:', error);
           }
-        } else {
-          this.updateWebviewState(panel, contextHolder);
         }
         break;
         
       case 'executeWorkItem':
         try {
-          const success = await contextHolder.executeToolWorkItem(message.id);
-          if (success) {
-            this.updateWebviewState(panel, contextHolder);
-          }
+          contextHolder.executeToolWorkItem(message.id);
         } catch (error) {
           vscode.window.showErrorMessage(`Work item execution failed: ${error}`);
         }
