@@ -38,6 +38,15 @@ Sorcery assumes that:
 
 - An OpenAI or Claude API key (can be configured via extension settings)
 
+#### Building from source
+- Have **Node.js v18+** installed (check with `node -v`)
+- Have **VSCode v1.100+**; have it in `PATH` system variable
+
+- clone the repo
+- `npm install` - installs dependencies
+- `npm run compile` - builds the extension, find it in `OUTPUT_PATH_GOES_HERE`
+- `npm run install` - builds & installs the extension into system-known VSCode (the one in the `PATH`)
+
 ---
 
 ## Extension Settings

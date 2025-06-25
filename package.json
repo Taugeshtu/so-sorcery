@@ -72,14 +72,14 @@
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
     "test": "vscode-test",
-    "package": "vsce package",
-    "publish": "vsce publish",
-    "install": "npm run compile && rimraf *.vsix && vsce package && code --install-extension *.vsix --force"
+    "package": "npx @vscode/vsce package",
+    "publish": "npx @vscode/vsce publish",
+    "install": "npm run compile && node scripts/clean-vsix.js && npx @vscode/vsce package && node scripts/install-vsix.js"
   },
   "devDependencies": {
     "esbuild": "^0.21.0",
     "rimraf": "^5.0.0",
-    "vsce": "^2.21.0",
+    "@vscode/vsce": "^3.5.0",
     "@types/vscode": "^1.100.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "20.x",
