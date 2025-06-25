@@ -66,6 +66,7 @@ Functional:
 - [x] better project assistant prompt
 - [x] !!Handling work items!!
 - [x] maybe better parsing?
+- [ ] Work items are not being saved to json lol
 - [ ] A way to view the full response of PA somewhere
 - [ ] File read/write tools
     - [ ] Make multi-read actually work: improve system prompt to enable it better? or tool description?

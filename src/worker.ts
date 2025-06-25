@@ -88,9 +88,14 @@ export class Worker {
       
       if (targetMatch) {
         const target = targetMatch[1].trim().toLowerCase();
-        // workType = target === 'user' ? 'user' : 'agent';
-        workType = target === 'user' ? 'user' : 'agent';
-        // TODO: actually parse the target here
+        // Map target strings to proper executor types
+        if (target === 'user') {
+          workType = 'user';
+        } else if (['multiread', 'file_read', 'file_write'].includes(target)) {
+          workType = target as WorkItem['executor'];
+        } else {
+          workType = 'agent';
+        }
         actualContent = workContent.replace(/<target>[\s\S]*?<\/target>/, '').trim();
       }
       
