@@ -5,7 +5,7 @@ import { Knowledge, WorkItem } from './types';
 
 export interface WorkerResponse {
   knowledges: Knowledge[];
-  workItems: WorkItem[];
+  works: WorkItem[];
   rawResponse?: string; // for when parsing fails
 }
 
@@ -52,7 +52,7 @@ export class Worker {
             timestamp: Date.now()
           }
         }],
-        workItems: [],
+        works: [],
         rawResponse: response.content
       };
     }
@@ -126,7 +126,7 @@ export class Worker {
       });
     }
 
-    return { knowledges, workItems };
+    return { knowledges, works: workItems };
   }
 
   public getPsyche(): Psyche {

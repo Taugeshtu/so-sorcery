@@ -111,27 +111,51 @@ export class ContextHolder {
     this.context.availableFiles = files;
     this.saveToDocument();
   }
-
-  public async includeFileInContext(filePath: string): Promise<Knowledge | null> {
-    // Check if file is available
+  
+  public emitKnowledge(source: Knowledge['source'], content: string): Knowledge {
+    const knowledge: Knowledge = {
+      id: -1, collapsed: true,
+      source: source,
+      content: content,
+      references: [],
+      metadata: {
+        timestamp: Date.now()
+      }
+    };
+    return knowledge;
+  }
+  
+  public emitFileKnowledge(filePath: string): Knowledge | null {
     if (!this.context.availableFiles.includes(filePath)) {
       return null;
     }
-
-    // Check if already included by looking for existing file knowledge
+    
     const existingKnowledge = this.context.items.find(item => 
       this.isKnowledge(item) && item.source === 'file' && item.content === filePath
     ) as Knowledge;
     
     if (existingKnowledge) {
-      return existingKnowledge;
+      // return existingKnowledge; // UH-OH! NOT SURE THIS IS CORRECT, TODO: CHECK!!
+      return null;
     }
     
-    // Add new file knowledge
-    const knowledge = this.addKnowledge('file', filePath, []);
-    return knowledge;
+    return this.emitKnowledge('file', filePath);
   }
-
+  
+  public addItem(item: ContextItem): ContextItem {
+    // Assign ID and add to context
+    item.id = this.context.nextId++;
+    this.context.items.push(item);
+    
+    // If it's a work item, schedule auto-execution
+    if (this.isWorkItem(item)) {
+      this.scheduleAutoExecution(item as WorkItem);
+    }
+    
+    this.saveToDocument();
+    return item;
+  }
+  
   public removeFileFromContext(filePath: string): boolean {
     // Find and remove the file knowledge
     const knowledge = this.context.items.find(item => 
@@ -143,56 +167,6 @@ export class ContextHolder {
     }
 
     return false;
-  }
-
-  public addItem(item: ContextItem): ContextItem {
-    item.id = this.context.nextId++;
-    this.context.items.push(item);
-    this.saveToDocument();
-    return item;
-  }
-
-  public addKnowledge(
-    source: Knowledge['source'], 
-    content: string, 
-    references?: number[]
-  ): Knowledge {
-    const knowledge: Knowledge = {
-      id: this.context.nextId,
-      collapsed: false,
-      source,
-      content,
-      references: references || [],
-      metadata: {
-        timestamp: Date.now()
-      }
-    };
-
-    return this.addItem(knowledge) as Knowledge;
-  }
-
-  public addWorkItem(
-    executor: WorkItem['executor'],
-    content: string,
-    psyche?: string,
-    tool?: string
-  ): WorkItem {
-    const workItem: WorkItem = {
-      id: this.context.nextId,
-      collapsed: false,
-      executor,
-      content,
-      status: 'cold',
-      metadata: {
-        timestamp: Date.now(),
-        source_psyche: psyche,
-        source_tool: tool
-      }
-    };
-
-    const addedItem = this.addItem(workItem) as WorkItem;
-    this.scheduleAutoExecution(addedItem);
-    return addedItem;
   }
   
   private scheduleAutoExecution(workItem: WorkItem): void {
@@ -259,8 +233,8 @@ export class ContextHolder {
       }
 
       // Add work items to context
-      for (const workItem of response.workItems) {
-        this.addItem(workItem);
+      for (const work of response.works) {
+        this.addItem(work);
       }
 
       this.saveToDocument();
@@ -385,9 +359,9 @@ export class ContextHolder {
         }
       }
 
-      if (result.workItems) {
-        for (const newWorkItem of result.workItems) {
-          this.addItem(newWorkItem);
+      if (result.works) {
+        for (const newWork of result.works) {
+          this.addItem(newWork);
         }
       }
 

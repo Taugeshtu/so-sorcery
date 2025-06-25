@@ -31,8 +31,9 @@ export class MultiReadTool extends Tool {
       // Process each file path
       for (const filePath of filePaths) {
         try {
-          const knowledge = await this.context.includeFileInContext(filePath);
+          const knowledge = this.context.emitFileKnowledge(filePath);
           if (knowledge) {
+            this.context.addItem( knowledge );
             results.push(`Added ${filePath} to context (ID: ${knowledge.id})`);
           } else {
             errors.push(`File not available or already in context: ${filePath}`);

@@ -68,9 +68,10 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
     switch (message.command) {
       case 'addFileToContext':
         try {
-          const knowledge = await contextHolder.includeFileInContext(message.filePath);
+          const knowledge = contextHolder.emitFileKnowledge( message.filePath );
           if (knowledge) {
-            this.updateWebviewState(panel, contextHolder);
+            contextHolder.addItem( knowledge );
+            this.updateWebviewState(panel, contextHolder);  // TODO: investigate, do we need that??
           } else {
             vscode.window.showErrorMessage(`Failed to include file: ${message.filePath}`);
           }
@@ -98,18 +99,8 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
         break;
       
       case 'addUserKnowledge':
-        const knowledge: Knowledge = {
-          id: 0, // Will be set by addItem
-          collapsed: false,
-          source: 'user',
-          content: message.content,
-          references: message.references || [],
-          metadata: {
-            timestamp: Date.now()
-          }
-        };
-        
-        contextHolder.addItem(knowledge);
+        const emitted = contextHolder.emitKnowledge('user', message.content);
+        const added = contextHolder.addItem(emitted);
         
         if (message.runAgent) {
           try {

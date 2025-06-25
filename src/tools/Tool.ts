@@ -4,7 +4,7 @@ import { ContextHolder } from '../contextHolder';
 
 export interface ToolResult {
   knowledges?: Knowledge[];
-  workItems?: WorkItem[];
+  works?: WorkItem[];
   error?: string;
 }
 
