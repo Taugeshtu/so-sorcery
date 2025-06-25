@@ -2,6 +2,7 @@
 import { Psyche } from './psyche';
 import { Backend, Models, Response as LLMResponse } from './llm';
 import { Knowledge, WorkItem } from './types';
+import { Block } from './utils/BlockParser';
 
 export interface WorkerResponse {
   knowledges: Knowledge[];
@@ -60,16 +61,16 @@ export class Worker {
     // Parse XML blocks
     const knowledges: Knowledge[] = [];
     const workItems: WorkItem[] = [];
-
-    // Extract <knowledge>...</knowledge> blocks
-    const knowledgeRegex = /<knowledge>([\s\S]*?)<\/knowledge>/g;
-    let match;
-    while ((match = knowledgeRegex.exec(response.content)) !== null) {
+    const responseBlock = Block.fromString(response.content);
+    
+    const knowledgeBlocks = responseBlock.extractAll('<knowledge>\n', '\n</knowledge>');
+    for (const block of knowledgeBlocks) {
+      const content = block.extracted;
       knowledges.push({
-        id: 0, // Will be assigned proper ID by ContextHolder
+        id: -1,
         source: 'agent',
-        content: match[1].trim(),
-        collapsed: false, // Add this
+        content: content,
+        collapsed: true,
         metadata: {
           source_psyche: this.psyche.name,
           timestamp: Date.now()
@@ -77,48 +78,45 @@ export class Worker {
       });
     }
 
-    // Extract <work>...</work> blocks
-    const workRegex = /<work>([\s\S]*?)<\/work>/g;
-    while ((match = workRegex.exec(response.content)) !== null) {
-      const workContent = match[1].trim();
-      const targetMatch = workContent.match(/<target>([\s\S]*?)<\/target>/);
+    const workBlocks = responseBlock.extractAll('<work>\n', '\n</work>');
+    for (const block of workBlocks) {
+      const target = block.extract('<target>', '</target>');
+      const extractedContent = (target.length > 0)
+                      ? Block.fromString(block+"==terminator").extract('</target>', '==terminator')
+                      : block;
       
       let workType: WorkItem['executor'] = 'agent';
-      let actualContent = workContent;
-      
-      if (targetMatch) {
-        const target = targetMatch[1].trim().toLowerCase();
-        // Map target strings to proper executor types
-        if (target === 'user') {
+      if (target.length >0){
+        const extractedTarget = target.extracted;
+        if (extractedTarget === 'user') {
           workType = 'user';
-        } else if (['multiread', 'file_read', 'file_write'].includes(target)) {
-          workType = target as WorkItem['executor'];
-        } else {
-          workType = 'agent';
+        } else if (['multiread', 'file_read', 'file_write'].includes(extractedTarget)) {
+          workType = extractedTarget as WorkItem['executor'];
         }
-        actualContent = workContent.replace(/<target>[\s\S]*?<\/target>/, '').trim();
       }
       
-      workItems.push({
-        id: 0, // Will be assigned proper ID by ContextHolder
-        collapsed: false,
-        executor: workType,
-        content: actualContent,
-        status: 'cold',
-        metadata: {
-          source_psyche: this.psyche.name,
-          timestamp: Date.now()
-        }
-      });
+      if( extractedContent.length > 0 ) {
+        workItems.push({
+          id: -1,
+          collapsed: false,
+          executor: workType,
+          content: extractedContent.extracted,
+          status: 'cold',
+          metadata: {
+            source_psyche: this.psyche.name,
+            timestamp: Date.now()
+          }
+        });
+      }
     }
     
     // If we didn't parse anything, fall back to raw response
     if (knowledges.length === 0 && workItems.length === 0) {
       knowledges.push({
-        id: 0,
+        id: -1,
         source: 'agent',
         content: response.content,
-        collapsed: false, // Add this
+        collapsed: false,
         metadata: {
           source_psyche: this.psyche.name,
           timestamp: Date.now()
