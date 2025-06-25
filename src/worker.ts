@@ -7,7 +7,7 @@ import { Block } from './utils/BlockParser';
 export interface WorkerResponse {
   knowledges: Knowledge[];
   works: WorkItem[];
-  rawResponse?: string; // for when parsing fails
+  rawResponse?: string;
 }
 
 export class Worker {
@@ -36,7 +36,9 @@ export class Worker {
       this.psyche.terminators
     );
 
-    return this.parseResponse(llmResponse);
+    const response = this.parseResponse(llmResponse);
+    response.rawResponse = llmResponse.content;
+    return response;
   }
 
   private parseResponse(response: LLMResponse): WorkerResponse {

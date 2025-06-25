@@ -14,10 +14,25 @@ export function getWebviewHtml(webview: vscode.Webview, cssUri: vscode.Uri, jsUr
         <div id="main">
           <div id="knowledgesList"></div>
           
+          <div id="workerOutput" class="hidden">
+            <div id="workerOutputHeader">
+              <h3 id="workerOutputTitle">Worker Output</h3>
+              <button id="copyWorkerOutputButton" class="copy-button">Copy</button>
+            </div>
+            <div id="workerOutputContent"></div>
+          </div>
+          
           <div id="inputSection">
             <div id="buttonContainer">
-              <button id="addButton" class="icon-button" title="Add Knowledge">+</button>
-              <button id="runButton" class="primary-button">Run</button>
+              <div id="leftButtons">
+                <button id="addButton" class="icon-button" title="Add Knowledge">+</button>
+                <button id="runButton" class="primary-button">Run</button>
+              </div>
+              <div id="rightButtons">
+                <div id="workerButtons">
+                  <!-- Worker buttons will be dynamically added here -->
+                </div>
+              </div>
             </div>
             <div id="textareaContainer">
               <textarea 

@@ -67,44 +67,24 @@ EVERYTHING. This is early days, see TODO for more info
 ## TODO
 
 Functional:
-- [x] Copy buttons
-- [x] remove storing the whole-ass file content inside file knowledge
-- [x] Fix context builder
-- [x] better project assistant prompt
-- [x] !!Handling work items!!
-- [x] maybe better parsing?
-- [x] Work items are not being saved to json lol
-- [ ] A way to view the full response of PA somewhere
-- [x] Make multi-read actually work:
-    - [x] improve system prompt to enable it better? or tool description?
-    - [x] automatically added to context things do not force view update??..
-            - not just view update; despite in-memory items being present, they don't get into json either. I think there's something fucky with the file-editor-memory thing going on
-- [ ] Test that the most up-to-date content of the file is being sent! Agent reactions look sus
+- [ ] Add work items to the knowledge blob
+- [ ] Try different formatting when congealing knowledge blob for file knowledge? So the agent is maybe less confused?
 - [ ] Undo/Redo (VS Code's built-in document undo should work?)
-
 - [~] Improve the system: agent is low on self-reflection, doesn't recognize refactoring, doesn't recognize the files are actual files it seems...
 
 Visual & polish:
 - [ ] "No knowledge yet" also reacts to file knowledge. Shouldn't
-- [ ] "Run" seems to be leading to a stuck state
-- [x] user knowledge adds in pre-collapsed
-- [x] Some kind of indicator (gradient into gray, transparent on top?) that the item is collapsed
 - [ ] ?? Remove collapse button if item is short enough to fit
-- [ ] when add & run-ing, refresh the screen
 - [ ] Cost counting and displaying
 - [ ] Add ID in the header of knowledge items?
 - [ ] remove available files list from the json?..
 - [ ] Parsing "thinking" stages of PA response and displaying them somewhere (couple that with streaming support?)
 - [ ] Hotkey settings for "add" and "send it"
-- [x] Add a list of tools to system environment for PA
 - [ ] Add a list of agents to system environment for PA
 - [ ] Move PA response parsing out of "Worker" (since worker can be NOT PA)
-- [x] Button to just run?.. Maybe it changes text depending on whether our user input is empty or not
-- [x] Bring in block parser because xml extraction fails miserably lol
 - [ ] Move parsing from "worker" into "contextHolder" because that's PA-specific
 
 Big & faraway items:
-- [x] more robust error handling on the backend pls?
 - [~] File read tool (done, but untested)
 - [ ] File write tool
 - [ ] !! consider more detailed format for submitting knowledge, allowing UPDATING as well (is a scratchpad, you see?)
@@ -124,6 +104,29 @@ Big & faraway items:
 
 ## Release Notes
 
+### 0.3.1
+
+- [x] A way to view the full response of PA somewhere
+- [x] "Run" seems to be leading to a stuck state
+
 ### 0.2.0
 
-- Initial alpha release with custom context editor, knowledge & work cards, and file context. Has a working `multiread` tool for the agent to pull up files into context by themselves
+Initial alpha release with custom context editor, knowledge & work cards, and file context. Has a working `multiread` tool for the agent to pull up files into context by themselves:
+
+- [x] Copy buttons
+- [x] remove storing the whole-ass file content inside file knowledge
+- [x] Fix context builder
+- [x] better project assistant prompt
+- [x] !!Handling work items!!
+- [x] Work items are not being saved to json lol
+- [x] more robust error handling on the backend pls?
+- [x] Add a list of tools to system environment for PA
+- [x] Bring in block parser because xml extraction fails miserably lol
+- [x] Button to just run?.. Maybe it changes text depending on whether our user input is empty or not
+- [x] when add & run-ing, refresh the screen
+- [x] Some kind of indicator (gradient into gray, transparent on top?) that the item is collapsed
+- [x] user knowledge adds in pre-collapsed
+- [x] Make multi-read actually work:
+    - [x] improve system prompt to enable it better? or tool description?
+    - [x] automatically added to context things do not force view update??..
+            - not just view update; despite in-memory items being present, they don't get into json either. I think there's something fucky with the file-editor-memory thing going on

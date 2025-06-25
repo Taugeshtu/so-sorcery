@@ -5,6 +5,7 @@ let isResizing = false;
 let allAvailableFiles = [];
 let fileKnowledges = []; // Store full knowledge objects instead of just paths
 let currentContext = null; // Store the full context
+let currentWorkerView = null; // Track which worker output is currently shown
 
 document.addEventListener('DOMContentLoaded', () => {
     const resizer = document.getElementById('resizer');
@@ -14,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const userInput = document.getElementById('userInput');
     const addButton = document.getElementById('addButton');
     const runButton = document.getElementById('runButton');
+    const copyWorkerOutputButton = document.getElementById('copyWorkerOutputButton');
     
     // Resizer logic (unchanged)
     resizer.addEventListener('mousedown', (e) => {
@@ -63,6 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Button handlers
     addButton.addEventListener('click', () => addKnowledge(false));
     runButton.addEventListener('click', handleRunButton);
+    copyWorkerOutputButton.addEventListener('click', copyWorkerOutput);
     
     // Initialize button text
     updateButtonText();
@@ -90,9 +93,96 @@ function updateUI(context) {
         'source' in item && item.source === 'file'
     );
     
+    updateWorkerButtons(context.workerOutputs || {});
     updateItemsList(context.items);
     updateIncludedFilesList();
     updateAvailableFilesTree();
+}
+
+function updateWorkerButtons(workerOutputs) {
+    const workerButtonsContainer = document.getElementById('workerButtons');
+    workerButtonsContainer.innerHTML = '';
+    
+    const workerNames = Object.keys(workerOutputs);
+    
+    workerNames.forEach(workerName => {
+        const button = document.createElement('button');
+        button.className = 'worker-button';
+        button.textContent = workerName;
+        button.dataset.workerName = workerName;
+        
+        // Set active state if this worker is currently shown
+        if (currentWorkerView === workerName) {
+            button.classList.add('active');
+        }
+        
+        button.addEventListener('click', () => {
+            if (currentWorkerView === workerName) {
+                // Clicking active button - hide worker output
+                hideWorkerOutput();
+            } else {
+                // Show this worker's output
+                showWorkerOutput(workerName);
+            }
+        });
+        
+        workerButtonsContainer.appendChild(button);
+    });
+}
+
+function showWorkerOutput(workerName) {
+    currentWorkerView = workerName;
+    
+    // Update button states
+    document.querySelectorAll('.worker-button').forEach(btn => {
+        if (btn.dataset.workerName === workerName) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+    
+    // Hide knowledge list and show worker output
+    document.getElementById('knowledgesList').style.display = 'none';
+    const workerOutput = document.getElementById('workerOutput');
+    workerOutput.classList.remove('hidden');
+    
+    // Update worker output content
+    const workerOutputTitle = document.getElementById('workerOutputTitle');
+    const workerOutputContent = document.getElementById('workerOutputContent');
+    
+    workerOutputTitle.textContent = `${workerName} Output`;
+    
+    const output = currentContext.workerOutputs[workerName];
+    if (output && output.trim()) {
+        workerOutputContent.textContent = output;
+    } else {
+        workerOutputContent.textContent = 'No output yet';
+    }
+}
+
+function hideWorkerOutput() {
+    currentWorkerView = null;
+    
+    // Update button states - remove all active states
+    document.querySelectorAll('.worker-button').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Show knowledge list and hide worker output
+    document.getElementById('knowledgesList').style.display = 'block';
+    document.getElementById('workerOutput').classList.add('hidden');
+}
+
+function copyWorkerOutput() {
+    if (!currentWorkerView || !currentContext.workerOutputs) {
+        return;
+    }
+    
+    const output = currentContext.workerOutputs[currentWorkerView];
+    if (output && output.trim()) {
+        copyToClipboard(output);
+    }
 }
 
 function updateItemsList(items) {

@@ -3,7 +3,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { Knowledge, SorceryContext, WorkItem, ContextItem } from './types';
 import { Worker, WorkerResponse } from './worker';
-import { getPsyche } from './psyche';
+import { getPsyche, getAllPsycheNames } from './psyche';
 import { toolRegistry } from './tools/ToolRegistry';
 import { Tool } from './tools/Tool';
 
@@ -19,6 +19,19 @@ export class ContextHolder {
     this.context = this.loadFromDocument(workspaceName);
     this.tools = toolRegistry.createTools(this);
     this.onStateChanged = onStateChanged;
+    
+    // initializing worker outputs:
+    if (!this.context.workerOutputs) {
+      this.context.workerOutputs = {};
+    }
+    
+    // Initialize with all known psyches
+    const psycheNames = getAllPsycheNames();
+    for (const psycheName of psycheNames) {
+      if (!(psycheName in this.context.workerOutputs)) {
+        this.context.workerOutputs[psycheName] = '';
+      }
+    }
   }
 
   private loadFromDocument(workspaceName: string): SorceryContext {
@@ -214,7 +227,7 @@ export class ContextHolder {
     }
   }
 
-  public async runAgent(userInput: string, psycheName: string = 'project_assistant'): Promise<WorkerResponse> {
+  public async runAgent(psycheName: string = 'project_assistant'): Promise<WorkerResponse> {
     const psyche = getPsyche(psycheName);
     if (!psyche) {
       throw new Error(`Psyche ${psycheName} not found`);
@@ -228,6 +241,12 @@ export class ContextHolder {
 
     try {
       const response = await worker.step(knowledgeBlob);
+
+      // Store the raw response in context
+      if (!this.context.workerOutputs) {
+        this.context.workerOutputs = {};
+      }
+      this.context.workerOutputs[psycheName] = response.rawResponse || '';
 
       // Add knowledges to context
       for (const knowledge of response.knowledges) {
@@ -418,6 +437,14 @@ export class ContextHolder {
   
   public getAvailableTools(): Array<{ name: string; description: string }> {
     return this.tools.map(t => ({ name: t.name, description: t.description }));
+  }
+  
+  public getWorkerOutput(psycheName: string): string | undefined {
+    return this.context.workerOutputs?.[psycheName];
+  }
+
+  public getAllWorkerOutputs(): { [workerKey: string]: string } {
+    return { ...(this.context.workerOutputs || {}) };
   }
 
   private isKnowledge(item: ContextItem): item is Knowledge {

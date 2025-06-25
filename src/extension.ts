@@ -6,8 +6,8 @@ import { toolRegistry } from './tools/ToolRegistry';
 import { MultiReadTool } from './tools/MultiReadTool';
 import { FileReadTool } from './tools/FileReadTool';
 
-export function activate(context: vscode.ExtensionContext) {
-  psyche.initializePsyches(context.extensionUri);
+export async function activate(context: vscode.ExtensionContext) {
+  await psyche.initializePsyches(context.extensionUri);
   toolRegistry.register(MultiReadTool);
   // toolRegistry.register(FileReadTool); // file read tool is disabled, this is future stuff
   

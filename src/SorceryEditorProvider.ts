@@ -100,7 +100,7 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
               running: true
             });
             
-            const response = await contextHolder.runAgent(message.content);
+            const response = await contextHolder.runAgent();
             
             panel.webview.postMessage({
               command: 'setAgentRunning',
@@ -117,7 +117,31 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
           }
         }
         break;
-        
+      
+      case 'runAgent':
+        try {
+          panel.webview.postMessage({
+            command: 'setAgentRunning',
+            running: true
+          });
+          
+          const response = await contextHolder.runAgent();
+          
+          panel.webview.postMessage({
+            command: 'setAgentRunning',
+            running: false
+          });
+        } catch (error) {
+          panel.webview.postMessage({
+            command: 'setAgentRunning',
+            running: false
+          });
+          
+          vscode.window.showErrorMessage(`Agent failed: ${error}`);
+          console.error('Agent run failed:', error);
+        }
+        break;
+      
       case 'executeWorkItem':
         try {
           contextHolder.executeToolWorkItem(message.id);
