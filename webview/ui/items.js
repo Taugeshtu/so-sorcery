@@ -9,19 +9,13 @@ export class ItemsManager {
         // Items manager doesn't need specific event listeners at init
         // All interactions are handled through dynamically created elements
     }
-
+    
     updateItemsList(items) {
         const knowledgesList = document.getElementById('knowledgesList');
         if (!knowledgesList) return;
-
+        
         knowledgesList.innerHTML = '';
         
-        if (items.length === 0) {
-            this.renderEmptyState(knowledgesList);
-            return;
-        }
-
-        // Filter out file knowledges for the main list and sort by timestamp
         const displayItems = items
             .filter(item => !('source' in item && item.source === 'file'))
             .sort((a, b) => {
@@ -29,6 +23,11 @@ export class ItemsManager {
                 const bTime = b.metadata?.timestamp || 0;
                 return aTime - bTime;
             });
+        
+        if (displayItems.length === 0) {
+            this.renderEmptyState(knowledgesList);
+            return;
+        }
         
         displayItems.forEach((item, index) => {
             let itemCard;
@@ -62,7 +61,7 @@ export class ItemsManager {
     renderEmptyState(container) {
         const emptyState = document.createElement('div');
         emptyState.className = 'empty-state';
-        emptyState.textContent = 'No knowledge or work items yet. Add some to get started!';
+        emptyState.textContent = 'Add some project knowledge to get started!';
         container.appendChild(emptyState);
     }
 

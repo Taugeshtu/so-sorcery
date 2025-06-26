@@ -248,8 +248,10 @@ export class ContextHolder {
         this.context.workerOutputs = {};
       }
       const response = await runPsyche(this.context.workerOutputs, psyche, knowledgeBlob, systemEnvironment);
-      
-      const extracted = extract(response);
+      const extractionContext = {
+        source_psyche: psyche.displayName
+      }
+      const extracted = extract(response, extractionContext);
       for (const knowledge of extracted.knowledges) {
         this.addItem(knowledge);
       }

@@ -59,6 +59,7 @@ class SorceryWebview {
         this.fileManager.updateFileLists();
         
         // Update worker buttons and outputs
+        // TODO: ideally we want psyche's display names here...
         this.workerManager.updateWorkerButtons(context.workerOutputs || {});
     }
     
