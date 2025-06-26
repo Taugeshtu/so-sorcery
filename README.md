@@ -58,49 +58,59 @@ Sorcery assumes that:
 
 ---
 
-## Known Issues
+## Known Issues / TODO
 
-EVERYTHING. This is early days, see TODO for more info
-
----
-
-## TODO
+EVERYTHING. This is early days
 
 Functional:
+- [ ] Daisy-chained psyches
+- [ ] Forking context
+- [ ] Cost counting and displaying
 - [ ] Undo/Redo (VS Code's built-in document undo should work?)
+- [ ] Images handling
 - [~] Improve the system: agent is low on self-reflection, doesn't recognize refactoring, doesn't recognize the files are actual files it seems...
 
 Visual & polish:
+- [ ] After reloading window, most recent full response got nuked :/ no bueno!
 - [ ] "No knowledge yet" also reacts to file knowledge. Shouldn't
 - [ ] ?? Remove collapse button if item is short enough to fit
-- [ ] Cost counting and displaying
 - [ ] Add ID in the header of knowledge items?
 - [ ] remove available files list from the json?..
 - [ ] Parsing "thinking" stages of PA response and displaying them somewhere (couple that with streaming support?)
 - [ ] Hotkey settings for "add" and "send it"
 - [ ] Add a list of agents to system environment for PA
 - [ ] Move PA response parsing out of "Worker" (since worker can be NOT PA)
-- [ ] Move parsing from "worker" into "contextHolder" because that's PA-specific
+- [ ] Try to split the gargantuan `script.js` into several files?
+- [ ] Make completed work auto-disappears? (at least for Tool ops?) (I do like being able to see what's going on... provide an event log?) Maybe it becomes omitted?
+- [ ] Settings: custom additional ignore
+- [ ] Auto-focusing the input field whenever Sorcery editor is activated
+- [ ] A way to navigate focus from files search to results
+- [ ] Folders on top in files tree
+- [ ] When files are added/removed, we need to be aware of this... Also maybe pull the list of availabe files up a level, it's more workspace-global than per-context anyway
+- [ ] Searched, added item - search didn't clear, BUT filter did drop. Hmmm... Dunno which should happen, but not that
+- [ ] What if you already have a file "Session_{X}.sorcery"?
 
 Big & faraway items:
 - [~] File read tool (done, but untested)
 - [ ] File write tool
 - [ ] !! consider more detailed format for submitting knowledge, allowing UPDATING as well (is a scratchpad, you see?)
-- [ ] Parsing & making jumpable wikilinks, obsidian-style, for IDs and files
-- [ ] Forking context
+- [ ] Parsing & making jumpable `[[wikilinks]]`, obsidian-style, for IDs and files
 - [ ] Multiple agent types ("psyches": autopath, patcher...)
 - [ ] Knowledge auto-naming & summary (Haiku to the rescue?)
 - [ ] Reference arrows (this is the big visual feature!)
-- [ ] chuck the whole file list (respecting gitignore) into context; but UI is filtered by extension?.. So that the agent knows what's up? OR give the agent "tree" command... yeah, that might be better. On-demand stuff...
 - [ ] building PA input with graph pull
 - [ ] psyche editor (ideally storing them into user-global storage but not settings)
 - [ ] maybe streaming support?
-- [ ] Images handling
 - [ ] Better tool ecosystem (interpreter, tree, maybe bash/cmd?)
+- [ ] Docs/readme of some kind, or a tutorial
 
 ---
 
 ## Release Notes
+
+### 
+
+- [x] Second case for "parsing failed, therefore full response": not just missing terminator, but also no knowledge nor work items
 
 ### 0.4.0
 

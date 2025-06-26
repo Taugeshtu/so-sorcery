@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import { Models, Response as LLMResponse } from './llm';
 
 export interface Psyche {
   name: string;
@@ -142,4 +143,25 @@ export function getAllPsyches(): Psyche[] {
 
 export function addPsyche(psyche: Psyche): void {
   psycheManager.addPsyche(psyche);
+}
+
+export async function runPsyche(psyche:Psyche, input: string, systemContext?: string): Promise<LLMResponse> {
+  const systemPrompt = systemContext 
+                        ? `${systemContext}\n\n${psyche.system}`
+                        : psyche.system;
+  const model = Models[psyche.model];
+  if (!model) {
+    throw new Error(`Model ${psyche.model} for ${psyche.name} not found`);
+  }
+  
+  const llmResponse = await model.backend.run(
+    model,
+    psyche.maxTokens,
+    systemPrompt,
+    input,
+    psyche.priming,
+    psyche.terminators
+  );
+  
+  return llmResponse;
 }

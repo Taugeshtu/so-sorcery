@@ -2,10 +2,10 @@ import * as vscode from 'vscode';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { Knowledge, SorceryContext, WorkItem, ContextItem } from './types';
-import { Worker, WorkerResponse } from './worker';
-import { getPsyche, getAllPsycheNames } from './psyche';
+import { getPsyche, getAllPsycheNames, runPsyche } from './psyche';
 import { toolRegistry } from './tools/ToolRegistry';
 import { Tool } from './tools/Tool';
+import { extract, ExtractionResult } from './Extractor';
 
 export class ContextHolder {
   private context: SorceryContext;
@@ -227,39 +227,36 @@ export class ContextHolder {
     }
   }
 
-  public async runAgent(psycheName: string = 'project_assistant'): Promise<WorkerResponse> {
+  public async runPA(): Promise<ExtractionResult> {
+    const psycheName = 'project_assistant';
     const psyche = getPsyche(psycheName);
     if (!psyche) {
       throw new Error(`Psyche ${psycheName} not found`);
     }
-
+    
     // Build context for the agent
     const systemEnvironment = this.buildSystemEnvironment();
-    const worker = new Worker(psyche, systemEnvironment);
-    
     const knowledgeBlob = await this.buildKnowledgeBlob();
 
     try {
-      const response = await worker.step(knowledgeBlob);
-
+      const response = await runPsyche(psyche, knowledgeBlob, systemEnvironment);
+      
       // Store the raw response in context
       if (!this.context.workerOutputs) {
         this.context.workerOutputs = {};
       }
-      this.context.workerOutputs[psycheName] = response.rawResponse || '';
-
-      // Add knowledges to context
-      for (const knowledge of response.knowledges) {
+      this.context.workerOutputs[psycheName] = response.content;
+      
+      const extracted = extract(response);
+      for (const knowledge of extracted.knowledges) {
         this.addItem(knowledge);
       }
-
-      // Add work items to context
-      for (const work of response.works) {
+      for (const work of extracted.works) {
         this.addItem(work);
       }
-
+      
       this.saveToDocument();
-      return response;
+      return extracted;
     } catch (error) {
       console.error('Agent run failed:', error);
       throw error;

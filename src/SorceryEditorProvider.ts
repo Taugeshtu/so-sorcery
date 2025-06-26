@@ -100,7 +100,7 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
               running: true
             });
             
-            const response = await contextHolder.runAgent();
+            const response = await contextHolder.runPA();
             
             panel.webview.postMessage({
               command: 'setAgentRunning',
@@ -125,7 +125,7 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
             running: true
           });
           
-          const response = await contextHolder.runAgent();
+          const response = await contextHolder.runPA();
           
           panel.webview.postMessage({
             command: 'setAgentRunning',
