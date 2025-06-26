@@ -64,7 +64,7 @@ EVERYTHING. This is early days
 
 Functional:
 - [ ] Forking context
-- [ ] Cost counting and displaying
+- [ ] Extractor misses code blocks, no bueno
 - [ ] Undo/Redo (VS Code's built-in document undo should work?)
 - [ ] Images handling
 - [~] Improve the system: agent is low on self-reflection, doesn't recognize refactoring, doesn't recognize the files are actual files it seems...
@@ -90,6 +90,7 @@ Visual & polish:
 - [ ] When files are added/removed, we need to be aware of this... Also maybe pull the list of availabe files up a level, it's more workspace-global than per-context anyway
 - [ ] Searched, added item - search didn't clear, BUT filter did drop. Hmmm... Dunno which should happen, but not that
 - [ ] What if you already have a file "Session_{X}.sorcery"?
+- [ ] Accumulate costs also over all workspaces
 
 Big & faraway items:
 - [~] File read tool (done, but untested)
@@ -108,6 +109,10 @@ Big & faraway items:
 ---
 
 ## Release Notes
+
+### 0.6.0
+
+- [x] Cost counting and displaying
 
 ### 0.5.0
 

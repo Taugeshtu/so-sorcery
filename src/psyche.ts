@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { Models, Response as LLMResponse } from './llm';
+import { Models, LLMResponse as LLMResponse, BackendResponse } from './llm';
 import { trace } from 'console';
 
 export interface Psyche {
@@ -159,8 +159,9 @@ export async function runPsyche(
   psyche: Psyche, 
   input: string, 
   systemContext?: string, 
-  chainDepth?: number | null
-): Promise<LLMResponse> {
+  chainDepth?: number | null,
+  costAccumulated?: number
+): Promise<BackendResponse> {
   const systemPrompt = systemContext 
                         ? `${systemContext}\n\n${psyche.system}`
                         : psyche.system;
@@ -178,6 +179,7 @@ export async function runPsyche(
     psyche.terminators
   );
   traceStore[psyche.name] = llmResponse.content;
+  const totalCostSoFar = (costAccumulated || 0) + llmResponse.cost;
   
   // Check for daisy-chaining
   if (psyche.post) {
@@ -201,9 +203,13 @@ export async function runPsyche(
       nextPsyche,
       llmResponse.content.trim(),
       systemContext,
-      nextStepDepthBudget
+      nextStepDepthBudget,
+      totalCostSoFar
     );
   }
   
-  return llmResponse;
+  return {
+    ...llmResponse,
+    cost: totalCostSoFar
+  };
 }

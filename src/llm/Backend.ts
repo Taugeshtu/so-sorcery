@@ -1,10 +1,15 @@
 // src/llm/Backend.ts
 import { Model } from './Model';
-import { Message, Messages, Response, StopReason, MessageSide } from './types';
+import { Messages, LLMResponse, StopReason, MessageSide, BackendResponse } from './types';
 
 export abstract class Backend {
   protected static logTraffic = false;
-
+  protected _accumulatedCost: number = 0;
+  
+  public getAccumulatedCost(): number {
+    return this._accumulatedCost;
+  }
+  
   public async run(
     model: Model,
     maxTokens: number,
@@ -12,7 +17,7 @@ export abstract class Backend {
     user: string,
     priming?: string,
     terminators?: string[]
-  ): Promise<Response> {
+  ): Promise<BackendResponse> {
     const messages: Messages = [{ side: MessageSide.User, content: user }];
     if (priming) {
       messages.push({ side: MessageSide.Agent, content: priming });
@@ -26,7 +31,7 @@ export abstract class Backend {
     system: string,
     messages: Messages,
     terminators?: string[]
-  ): Promise<Response> {
+  ): Promise<BackendResponse> {
     const messagesCopy = [...messages];
     
     let tokensToSample = maxTokens;
@@ -34,13 +39,17 @@ export abstract class Backend {
     let trailingWhitespace = '';
     let stopReason = StopReason.Natural;
     let terminator: string | undefined;
-
+    let inputTokensUsed = 0;
+    let outputTokensUsed = 0;
+    
     while (tokensToSample > 0) {
       const currentSampleSize = Math.min(tokensToSample, model.tokensLimit);
       const result = await this.runStep(model, currentSampleSize, system, messagesCopy, terminators);
       
       result.content = trailingWhitespace + result.content;
       tokensToSample -= model.tokensLimit;
+      inputTokensUsed += result.inputTokens;
+      outputTokensUsed += result.outputTokens;
       
       fullResponse += result.content;
       stopReason = result.stopReason;
@@ -73,8 +82,10 @@ export abstract class Backend {
         break;
       }
     }
-
-    return { content: fullResponse, stopReason, terminator };
+    
+    const cost = model.calculateCost( inputTokensUsed, outputTokensUsed );
+    this._accumulatedCost += cost;
+    return { content: fullResponse, stopReason, terminator, cost };
   }
 
   protected abstract runStep(
@@ -83,7 +94,7 @@ export abstract class Backend {
     system: string,
     messages: Messages,
     terminators?: string[]
-  ): Promise<Response>;
+  ): Promise<LLMResponse>;
 
   protected async sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));

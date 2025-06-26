@@ -50,7 +50,8 @@ export class ContextHolder {
       workspaceName,
       availableFiles: [],
       items: [],
-      nextId: 1
+      nextId: 1,
+      accumulatedCost: 0
     };
   }
 
@@ -59,7 +60,8 @@ export class ContextHolder {
       workspaceName: parsed.workspaceName || workspaceName,
       availableFiles: Array.isArray(parsed.availableFiles) ? parsed.availableFiles : [],
       items: [],
-      nextId: typeof parsed.nextId === 'number' ? parsed.nextId : 1
+      nextId: typeof parsed.nextId === 'number' ? parsed.nextId : 1,
+      accumulatedCost: typeof parsed.accumulatedCost === 'number' ? parsed.accumulatedCost : 0
     };
 
     // Handle legacy format with separate knowledges/workItems arrays
@@ -251,6 +253,8 @@ export class ContextHolder {
       for (const work of extracted.works) {
         this.addItem(work);
       }
+      
+      this.context.accumulatedCost += response.cost;
       
       this.saveToDocument();
       return extracted;
@@ -448,6 +452,10 @@ export class ContextHolder {
 
   public getAllWorkerOutputs(): { [workerKey: string]: string } {
     return { ...(this.context.workerOutputs || {}) };
+  }
+  
+  public getAccumulatedCost(): number {
+    return this.context.accumulatedCost;
   }
 
   private isKnowledge(item: ContextItem): item is Knowledge {

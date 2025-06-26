@@ -2,7 +2,7 @@
 import * as vscode from 'vscode';
 import { Backend } from './Backend';
 import { Model } from './Model';
-import { Messages, Response, StopReason } from './types';
+import { Messages, LLMResponse, StopReason } from './types';
 
 export interface WebRequest {
   url: string;
@@ -31,7 +31,7 @@ export abstract class WebBackend extends Backend {
     system: string,
     messages: Messages,
     terminators?: string[]
-  ): Promise<Response> {
+  ): Promise<LLMResponse> {
     const request = this.buildRequest(model, maxTokens, system, messages, terminators);
     
     if (Backend['logTraffic']) {
@@ -67,20 +67,22 @@ export abstract class WebBackend extends Backend {
           );
         }
         
-        return { content: '', stopReason: StopReason.NetError };
+        return { content: '', stopReason: StopReason.NetError, inputTokens: 0, outputTokens: 0 };
       }
       
       return {
         content: result.response!.content,
         stopReason: result.response!.stopReason,
-        terminator: result.response!.terminator
+        terminator: result.response!.terminator,
+        inputTokens: result.response!.inputTokens,
+        outputTokens: result.response!.outputTokens
       };
     }
-
+    
     // This should never happen but add notification just in case
     vscode.window.showErrorMessage(`Unexpected error in ${model.name} API handling`);
     console.error('!!!! ALARM WAKE THE FUCK UP !!!! this should never happen');
-    return { content: '', stopReason: StopReason.NetError };
+    return { content: '', stopReason: StopReason.NetError, inputTokens: 0, outputTokens: 0 };
   }
 
   private async makeRequest(
@@ -114,11 +116,6 @@ export abstract class WebBackend extends Backend {
       }
 
       const parsedResponse = this.parseResponse(responseText, model);
-      
-      model.registerUsage(
-        parsedResponse.inputTokens,
-        parsedResponse.outputTokens
-      );
 
       return {
         response: parsedResponse,

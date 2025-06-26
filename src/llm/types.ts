@@ -24,10 +24,19 @@ export enum StopReason {
   NetError = 'net_error'
 }
 
-export interface Response {
+export interface BackendResponse {
   content: string;
   stopReason: StopReason;
   terminator?: string;
+  cost: number;
+}
+
+export interface LLMResponse {
+  content: string;
+  stopReason: StopReason;
+  terminator?: string;
+  inputTokens: number;
+  outputTokens: number;
 }
 
 export type Messages = Message[];

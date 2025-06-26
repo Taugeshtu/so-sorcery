@@ -1,6 +1,6 @@
 import { Knowledge, WorkItem } from './types';
 import { Block } from './utils/BlockParser';
-import { Response as LLMResponse } from './llm';
+import { BackendResponse } from './llm';
 
 export interface ExtractionContext {
   source_psyche?: string;
@@ -15,7 +15,7 @@ export interface ExtractionResult {
 }
 
 export function extract(
-    response: LLMResponse | string, 
+    response: BackendResponse | string, 
     context: ExtractionContext = {}
   ): ExtractionResult {
     const rawResponse = typeof response === 'string' ? response : response.content;

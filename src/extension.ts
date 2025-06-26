@@ -5,11 +5,26 @@ import * as psyche from './psyche'
 import { toolRegistry } from './tools/ToolRegistry';
 import { MultiReadTool } from './tools/MultiReadTool';
 import { FileReadTool } from './tools/FileReadTool';
+import { getSessionCost } from './llm/models';
+
+let sorceryEditorProvider: SorceryEditorProvider;
+let costStatusBarItem: vscode.StatusBarItem;
 
 export async function activate(context: vscode.ExtensionContext) {
+  const lifetimeCost = context.globalState.get<number>('sorcery.lifetimeCost', 0);
   await psyche.initializePsyches(context.extensionUri);
   toolRegistry.register(MultiReadTool);
   // toolRegistry.register(FileReadTool); // file read tool is disabled, this is future stuff
+  
+  // Create status bar item
+  costStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+  costStatusBarItem.tooltip = 'Sorcery cost tracking - workspace total and session increment';
+  context.subscriptions.push(costStatusBarItem);
+  
+  // Update cost display initially and periodically
+  updateCostDisplay();
+  const costUpdateInterval = setInterval(updateCostDisplay, 2000); // Update every 2 seconds
+  context.subscriptions.push(new vscode.Disposable(() => clearInterval(costUpdateInterval)));
   
   context.subscriptions.push(
     vscode.commands.registerCommand('sorcery.newContext', async () => {
@@ -37,14 +52,30 @@ export async function activate(context: vscode.ExtensionContext) {
     })
   );
 
+  // Create and store reference to SorceryEditorProvider
+  sorceryEditorProvider = new SorceryEditorProvider(context);
   context.subscriptions.push(
     vscode.window.registerCustomEditorProvider(
       SorceryEditorProvider.viewType,
-      new SorceryEditorProvider(context),
+      sorceryEditorProvider,
       {
         webviewOptions: { retainContextWhenHidden: true },
         supportsMultipleEditorsPerDocument: true
       }
     )
   );
+}
+
+function updateCostDisplay() {
+  const sessionCost = getSessionCost();
+  const workspaceCost = sorceryEditorProvider ? sorceryEditorProvider.getWorkspaceCost() : 0;
+  const formatCost = (cost: number): string => {
+    return cost.toFixed(2);
+  };
+  
+  const workspaceCostStr = formatCost(workspaceCost);
+  const sessionCostStr = formatCost(sessionCost);
+  
+  costStatusBarItem.text = `💰 Sorcery: ${workspaceCostStr} (+${sessionCostStr})`;
+  costStatusBarItem.show();
 }

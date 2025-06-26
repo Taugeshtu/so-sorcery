@@ -8,7 +8,15 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
   private contextHolders = new Map<string, ContextHolder>();
 
   constructor(private readonly context: vscode.ExtensionContext) {}
-
+  
+  public getWorkspaceCost(): number {
+    let total = 0;
+    for (const contextHolder of this.contextHolders.values()) {
+      total += contextHolder.getAccumulatedCost();
+    }
+    return total;
+  }
+  
   public async resolveCustomTextEditor(
     document: vscode.TextDocument,
     webviewPanel: vscode.WebviewPanel,

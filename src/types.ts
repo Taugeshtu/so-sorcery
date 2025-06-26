@@ -35,4 +35,5 @@ export interface SorceryContext {
   items: ContextItem[];
   nextId: number;
   workerOutputs?: { [workerKey: string]: string }; // Store latest raw output per worker
+  accumulatedCost: number;
 }
