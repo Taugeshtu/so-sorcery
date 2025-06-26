@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { Models, LLMResponse as LLMResponse, BackendResponse } from './llm';
-import { trace } from 'console';
+import { Models, LLMResponse, BackendResponse } from './llm';
 
 export interface Psyche {
   name: string;

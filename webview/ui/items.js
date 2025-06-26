@@ -97,7 +97,7 @@ export class ItemsManager {
         
         const nameSpan = document.createElement('span');
         nameSpan.className = 'knowledge-name';
-        nameSpan.textContent = knowledge.name;
+        nameSpan.textContent = `[${knowledge.id}] knowledge`;
         
         const sourceSpan = document.createElement('span');
         sourceSpan.className = 'knowledge-source';
@@ -183,7 +183,7 @@ export class ItemsManager {
         
         const nameSpan = document.createElement('span');
         nameSpan.className = 'work-item-name';
-        nameSpan.textContent = `Work Item #${workItem.id}`;
+        nameSpan.textContent = `[${workItem.id}] work`;
         
         const typeSpan = document.createElement('span');
         typeSpan.className = 'work-item-type';
