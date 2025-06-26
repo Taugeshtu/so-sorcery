@@ -13,7 +13,7 @@ export const Models: Record<string, Model> = {
   // Claude 3 series
   'claude-opus-3-20240307': new Model('claude-opus-3-20240307', claude, 200_000, 1.5, 75),
   'claude-3-7-sonnet-20250219': new Model('claude-3-7-sonnet-20250219', claude, 200_000, 3, 15),
-  'claude-haiku-3.5-20250601': new Model('claude-haiku-3.5-20250601', claude, 200_000, 0.08, 4.0),
+  'claude-3-5-haiku-latest': new Model('claude-3-5-haiku-latest', claude, 200_000, 0.08, 4.0),
   'claude-haiku-3-20240307': new Model('claude-haiku-3-20240307', claude, 200_000, 0.03, 1.25),
 
   // OpenAI GPT‑4.1 family

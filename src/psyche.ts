@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { Models, Response as LLMResponse } from './llm';
+import { trace } from 'console';
 
 export interface Psyche {
   name: string;
@@ -154,6 +155,7 @@ export function addPsyche(psyche: Psyche): void {
 }
 
 export async function runPsyche(
+  traceStore: { [workerKey: string]: string },
   psyche: Psyche, 
   input: string, 
   systemContext?: string, 
@@ -175,6 +177,7 @@ export async function runPsyche(
     psyche.priming,
     psyche.terminators
   );
+  traceStore[psyche.name] = llmResponse.content;
   
   // Check for daisy-chaining
   if (psyche.post) {
@@ -194,8 +197,9 @@ export async function runPsyche(
                                 ? chainDepth - 1
                                 : psyche.post.chaining_depth;
     return await runPsyche(
+      traceStore,
       nextPsyche,
-      llmResponse.content,
+      llmResponse.content.trim(),
       systemContext,
       nextStepDepthBudget
     );

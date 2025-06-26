@@ -2,10 +2,13 @@
   "name": "project_assistant",
   "displayName": "PA",
   "description": "Aids in generating knowledge about project and generates WorkItems",
-  "backend": 1,
   "model": "claude-sonnet-4-20250514",
   "maxTokens": 8192,
   "system": null,
   "priming": null,
-  "terminators": ["=handover_protocol="]
+  "terminators": ["=handover_protocol="],
+  "post": {
+    "psyche": "extractor",
+    "chaining_depth": 1
+  }
 }

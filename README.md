@@ -63,12 +63,12 @@ Sorcery assumes that:
 EVERYTHING. This is early days
 
 Functional:
-- [ ] Daisy-chained psyches
 - [ ] Forking context
 - [ ] Cost counting and displaying
 - [ ] Undo/Redo (VS Code's built-in document undo should work?)
 - [ ] Images handling
 - [~] Improve the system: agent is low on self-reflection, doesn't recognize refactoring, doesn't recognize the files are actual files it seems...
+    this needs re-testing on larger contexts and deeper convos. Maybe two-stage format helps with that?
 - [ ] System: PA really loves repeating what's already in the knowledge...
 
 Visual & polish:
@@ -109,8 +109,11 @@ Big & faraway items:
 
 ## Release Notes
 
-### 
+### 0.5.0
 
+- [x] Daisy-chained psyches
+    - [x] extractor seems to work... but lost traceability.
+    - [x] post-extractor parsing didn't pick up work, whyyy?.. no newlines?.. Yep.
 - [x] Second case for "parsing failed, therefore full response": not just missing terminator, but also no knowledge nor work items
 
 ### 0.4.0

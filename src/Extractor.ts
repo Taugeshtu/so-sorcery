@@ -43,7 +43,7 @@ export function extract(
   // Parse XML blocks
   const knowledges: Knowledge[] = [];
   const workItems: WorkItem[] = [];
-  const responseBlock = Block.fromString(rawResponse);
+  const responseBlock = Block.fromString('\n'+rawResponse+'\n');
   
   // Extract knowledge blocks
   const knowledgeBlocks = responseBlock.extractAll('\n<knowledge>', '</knowledge>\n');

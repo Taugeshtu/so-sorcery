@@ -1,0 +1,10 @@
+{
+  "name": "extractor",
+  "displayName": "extractor",
+  "description": "Pulls knowledge and work out of PA's output",
+  "model": "claude-3-5-haiku-latest",
+  "maxTokens": 4096,
+  "system": null,
+  "priming": null,
+  "terminators": ["=extraction_complete="]
+}

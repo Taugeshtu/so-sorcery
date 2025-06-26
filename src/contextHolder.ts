@@ -237,15 +237,12 @@ export class ContextHolder {
     // Build context for the agent
     const systemEnvironment = this.buildSystemEnvironment();
     const knowledgeBlob = await this.buildKnowledgeBlob();
-
+    
     try {
-      const response = await runPsyche(psyche, knowledgeBlob, systemEnvironment);
-      
-      // Store the raw response in context
       if (!this.context.workerOutputs) {
         this.context.workerOutputs = {};
       }
-      this.context.workerOutputs[psycheName] = response.content;
+      const response = await runPsyche(this.context.workerOutputs, psyche, knowledgeBlob, systemEnvironment);
       
       const extracted = extract(response);
       for (const knowledge of extracted.knowledges) {
