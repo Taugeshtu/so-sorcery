@@ -41,6 +41,13 @@ class SorceryWebview {
         this.messageHandler.on('setAgentRunning', (message) => {
             this.buttonManager.setAgentRunning(message.running);
         });
+        
+        this.messageHandler.on('focusInput', () => {
+            const userInput = document.getElementById('userInput');
+            if (userInput) {
+                userInput.focus();
+            }
+        });
     }
 
     setupGlobalEventListeners() {

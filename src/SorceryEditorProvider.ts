@@ -42,6 +42,17 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
       undefined,
       this.context.subscriptions
     );
+    
+    webviewPanel.onDidChangeViewState(e => {
+      if (e.webviewPanel.active) {
+        // Add delay to ensure webview DOM is ready
+        setTimeout(() => {
+          webviewPanel.webview.postMessage({
+            command: 'focusInput'
+          });
+        }, 100); // 100ms should be sufficient
+      }
+    });
 
     // Clean up on dispose
     webviewPanel.onDidDispose(() => {

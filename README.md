@@ -77,10 +77,8 @@ Visual & polish:
 - [ ] Add a list of agents to system environment for PA
 - [ ] Make completed work auto-disappears? (at least for Tool ops?) (I do like being able to see what's going on... provide an event log?) Maybe it becomes omitted?
 - [ ] Settings: custom additional ignore
-- [ ] Auto-focusing the input field whenever Sorcery editor is activated
 - [ ] A way to navigate focus from files search to results
 - [ ] Folders on top in files tree
-- [ ] When files are added/removed, we need to be aware of this... Also maybe pull the list of availabe files up a level, it's more workspace-global than per-context anyway
 - [ ] Searched, added item - search didn't clear, BUT filter did drop. Hmmm... Dunno which should happen, but not that
 - [ ] What if you already have a file "Session_{X}.sorcery"?
         - I think we can half-solve it by auto-renaming our sorceries. First after two items in the workspace, just take items, send them over to small model; then do that again 5-7 items in?..
@@ -104,6 +102,7 @@ Big & faraway items:
 - [ ] maybe streaming support?
 - [ ] Better tool ecosystem (interpreter, tree, maybe bash/cmd?)
 - [ ] Docs/readme of some kind, or a tutorial
+- [ ] When files are added/removed/renamed, we need to be aware of this... This will kill "refresh" button
 
 ---
 
@@ -112,6 +111,7 @@ Big & faraway items:
 ### 0.6.x
 
 - [ ] Hotkey settings for "add" and "send it"
+- [~] Auto-focusing the input field whenever Sorcery editor is activated
 - [x] button to re-scan the files, as an alternative to live wire monitor
 - [x] "No knowledge yet" also reacts to file knowledge. Shouldn't
 - [x] Add ID in the header of knowledge items?
