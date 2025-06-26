@@ -61,7 +61,8 @@ export class ContextHolder {
       availableFiles: Array.isArray(parsed.availableFiles) ? parsed.availableFiles : [],
       items: [],
       nextId: typeof parsed.nextId === 'number' ? parsed.nextId : 1,
-      accumulatedCost: typeof parsed.accumulatedCost === 'number' ? parsed.accumulatedCost : 0
+      accumulatedCost: typeof parsed.accumulatedCost === 'number' ? parsed.accumulatedCost : 0,
+      workerOutputs: parsed.workerOutputs || {} 
     };
 
     // Handle legacy format with separate knowledges/workItems arrays

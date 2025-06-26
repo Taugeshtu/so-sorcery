@@ -64,24 +64,17 @@ EVERYTHING. This is early days
 
 Functional:
 - [ ] Forking context
-- [ ] Extractor misses code blocks, no bueno
-- [ ] Undo/Redo (VS Code's built-in document undo should work?)
 - [ ] Images handling
+- [ ] Extractor misses code blocks, no bueno
 - [~] Improve the system: agent is low on self-reflection, doesn't recognize refactoring, doesn't recognize the files are actual files it seems...
     this needs re-testing on larger contexts and deeper convos. Maybe two-stage format helps with that?
+    did catch a hallucination once about file contents which wasn't present in context... Time to bring back "list the unknowns"!
 - [ ] System: PA really loves repeating what's already in the knowledge...
 
 Visual & polish:
-- [ ] After reloading window, most recent full response got nuked :/ no bueno!
-- [ ] "No knowledge yet" also reacts to file knowledge. Shouldn't
 - [ ] ?? Remove collapse button if item is short enough to fit
-- [ ] Add ID in the header of knowledge items?
-- [ ] remove available files list from the json?..
 - [ ] Parsing "thinking" stages of PA response and displaying them somewhere (couple that with streaming support?)
-- [ ] Hotkey settings for "add" and "send it"
 - [ ] Add a list of agents to system environment for PA
-- [ ] Move PA response parsing out of "Worker" (since worker can be NOT PA)
-- [ ] Try to split the gargantuan `script.js` into several files?
 - [ ] Make completed work auto-disappears? (at least for Tool ops?) (I do like being able to see what's going on... provide an event log?) Maybe it becomes omitted?
 - [ ] Settings: custom additional ignore
 - [ ] Auto-focusing the input field whenever Sorcery editor is activated
@@ -90,6 +83,8 @@ Visual & polish:
 - [ ] When files are added/removed, we need to be aware of this... Also maybe pull the list of availabe files up a level, it's more workspace-global than per-context anyway
 - [ ] Searched, added item - search didn't clear, BUT filter did drop. Hmmm... Dunno which should happen, but not that
 - [ ] What if you already have a file "Session_{X}.sorcery"?
+        - I think we can half-solve it by auto-renaming our sorceries. First after two items in the workspace, just take items, send them over to small model; then do that again 5-7 items in?..
+        - but that doesn't _solve_ the problem, only makes it much less likely
 - [ ] Accumulate costs also over all workspaces
 
 Big & faraway items:
@@ -110,6 +105,20 @@ Big & faraway items:
 
 ## Release Notes
 
+### 0.6.x
+
+- [ ] Try to split the gargantuan `script.js` into several files?
+- [ ] Hotkey settings for "add" and "send it"
+- [ ] Add ID in the header of knowledge items?
+- [ ] Undo/Redo (VS Code's built-in document undo should work?)
+- [ ] "No knowledge yet" also reacts to file knowledge. Shouldn't
+- [ ] button to re-scan the files, as an alternative to live wire monitor
+- [ ] remove available files list from the json?..
+
+### 0.6.1
+
+- [x] After reloading window, most recent full response got nuked :/ no bueno!
+
 ### 0.6.0
 
 - [x] Cost counting and displaying
@@ -120,6 +129,7 @@ Big & faraway items:
     - [x] extractor seems to work... but lost traceability.
     - [x] post-extractor parsing didn't pick up work, whyyy?.. no newlines?.. Yep.
 - [x] Second case for "parsing failed, therefore full response": not just missing terminator, but also no knowledge nor work items
+- [x] Move PA response parsing out of "Worker" (since worker can be NOT PA)
 
 ### 0.4.0
 
