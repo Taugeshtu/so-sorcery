@@ -11,6 +11,10 @@ export interface Psyche {
   system: string;
   priming?: string;
   terminators?: string[];
+  post?: {
+    psyche: string;
+    chaining_depth: number;
+  };
 }
 
 interface PsycheFile {
@@ -22,6 +26,10 @@ interface PsycheFile {
   system?: string; // Optional in file, will be loaded from .system file if empty
   priming?: string;
   terminators?: string[];
+  post?: {
+    psyche: string;
+    chaining_depth: number;
+  };
 }
 
 class PsycheManager {
@@ -145,7 +153,12 @@ export function addPsyche(psyche: Psyche): void {
   psycheManager.addPsyche(psyche);
 }
 
-export async function runPsyche(psyche:Psyche, input: string, systemContext?: string): Promise<LLMResponse> {
+export async function runPsyche(
+  psyche: Psyche, 
+  input: string, 
+  systemContext?: string, 
+  chainDepth?: number | null
+): Promise<LLMResponse> {
   const systemPrompt = systemContext 
                         ? `${systemContext}\n\n${psyche.system}`
                         : psyche.system;
@@ -162,6 +175,31 @@ export async function runPsyche(psyche:Psyche, input: string, systemContext?: st
     psyche.priming,
     psyche.terminators
   );
+  
+  // Check for daisy-chaining
+  if (psyche.post) {
+    if( chainDepth && chainDepth === 0 ) {
+      vscode.window.showWarningMessage(`Wanting to chain further '${psyche.name}' -> '${psyche.post.psyche}', but out of depth!`);
+      return llmResponse;
+    }
+    
+    const nextPsyche = getPsyche(psyche.post.psyche);
+    if (!nextPsyche) {
+      vscode.window.showErrorMessage(`Chained psyche '${psyche.post.psyche}' not found`);
+      throw new Error(`Chained psyche '${psyche.post.psyche}' not found`);
+    }
+    
+    // Recursively call the next psyche with decremented chain depth
+    const nextStepDepthBudget = chainDepth
+                                ? chainDepth - 1
+                                : psyche.post.chaining_depth;
+    return await runPsyche(
+      nextPsyche,
+      llmResponse.content,
+      systemContext,
+      nextStepDepthBudget
+    );
+  }
   
   return llmResponse;
 }

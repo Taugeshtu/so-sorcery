@@ -69,6 +69,7 @@ Functional:
 - [ ] Undo/Redo (VS Code's built-in document undo should work?)
 - [ ] Images handling
 - [~] Improve the system: agent is low on self-reflection, doesn't recognize refactoring, doesn't recognize the files are actual files it seems...
+- [ ] System: PA really loves repeating what's already in the knowledge...
 
 Visual & polish:
 - [ ] After reloading window, most recent full response got nuked :/ no bueno!
