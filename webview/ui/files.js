@@ -16,6 +16,17 @@ export class FileManager {
                 this.filterAvailableFiles(e.target.value);
             });
         }
+        
+        const refreshButton = document.getElementById('refreshFilesButton');
+        if (refreshButton) {
+            refreshButton.addEventListener('click', () => {
+                this.refreshFiles();
+            });
+        }
+    }
+
+    refreshFiles() {
+        this.messageHandler.send('refreshFiles');
     }
 
     updateIncludedFilesList() {

@@ -49,13 +49,16 @@ export function getWebviewHtml(webview: vscode.Webview, cssUri: vscode.Uri, jsUr
             <h3>Included Files</h3>
             <ul id="includedFilesList"></ul>
           </div>
-          
-          <div class="search-section">
-            <input type="text" id="fileSearchInput" placeholder="Search files..." />
-          </div>
-          
           <div class="available-files-section">
-            <h3>Available Files</h3>
+            <div class="available-files-header">
+              <h3>Available Files</h3>
+              <button id="refreshFilesButton" class="refresh-button">Refresh</button>
+            </div>
+            
+            <div class="search-section">
+              <input type="text" id="fileSearchInput" placeholder="Search files..." />
+            </div>
+            
             <div id="availableFilesTree"></div>
           </div>
         </div>

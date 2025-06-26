@@ -27,8 +27,7 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
     
     // really we only need to do it once... but fine...
     // Hey, bonus shadow feature - now each time we open up new sorcery, we get an update to files list everywhere!
-    const filePaths = await getFilteredFilePaths();
-    ContextHolder.updateAvailableFiles(filePaths);
+    this.refreshFiles( webviewPanel );
     
     // Create or get context holder for this document
     const contextHolder = new ContextHolder(document, workspaceName, () => this.updateWebviewState(webviewPanel, contextHolder));
@@ -48,16 +47,18 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
     webviewPanel.onDidDispose(() => {
       this.contextHolders.delete(document.uri.toString());
     });
-
+    
     // Initialize webview with current state
-    this.updateWebviewFiles(webviewPanel, filePaths);
     this.updateWebviewState(webviewPanel, contextHolder);
   }
   
-  private async updateWebviewFiles(panel: vscode.WebviewPanel, availableFiles: string[]) {
+  private async refreshFiles(panel: vscode.WebviewPanel) {
+    const filePaths = await getFilteredFilePaths();
+    ContextHolder.updateAvailableFiles(filePaths);
+    
     panel.webview.postMessage({
         command: 'updateFiles',
-        availableFiles
+        availableFiles: ContextHolder.getAvailableFiles()
     });
   }
   
@@ -76,6 +77,10 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
     panel: vscode.WebviewPanel
   ) {
     switch (message.command) {
+      case 'refreshFiles':
+        this.refreshFiles(panel);
+        break;
+      
       case 'addFileToContext':
         try {
           const knowledge = contextHolder.emitFileKnowledge( message.filePath );
