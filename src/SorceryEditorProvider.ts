@@ -165,7 +165,7 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
       vscode.Uri.joinPath(this.context.extensionUri, 'webview', 'styles.css')
     );
     const jsUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(this.context.extensionUri, 'webview', 'script.js')
+      vscode.Uri.joinPath(this.context.extensionUri, 'webview', 'main.js')
     );
     
     return getWebviewHtml(webview, cssUri, jsUri);

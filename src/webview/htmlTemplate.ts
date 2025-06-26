@@ -60,7 +60,7 @@ export function getWebviewHtml(webview: vscode.Webview, cssUri: vscode.Uri, jsUr
           </div>
         </div>
       </div>
-      <script src="${jsUri}"></script>
+      <script type="module" src="${jsUri}"></script>
     </body>
     </html>
   `;

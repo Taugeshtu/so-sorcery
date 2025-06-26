@@ -107,7 +107,7 @@ Big & faraway items:
 
 ### 0.6.x
 
-- [ ] Try to split the gargantuan `script.js` into several files?
+- [x] Try to split the gargantuan `script.js` into several files?
 - [ ] Hotkey settings for "add" and "send it"
 - [ ] Add ID in the header of knowledge items?
 - [ ] Undo/Redo (VS Code's built-in document undo should work?)
