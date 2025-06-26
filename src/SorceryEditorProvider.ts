@@ -6,8 +6,11 @@ import { getWebviewHtml } from './webview/htmlTemplate';
 export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
   public static readonly viewType = 'sorcery.contextEditor';
   private contextHolders = new Map<string, ContextHolder>();
+  private currentlyFocusedPanel: vscode.WebviewPanel | undefined;
 
-  constructor(private readonly context: vscode.ExtensionContext) {}
+  constructor(
+    private readonly context: vscode.ExtensionContext
+  ) {}
   
   public getWorkspaceCost(): number {
     let total = 0;
@@ -22,6 +25,8 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
     webviewPanel: vscode.WebviewPanel,
     _token: vscode.CancellationToken
   ) {
+    this.currentlyFocusedPanel = webviewPanel;
+    
     // Get workspace name
     const workspaceName = vscode.workspace.name || 'Unknown Workspace';
     
@@ -42,10 +47,22 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
       undefined,
       this.context.subscriptions
     );
-
+    
+    webviewPanel.onDidChangeViewState((e) => {
+      if (e.webviewPanel.active) {
+        this.currentlyFocusedPanel = e.webviewPanel;
+      } else if (this.currentlyFocusedPanel === e.webviewPanel) {
+        // Clear if this panel lost focus
+        this.currentlyFocusedPanel = undefined;
+      }
+    });
+    
     // Clean up on dispose
     webviewPanel.onDidDispose(() => {
       this.contextHolders.delete(document.uri.toString());
+      if (this.currentlyFocusedPanel === webviewPanel) {
+        this.currentlyFocusedPanel = undefined;
+      }
     });
     
     // Initialize webview with current state
@@ -77,6 +94,7 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
     panel: vscode.WebviewPanel
   ) {
     switch (message.command) {
+      
       case 'refreshFiles':
         this.refreshFiles(panel);
         break;
@@ -108,31 +126,7 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
       
       case 'addUserKnowledge':
         const emitted = contextHolder.emitKnowledge('user', message.content);
-        const added = contextHolder.addItem(emitted);
-        
-        if (message.runAgent) {
-          try {
-            panel.webview.postMessage({
-              command: 'setAgentRunning',
-              running: true
-            });
-            
-            const response = await contextHolder.runPA();
-            
-            panel.webview.postMessage({
-              command: 'setAgentRunning',
-              running: false
-            });
-          } catch (error) {
-            panel.webview.postMessage({
-              command: 'setAgentRunning',
-              running: false
-            });
-            
-            vscode.window.showErrorMessage(`Agent failed: ${error}`);
-            console.error('Agent run failed:', error);
-          }
-        }
+        contextHolder.addItem(emitted);
         break;
       
       case 'runAgent':
@@ -178,5 +172,9 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
     );
     
     return getWebviewHtml(webview, cssUri, jsUri);
+  }
+  
+  public getCurrentlyFocusedPanel(): vscode.WebviewPanel | undefined {
+    return this.currentlyFocusedPanel;
   }
 }

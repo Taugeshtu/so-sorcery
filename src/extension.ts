@@ -26,8 +26,27 @@ export async function activate(context: vscode.ExtensionContext) {
   const costUpdateInterval = setInterval(updateCostDisplay, 2000); // Update every 2 seconds
   context.subscriptions.push(new vscode.Disposable(() => clearInterval(costUpdateInterval)));
   
+  // Context-sensitive Alt+S command
   context.subscriptions.push(
-    vscode.commands.registerCommand('sorcery.newContext', async () => {
+    vscode.commands.registerCommand('sorcery.addAndRun', async () => {
+      const focusedPanel = sorceryEditorProvider.getCurrentlyFocusedPanel();
+      if (focusedPanel) {
+        focusedPanel.webview.postMessage({ command: 'executeAddAndRun' });
+      }
+    })
+  );
+  
+  context.subscriptions.push(
+    vscode.commands.registerCommand('sorcery.addKnowledge', async () => {
+      const focusedPanel = sorceryEditorProvider.getCurrentlyFocusedPanel();
+      if (focusedPanel) {
+        focusedPanel.webview.postMessage({ command: 'executeAddKnowledge' });
+      }
+    })
+  );
+  
+  context.subscriptions.push(
+    vscode.commands.registerCommand('sorcery.newSession', async () => {
       const wsFolder = vscode.workspace.workspaceFolders?.[0];
       if (!wsFolder) {
         return vscode.window.showErrorMessage('Please open a folder first.');
@@ -54,6 +73,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   // Create and store reference to SorceryEditorProvider
   sorceryEditorProvider = new SorceryEditorProvider(context);
+  
   context.subscriptions.push(
     vscode.window.registerCustomEditorProvider(
       SorceryEditorProvider.viewType,

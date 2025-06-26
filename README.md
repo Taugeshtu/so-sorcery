@@ -111,7 +111,7 @@ Big & faraway items:
 
 ### 0.6.x
 
-- [ ] Hotkey settings for "add" and "send it"
+- [x] Hotkey settings for "add" and "send it"; also maybe for creating new context??..
 - [x] button to re-scan the files, as an alternative to live wire monitor
 - [x] "No knowledge yet" also reacts to file knowledge. Shouldn't
 - [x] Add ID in the header of knowledge items?

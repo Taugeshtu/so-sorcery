@@ -7,7 +7,7 @@
     "url": "https://github.com/Taugeshtu/so-sorcery.git"
   },
   "homepage": "https://github.com/Taugeshtu/so-sorcery#readme",
-  "version": "0.6.6",
+  "version": "0.6.7",
   "engines": {
     "vscode": "^1.100.0"
   },
@@ -15,14 +15,14 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:sorcery.newContext",
+    "onCommand:sorcery.newSession",
     "onCustomEditor:sorcery.contextEditor"
   ],
   "contributes": {
     "commands": [
       {
-        "command": "sorcery.newContext",
-        "title": "Sorcery: New Context File"
+        "command": "sorcery.newSession",
+        "title": "Sorcery: New Session File"
       }
     ],
     "customEditors": [
@@ -61,7 +61,24 @@
           "maximum": 10000
         }
       }
-    }
+    },
+    "keybindings": [
+      {
+        "command": "sorcery.newSession", 
+        "key": "alt+s",
+        "when": "!activeCustomEditorId || activeCustomEditorId != 'sorcery.contextEditor'"
+      },
+      {
+        "command": "sorcery.addAndRun",
+        "key": "alt+s",
+        "when": "activeCustomEditorId == 'sorcery.contextEditor'"
+      },
+      {
+        "command": "sorcery.addKnowledge",
+        "key": "alt+enter",
+        "when": "activeCustomEditorId == 'sorcery.contextEditor'"
+      }
+    ]
   },
   "main": "./dist/extension.js",
   "scripts": {

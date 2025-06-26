@@ -3,30 +3,35 @@ export class ButtonManager {
         this.messageHandler = messageHandler;
         this.stateManager = stateManager;
         this.init();
+        this.setupVSCodeMessageHandling();
     }
-
+    
     init() {
         this.setupEventListeners();
         this.updateButtonText();
     }
-
+    
+    setupVSCodeMessageHandling() {
+        // Listen for messages from VS Code extension
+        window.addEventListener('message', (event) => {
+            const message = event.data;
+            switch (message.command) {
+                case 'executeAddAndRun':
+                    this.handleRunButton();
+                    break;
+                case 'executeAddKnowledge':
+                    this.addKnowledge();
+                    break;
+            }
+        });
+    }
+    
     setupEventListeners() {
         const userInput = document.getElementById('userInput');
         const addButton = document.getElementById('addButton');
         const runButton = document.getElementById('runButton');
 
         if (userInput) {
-            // Handle keyboard shortcuts
-            userInput.addEventListener('keydown', (e) => {
-                if (e.altKey && e.key === 'Enter') {
-                    e.preventDefault();
-                    this.addKnowledge(false);
-                } else if (e.ctrlKey && e.key === 'Enter') {
-                    e.preventDefault();
-                    this.handleRunButton();
-                }
-            });
-
             // Update button text when input changes
             userInput.addEventListener('input', () => {
                 this.updateButtonText();
@@ -34,7 +39,7 @@ export class ButtonManager {
         }
 
         if (addButton) {
-            addButton.addEventListener('click', () => this.addKnowledge(false));
+            addButton.addEventListener('click', () => this.addKnowledge());
         }
 
         if (runButton) {
@@ -59,15 +64,14 @@ export class ButtonManager {
         const hasContent = userInput.value.trim().length > 0;
         
         if (hasContent) {
-            // Add knowledge and run agent
-            this.addKnowledge(true);
-        } else {
-            // Just run agent with current context
-            this.runAgent();
+            // add knowledge...
+            this.addKnowledge();
         }
+        // run the agent:
+        this.runAgent();
     }
 
-    addKnowledge(runAgent = false) {
+    addKnowledge() {
         const userInput = document.getElementById('userInput');
         if (!userInput) return;
 
@@ -76,11 +80,8 @@ export class ButtonManager {
 
         // Disable buttons while processing
         this.setButtonsEnabled(false);
-
-        this.messageHandler.send('addUserKnowledge', {
-            content: content,
-            runAgent: runAgent
-        });
+        
+        this.messageHandler.send('addUserKnowledge', { content });
 
         // Clear input
         userInput.value = '';
