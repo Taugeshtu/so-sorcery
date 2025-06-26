@@ -13,7 +13,16 @@ export class ContextHolder {
   private tools: Tool[];
   private pendingExecutions: Map<number, NodeJS.Timeout> = new Map();
   private onStateChanged?: () => void;
-
+  
+  private static availableFiles: string[] = [];
+  public static updateAvailableFiles(files: string[]): void {
+    ContextHolder.availableFiles.length = 0;
+    ContextHolder.availableFiles.push(...files);
+  }
+  public static getAvailableFiles(): string[] {
+    return [...ContextHolder.availableFiles];
+  }
+  
   constructor(document: vscode.TextDocument, workspaceName: string, onStateChanged?: () => void) {
     this.document = document;
     this.context = this.loadFromDocument(workspaceName);
@@ -48,7 +57,6 @@ export class ContextHolder {
     // Create empty context
     return {
       workspaceName,
-      availableFiles: [],
       items: [],
       nextId: 1,
       accumulatedCost: 0
@@ -58,7 +66,6 @@ export class ContextHolder {
   private validateContext(parsed: any, workspaceName: string): SorceryContext {
     const context: SorceryContext = {
       workspaceName: parsed.workspaceName || workspaceName,
-      availableFiles: Array.isArray(parsed.availableFiles) ? parsed.availableFiles : [],
       items: [],
       nextId: typeof parsed.nextId === 'number' ? parsed.nextId : 1,
       accumulatedCost: typeof parsed.accumulatedCost === 'number' ? parsed.accumulatedCost : 0,
@@ -124,11 +131,6 @@ export class ContextHolder {
       references: []
     } as Knowledge;
   }
-
-  public updateAvailableFiles(files: string[]): void {
-    this.context.availableFiles = files;
-    this.saveToDocument();
-  }
   
   public emitKnowledge(source: Knowledge['source'], content: string): Knowledge {
     const knowledge: Knowledge = {
@@ -144,7 +146,7 @@ export class ContextHolder {
   }
   
   public emitFileKnowledge(filePath: string): Knowledge | null {
-    if (!this.context.availableFiles.includes(filePath)) {
+    if (!ContextHolder.availableFiles.includes(filePath)) {
       return null;
     }
     
@@ -273,8 +275,8 @@ export class ContextHolder {
   private async buildKnowledgeBlob(): Promise<string> {
     const parts: string[] = [];
 
-    if (this.context.availableFiles.length > 0) {
-      parts.push(`Available files:\n${this.context.availableFiles.join('\n')}`);
+    if (ContextHolder.availableFiles.length > 0) {
+      parts.push(`Available files:\n${ContextHolder.availableFiles.join('\n')}`);
     }
     
     const allItems = this.context.items;
@@ -437,10 +439,6 @@ export class ContextHolder {
 
   public getWorkItems(): WorkItem[] {
     return this.context.items.filter(this.isWorkItem) as WorkItem[];
-  }
-
-  public getAvailableFiles(): string[] {
-    return [...this.context.availableFiles];
   }
   
   public getAvailableTools(): Array<{ name: string; description: string }> {

@@ -31,7 +31,6 @@ export interface WorkItem extends ContextItem {
 
 export interface SorceryContext {
   workspaceName: string;
-  availableFiles: string[];
   items: ContextItem[];
   nextId: number;
   workerOutputs?: { [workerKey: string]: string }; // Store latest raw output per worker

@@ -86,6 +86,7 @@ Visual & polish:
         - I think we can half-solve it by auto-renaming our sorceries. First after two items in the workspace, just take items, send them over to small model; then do that again 5-7 items in?..
         - but that doesn't _solve_ the problem, only makes it much less likely
 - [ ] Accumulate costs also over all workspaces
+- [ ] Undo/Redo (VS Code's built-in document undo should work?)
 
 Big & faraway items:
 - [~] File read tool (done, but untested)
@@ -107,13 +108,12 @@ Big & faraway items:
 
 ### 0.6.x
 
-- [x] Try to split the gargantuan `script.js` into several files?
 - [ ] Hotkey settings for "add" and "send it"
 - [ ] Add ID in the header of knowledge items?
-- [ ] Undo/Redo (VS Code's built-in document undo should work?)
 - [ ] "No knowledge yet" also reacts to file knowledge. Shouldn't
 - [ ] button to re-scan the files, as an alternative to live wire monitor
-- [ ] remove available files list from the json?..
+- [x] remove available files list from the json?..
+- [x] Try to split the gargantuan `script.js` into several files?
 
 ### 0.6.1
 

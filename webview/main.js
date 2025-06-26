@@ -33,6 +33,10 @@ class SorceryWebview {
         this.messageHandler.on('updateState', (message) => {
             this.handleStateUpdate(message.context);
         });
+        
+        this.messageHandler.on('updateFiles', (message) => {
+            this.handleFilesUpdate(message.availableFiles);
+        });
 
         this.messageHandler.on('setAgentRunning', (message) => {
             this.buttonManager.setAgentRunning(message.running);
@@ -48,19 +52,22 @@ class SorceryWebview {
         // Update state manager
         this.stateManager.updateContext(context);
         
-        // Update all UI components
-        this.updateAllUI(context);
-    }
-
-    updateAllUI(context) {
         // Update items display
         this.itemsManager.updateItemsList(context.items);
         
-        // Update file lists
+        // Update file lists, because we might've touched file knowledge
         this.fileManager.updateFileLists();
         
         // Update worker buttons and outputs
         this.workerManager.updateWorkerButtons(context.workerOutputs || {});
+    }
+    
+    handleFilesUpdate(availableFiles) {
+        // Update state manager
+        this.stateManager.updateFiles(availableFiles);
+        
+        // UI update
+        this.fileManager.updateFileLists();
     }
 }
 

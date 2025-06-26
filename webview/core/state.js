@@ -8,10 +8,13 @@ export class StateManager {
 
     updateContext(context) {
         this.currentContext = context;
-        this.allAvailableFiles = context.availableFiles || [];
-        this.fileKnowledges = context.items.filter(item => 
+        this.fileKnowledges = this.currentContext.items.filter(item => 
             'source' in item && item.source === 'file'
         );
+    }
+    
+    updateFiles(availableFiles) {
+        this.allAvailableFiles = availableFiles;
     }
 
     getIncludedFilePaths() {
