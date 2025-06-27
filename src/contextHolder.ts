@@ -278,7 +278,7 @@ export class ContextHolder {
     const parts: string[] = [];
 
     if (ContextHolder.availableFiles.length > 0) {
-      parts.push(`Available files:\n${ContextHolder.availableFiles.join('\n')}`);
+      parts.push(`Files index:\n${ContextHolder.availableFiles.join('\n')}`);
     }
     
     const allItems = this.context.items;
