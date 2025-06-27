@@ -7,7 +7,7 @@
     "url": "https://github.com/Taugeshtu/so-sorcery.git"
   },
   "homepage": "https://github.com/Taugeshtu/so-sorcery#readme",
-  "version": "0.6.7",
+  "version": "0.7.0",
   "engines": {
     "vscode": "^1.100.0"
   },
@@ -76,6 +76,11 @@
       {
         "command": "sorcery.addKnowledge",
         "key": "alt+enter",
+        "when": "activeCustomEditorId == 'sorcery.contextEditor'"
+      },
+      {
+        "command": "sorcery.forkSession",
+        "key": "shift+alt+f",
         "when": "activeCustomEditorId == 'sorcery.contextEditor'"
       }
     ]

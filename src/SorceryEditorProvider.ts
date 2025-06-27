@@ -7,18 +7,11 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
   public static readonly viewType = 'sorcery.contextEditor';
   private contextHolders = new Map<string, ContextHolder>();
   private currentlyFocusedPanel: vscode.WebviewPanel | undefined;
-
+  private panelToDocument = new Map<vscode.WebviewPanel, vscode.TextDocument>();
+  
   constructor(
     private readonly context: vscode.ExtensionContext
   ) {}
-  
-  public getWorkspaceCost(): number {
-    let total = 0;
-    for (const contextHolder of this.contextHolders.values()) {
-      total += contextHolder.getAccumulatedCost();
-    }
-    return total;
-  }
   
   public async resolveCustomTextEditor(
     document: vscode.TextDocument,
@@ -26,6 +19,7 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
     _token: vscode.CancellationToken
   ) {
     this.currentlyFocusedPanel = webviewPanel;
+    this.panelToDocument.set(webviewPanel, document);
     
     // Get workspace name
     const workspaceName = vscode.workspace.name || 'Unknown Workspace';
@@ -63,6 +57,7 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
       if (this.currentlyFocusedPanel === webviewPanel) {
         this.currentlyFocusedPanel = undefined;
       }
+      this.panelToDocument.delete(webviewPanel);
     });
     
     // Initialize webview with current state
@@ -176,5 +171,21 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
   
   public getCurrentlyFocusedPanel(): vscode.WebviewPanel | undefined {
     return this.currentlyFocusedPanel;
+  }
+  
+  public getCurrentDocumentUri(): vscode.Uri | undefined {
+    if (!this.currentlyFocusedPanel) {
+      return undefined;
+    }
+    const document = this.panelToDocument.get(this.currentlyFocusedPanel);
+    return document?.uri;
+  }
+  
+  public getWorkspaceCost(): number {
+    let total = 0;
+    for (const contextHolder of this.contextHolders.values()) {
+      total += contextHolder.getAccumulatedCost();
+    }
+    return total;
   }
 }

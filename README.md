@@ -6,10 +6,22 @@ _(trivia: majority of So-Sorcery was written using So-Sorcery)_
 
 ---
 
+## Usage
+
+- Run the command: `Sorcery: New Session File` _(keybinding: `sorcery.newSession`, `alt+S`)_
+- This creates a `.sorcery` file and opens the **custom context editor**
+- Use the editor to write & manage knowledge cards, add/remove workspace files to context, and invoke agents
+- `+` button _(keybinding: `sorcery.addKnowledge`, `alt+enter`)_ adds your input to context
+- `Run`/`+ & Run` button _(keybinding: `sorcery.addAndRun`, `alt+S` when in `.sorcery` file)_ runs Project Assistant on the context
+- Fork your current session whenever _(keybinding: `sorcery.forkSession`, `shift+alt+F`)_
+- Move your `.sorcery` files wherever - they are just files. Check them into your repo if you want to
+
+---
+
 ## Features
 
-- [~] **Custom editor for `.sorcery` files**
-- [ ] **Forkable context sessions** with knowledge cards, chat, and workspace metadata
+- [x] **Custom editor for `.sorcery` files**
+- [x] **Forkable context sessions** with knowledge cards, chat, and workspace metadata
 - [x] **Agent interaction driven by few-shot prompting + progressive prompt refinement**, not chat history
 - [x] **Explicit tool invocation model** — the agent stops when it's done, user decides what happens next
 - [x] **Context-aware file access**, filtered by workspace file extensions & `.gitignore`
@@ -23,16 +35,7 @@ Sorcery assumes that:
 - Typical document-based work is highly non-linear
 - AI agents are powerful but fallible
 - User context control is more important than log-style chat memory
-- Tools are constraints, not capabilities
 - Good prompting beats long conversations
-
----
-
-## Usage
-
-- Run the command: `Sorcery: New Context File`
-- This creates a `.sorcery` file and opens the **custom context editor**
-- Use the editor to write & manage knowledge cards, add/remove workspace files to context, and invoke agents
 
 ---
 
@@ -45,8 +48,9 @@ Sorcery assumes that:
 - Have **VSCode v1.100+**; have it in `PATH` system variable
 
 - clone the repo
+- `npm install`
 - `npm run compile` - builds the extension, find it in `OUTPUT_PATH_GOES_HERE`
-- `npm install` - builds & installs the extension into system-known VSCode (the one in the `PATH`)
+- `npm run install` - builds & installs the extension into system-known VSCode (the one in the `PATH`)
 
 ---
 
@@ -60,35 +64,32 @@ Sorcery assumes that:
 
 ## Known Issues / TODO
 
-EVERYTHING. This is early days
-
 Functional:
-- [ ] Forking context
 - [ ] Images handling
 - [ ] Extractor misses code blocks, no bueno
+- [ ] PA hallucinates a bit about files; may need prompt massaging
 - [~] Improve the system: agent is low on self-reflection, doesn't recognize refactoring, doesn't recognize the files are actual files it seems...
     this needs re-testing on larger contexts and deeper convos. Maybe two-stage format helps with that?
     did catch a hallucination once about file contents which wasn't present in context... Time to bring back "list the unknowns"!
 - [ ] System: PA really loves repeating what's already in the knowledge...
 
 Visual & polish:
-- [ ] ?? Remove collapse button if item is short enough to fit
-- [ ] Parsing "thinking" stages of PA response and displaying them somewhere (couple that with streaming support?)
+- [ ] Accumulate costs also over all workspaces
+- [ ] Feels like cost calc is somewhat buggy... Needs a second pass
 - [ ] Add a list of agents to system environment for PA
-- [ ] Make completed work auto-disappears? (at least for Tool ops?) (I do like being able to see what's going on... provide an event log?) Maybe it becomes omitted?
-- [ ] Settings: custom additional ignore
+- [ ] Starting a new session from a file should maybe pull that file into context from the get-go?..
+- [ ] Starting a new session from a file WITH SELECTION pulls a file AND generates that selection as a knowledge item?
+- [ ] Searched, added item - search didn't clear, BUT filter did drop. Hmmm... Dunno which should happen, but not that
 - [ ] Auto-focusing the input field whenever Sorcery editor is activated
+- [ ] Undo/Redo (VS Code's built-in document undo should work?)
+- [ ] Settings: custom additional ignore
+- [ ] Somehow pipe psyches' display names into the frontend... wait, can we use display names to store? Probably not a good idea, BUT we do need them unique, maybe?..
+- [ ] Add a button somewhere in the UI to fork a session?
+- [ ] Make completed work auto-disappears? (at least for Tool ops?) (I do like being able to see what's going on... provide an event log?) Maybe it becomes omitted?
 - [ ] A way to navigate focus from files search to results
 - [ ] Folders on top in files tree
-- [ ] When files are added/removed, we need to be aware of this... Also maybe pull the list of availabe files up a level, it's more workspace-global than per-context anyway
-- [ ] Searched, added item - search didn't clear, BUT filter did drop. Hmmm... Dunno which should happen, but not that
-- [ ] What if you already have a file "Session_{X}.sorcery"?
-        - I think we can half-solve it by auto-renaming our sorceries. First after two items in the workspace, just take items, send them over to small model; then do that again 5-7 items in?..
-        - but that doesn't _solve_ the problem, only makes it much less likely
-- [ ] Accumulate costs also over all workspaces
-- [ ] Undo/Redo (VS Code's built-in document undo should work?)
-- [ ] Feels like cost calc is somewhat buggy... Needs a second pass
-- [ ] Somehow pipe psyches' display names into the frontend... wait, can we use display names to store? Probably not a good idea, BUT we do need them unique, maybe?..
+- [ ] ?? Remove collapse button if item is short enough to fit
+- [ ] Parsing "thinking" stages of PA response and displaying them somewhere (couple that with streaming support?)
 
 Big & faraway items:
 - [ ] A way to define what inputs go into a psyche. And built-ins for that - "parent_output", "knowledge_blob", "available_files", maybe something else... like tools, agents?? Call that field `awareness`
@@ -104,12 +105,19 @@ Big & faraway items:
 - [ ] maybe streaming support?
 - [ ] Better tool ecosystem (interpreter, tree, maybe bash/cmd?)
 - [ ] Docs/readme of some kind, or a tutorial
+- [ ] user-informed extra context, on the level of working dir/user themselves (like preferences, maybe info that's general about project, etc... altho project stuff coooould be a file; and maybe the way to do that would be to "pin" it in the tree, so it auto-adds to every new session, but can be picked out? and maybe we also have a way to "memorize" a particular bit of knowledge...)
+- [ ] When files are added/removed, we need to be aware of this... Also maybe pull the list of availabe files up a level, it's more workspace-global than per-context anyway
 
 ---
 
 ## Release Notes
 
-### 0.6.x
+### 0.7.0
+
+- [x] Forking context
+- [x] What if you already have a file "Session_{X}.sorcery"?
+
+### 0.6.7
 
 - [x] Hotkey settings for "add" and "send it"; also maybe for creating new context??..
 - [x] button to re-scan the files, as an alternative to live wire monitor
