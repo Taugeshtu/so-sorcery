@@ -8,7 +8,7 @@ import { gatherContext, bakeContext as bakeContext } from './ContextBuilder';
 import { BackendResponse } from './llm/types';
 import { Models } from './llm/models';
 
-export class Session {
+export class SessionController {
   private context: SessionContext;
   private document: vscode.TextDocument;
   private tools: Tool[];
@@ -400,7 +400,9 @@ export class Session {
     
     const defaultAwareness: ContextAwareness = {
         projectStructure: true,
-        items: "all"
+        items: "all",
+        files: true,
+        parentOutput: true
       };
     const awareness = psyche.awareness ? psyche.awareness : defaultAwareness;
     const gatheredContext = await gatherContext(awareness, this.context, chaining?.parentOutput);

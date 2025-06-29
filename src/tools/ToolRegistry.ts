@@ -1,22 +1,22 @@
 // src/tools/ToolRegistry.ts
 import { Tool } from './Tool';
-import { Session } from '../session';
+import { SessionController } from '../session';
 
 export class ToolRegistry {
-  private tools: Map<string, new (session: Session) => Tool> = new Map();
+  private tools: Map<string, new (session: SessionController) => Tool> = new Map();
   
   /**
    * Register a tool class
    */
-  register(toolClass: new (session: Session) => Tool): void {
-    const instance = new toolClass({} as Session); // Temporary instance for metadata
+  register(toolClass: new (session: SessionController) => Tool): void {
+    const instance = new toolClass({} as SessionController); // Temporary instance for metadata
     this.tools.set(instance.name, toolClass);
   }
 
   /**
    * Create tool instances for a given context
    */
-  createTools(context: Session): Tool[] {
+  createTools(context: SessionController): Tool[] {
     return Array.from(this.tools.values()).map(ToolClass => new ToolClass(context));
   }
 
@@ -25,7 +25,7 @@ export class ToolRegistry {
    */
   getToolsInfo(): Array<{ name: string; description: string }> {
     return Array.from(this.tools.values()).map(ToolClass => {
-      const instance = new ToolClass({} as Session);
+      const instance = new ToolClass({} as SessionController);
       return { name: instance.name, description: instance.description };
     });
   }

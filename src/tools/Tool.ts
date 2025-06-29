@@ -1,6 +1,6 @@
 // src/tools/Tool.ts
 import { WorkItem, Knowledge } from '../types';
-import { Session } from '../session';
+import { SessionController } from '../session';
 
 export interface ToolResult {
   knowledges?: Knowledge[];
@@ -9,9 +9,9 @@ export interface ToolResult {
 }
 
 export abstract class Tool {
-  protected session: Session;
+  protected session: SessionController;
   
-  constructor(session: Session) {
+  constructor(session: SessionController) {
     this.session = session;
   }
 

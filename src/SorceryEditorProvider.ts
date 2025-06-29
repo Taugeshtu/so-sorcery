@@ -1,12 +1,12 @@
 import * as vscode from 'vscode';
 import { getFilteredFilePaths } from './fileDiscovery';
-import { Session } from './session';
+import { SessionController } from './session';
 import { getWebviewHtml } from './webview/htmlTemplate';
 import { updateAvailableFiles, getAvailableFiles } from './types';
 
 export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
   public static readonly viewType = 'sorcery.contextEditor';
-  private contextHolders = new Map<string, Session>();
+  private contextHolders = new Map<string, SessionController>();
   private currentlyFocusedPanel: vscode.WebviewPanel | undefined;
   private panelToDocument = new Map<vscode.WebviewPanel, vscode.TextDocument>();
   
@@ -30,7 +30,7 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
     this.refreshFiles( webviewPanel );
     
     // Create or get context holder for this document
-    const contextHolder = new Session(document, workspaceName, () => this.updateWebviewState(webviewPanel, contextHolder));
+    const contextHolder = new SessionController(document, workspaceName, () => this.updateWebviewState(webviewPanel, contextHolder));
     this.contextHolders.set(document.uri.toString(), contextHolder);
 
     webviewPanel.webview.options = { enableScripts: true };
@@ -75,7 +75,7 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
     });
   }
   
-  private async updateWebviewState(panel: vscode.WebviewPanel, contextHolder: Session) {
+  private async updateWebviewState(panel: vscode.WebviewPanel, contextHolder: SessionController) {
     const context = contextHolder.getContext();
     
     panel.webview.postMessage({
@@ -86,7 +86,7 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
   
   private async handleWebviewMessage(
     message: any, 
-    contextHolder: Session, 
+    contextHolder: SessionController, 
     panel: vscode.WebviewPanel
   ) {
     switch (message.command) {
