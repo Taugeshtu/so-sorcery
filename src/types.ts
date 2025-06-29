@@ -1,19 +1,21 @@
 export interface ContextItemMetadata {
   timestamp: number;
-  source_psyche?: string;
-  source_tool?: string;
+  collapsed: boolean;
   error?: string;
+  references?: number[];
 }
 
 export interface ContextItem {
   id: number;
-  collapsed: boolean;
+  type: 'knowledge' | 'work';
+  sourceType: 'user' | 'agent' | 'file' | 'system';
+  sourceName: string;
+  content: string;
   metadata: ContextItemMetadata;
 }
 
 export interface Knowledge extends ContextItem {
-  source: 'user' | 'agent' | 'file' | 'system';
-  content: string;
+  type: 'knowledge';
   references?: number[];
   metadata: ContextItemMetadata & {
     // Knowledge-specific metadata can be added here if needed
@@ -21,8 +23,8 @@ export interface Knowledge extends ContextItem {
 }
 
 export interface WorkItem extends ContextItem {
+  type: 'work';
   executor: 'multiread' | 'file_read' | 'file_write' | 'user' | 'agent';
-  content: string;
   status: 'cold' | 'running' | 'done' | 'failed';
   metadata: ContextItemMetadata & {
     // WorkItem-specific metadata can be added here if needed

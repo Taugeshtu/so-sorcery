@@ -84,11 +84,14 @@ export class Session {
   private validateItem(item: any): ContextItem {
     const baseItem: ContextItem = {
       id: item.id || 0,
-      collapsed: item.collapsed || false,
+      type: item.type || 'knowledge',
+      sourceType: item.sourceType || 'system',
+      sourceName: item.sourceName || 'system',
+      content: item.content || '',
+      // todo: if validation failed on any field, we can maybe populate metadata.error with info??
       metadata: {
         timestamp: item.metadata?.timestamp || Date.now(),
-        source_psyche: item.metadata?.source_psyche,
-        source_tool: item.metadata?.source_tool,
+        collapsed: item.collapsed || false,
         error: item.metadata?.error
       }
     };
@@ -107,7 +110,7 @@ export class Session {
         // It's a Knowledge
         return {
           ...baseItem,
-          source: item.source || 'user',
+          sourceType: item.source || 'user',
           content: item.content || '',
           references: Array.isArray(item.references) ? item.references : []
         } as Knowledge;
@@ -117,20 +120,23 @@ export class Session {
     // Default to Knowledge if unclear
     return {
       ...baseItem,
-      source: 'user',
+      sourceType: 'user',
       content: '',
       references: []
     } as Knowledge;
   }
   
-  public emitKnowledge(source: Knowledge['source'], content: string): Knowledge {
+  public emitKnowledge(source: Knowledge['sourceType'], sourceName: string, content: string): Knowledge {
     const knowledge: Knowledge = {
-      id: -1, collapsed: true,
-      source: source,
+      id: -1,
+      type: 'knowledge',
+      sourceType: source,
+      sourceName: sourceName,
       content: content,
       references: [],
       metadata: {
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        collapsed: true
       }
     };
     return knowledge;
@@ -142,7 +148,7 @@ export class Session {
     }
     
     const existingKnowledge = this.context.items.find(item => 
-      this.isKnowledge(item) && item.source === 'file' && item.content === filePath
+      this.isKnowledge(item) && item.sourceType === 'file' && item.sourceName === filePath
     ) as Knowledge;
     
     if (existingKnowledge) {
@@ -150,7 +156,7 @@ export class Session {
       return null;
     }
     
-    return this.emitKnowledge('file', filePath);
+    return this.emitKnowledge('file', filePath, '');
   }
   
   public addItem(item: ContextItem): ContextItem {
@@ -170,7 +176,7 @@ export class Session {
   public removeFileFromContext(filePath: string): boolean {
     // Find and remove the file knowledge
     const knowledge = this.context.items.find(item => 
-      this.isKnowledge(item) && item.source === 'file' && item.content === filePath
+      this.isKnowledge(item) && item.sourceType === 'file' && item.sourceName === filePath
     );
 
     if (knowledge) {
@@ -240,7 +246,8 @@ export class Session {
       }
       const response = await runPsyche(this.context.workerOutputs, psyche, knowledgeBlob, systemEnvironment);
       const extractionContext = {
-        source_psyche: psyche.displayName
+        sourceName: psyche.displayName,
+        timeStamp: Date.now()
       }
       const extracted = extract(response, extractionContext);
       for (const knowledge of extracted.knowledges) {
@@ -279,7 +286,7 @@ export class Session {
         if (this.isKnowledge(item)) {
           
           const knowledge = item as Knowledge;
-          if (knowledge.source === 'file') {
+          if (knowledge.sourceType === 'file') {
             let content = knowledge.content;
             try {
               const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
@@ -292,18 +299,19 @@ export class Session {
             }
             parts.push(`\n<file>[${knowledge.id}] at: ${knowledge.content}\n${content}\n</file>`);
           } else {
-            const source = knowledge.metadata?.source_psyche
-                          ? `${knowledge.source}(${knowledge.metadata.source_psyche})`
-                          : knowledge.source;
+            const source = knowledge.sourceType === 'user'
+                          ? knowledge.sourceType
+                          // for agent or tool source types (because files take a different route altogether):
+                          : `${knowledge.sourceType}(${knowledge.sourceName})`;
             parts.push(`\n<knowledge>[${knowledge.id}] from: ${source}\ncontent:\n${knowledge.content}\n</knowledge>`);
           }
         } else if (this.isWorkItem(item)) {
           const workItem = item as WorkItem;
-          const executor = workItem.metadata?.source_tool 
-                        ? `${workItem.executor}(${workItem.metadata.source_tool})`
-                        : workItem.executor;
-          // TODO: maybe do different things for different executors/statuses in the future
-          parts.push(`\n<work>[${workItem.id}] executor: ${executor}, status: ${workItem.status}\ncontent:\n${workItem.content}\n</work>`);
+          const source = workItem.sourceType === 'user'
+                          ? workItem.sourceType
+                          // for agent and system source types (files take a different route altogether)
+                          : `${workItem.sourceType}(${workItem.sourceName})`;
+          parts.push(`<work>[${workItem.id}] from: ${source} for executor: ${workItem.executor}, status: ${workItem.status}\ncontent:\n${workItem.content}\n</work>`);
         }
       }
     }
@@ -357,9 +365,9 @@ export class Session {
     }
     
     if (!workItem.metadata) {
-      workItem.metadata = { timestamp: Date.now() };
+      workItem.metadata = { timestamp: Date.now(), collapsed: false };
     }
-
+    
     // Find appropriate tool
     const tool = this.tools.find(t => t.canHandle(workItem));
     if (!tool) {
@@ -411,7 +419,7 @@ export class Session {
   public toggleItemCollapse(id: number): boolean {
     const item = this.context.items.find(item => item.id === id);
     if (item) {
-      item.collapsed = !item.collapsed;
+      item.metadata.collapsed = !item.metadata.collapsed;
       this.saveToDocument();
       return true;
     }

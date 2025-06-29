@@ -46,13 +46,14 @@ export abstract class Tool {
   protected createKnowledge(content: string, source: 'system' = 'system'): Knowledge {
     return {
       id: 0, // Will be assigned by ContextHolder
-      source,
+      type: 'knowledge',
+      sourceType: source,
+      sourceName: this.name,
       content,
-      collapsed: false,
       references: [],
       metadata: {
         timestamp: Date.now(),
-        source_tool: this.name
+        collapsed: false
       }
     };
   }
@@ -67,13 +68,15 @@ export abstract class Tool {
   ): WorkItem {
     return {
       id: 0, // Will be assigned by ContextHolder
-      collapsed: false,
+      type: 'work',
+      sourceType: 'system',
+      sourceName: this.name,
       executor: type,
       content,
       status: 'cold',
       metadata: {
         timestamp: Date.now(),
-        source_tool: this.name
+        collapsed: false
       }
     };
   }

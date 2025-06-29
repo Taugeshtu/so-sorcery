@@ -121,7 +121,7 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
         break;
       
       case 'addUserKnowledge':
-        const emitted = contextHolder.emitKnowledge('user', message.content);
+        const emitted = contextHolder.emitKnowledge('user', 'user', message.content);
         contextHolder.addItem(emitted);
         break;
       
