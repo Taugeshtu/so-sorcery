@@ -6,5 +6,11 @@
   "maxTokens": 8000,
   "system": null,
   "priming": null,
-  "terminators": ["=extraction_complete="]
+  "terminators": ["=extraction_complete="],
+  "awareness": {
+    "tools": true,
+    "psyches": true,
+    "projectStructure": true,
+    "parentOutput": true
+  }
 }

@@ -7,6 +7,13 @@
   "system": null,
   "priming": null,
   "terminators": ["=handover_protocol="],
+  "awareness": {
+    "tools": true,
+    "psyches": true,
+    "projectStructure": true,
+    "items": "all",
+    "files": true
+  },
   "post": {
     "psyche": "extractor",
     "chaining_depth": 1
