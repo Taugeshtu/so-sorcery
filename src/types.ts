@@ -36,3 +36,12 @@ export interface SorceryContext {
   workerOutputs?: { [workerKey: string]: string }; // Store latest raw output per worker
   accumulatedCost: number;
 }
+
+let availableFiles: string[] = [];
+export function updateAvailableFiles(files: string[]): void {
+  availableFiles.length = 0;
+  availableFiles.push(...files);
+}
+export function getAvailableFiles(): string[] {
+  return availableFiles;
+}

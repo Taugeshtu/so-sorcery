@@ -65,6 +65,7 @@ Sorcery assumes that:
 ## Known Issues / TODO
 
 Functional:
+- [ ] A way to define what inputs go into a psyche. And built-ins for that - "parent_output", "knowledge_blob", "available_files", maybe something else... like tools, agents?? Call that field `awareness`
 - [ ] Images handling
 - [ ] Extractor misses code blocks, no bueno
 - [ ] PA hallucinates a bit about files; may need prompt massaging
@@ -74,6 +75,8 @@ Functional:
 - [ ] System: PA really loves repeating what's already in the knowledge...
 
 Visual & polish:
+- [ ] the way "run" button blocks between "run" and "+ & run" is somehow different
+- [ ] when we add an item, we lose focus from the input field. Not nice!
 - [ ] Accumulate costs also over all workspaces
 - [ ] Feels like cost calc is somewhat buggy... Needs a second pass
 - [ ] Add a list of agents to system environment for PA
@@ -92,7 +95,6 @@ Visual & polish:
 - [ ] Parsing "thinking" stages of PA response and displaying them somewhere (couple that with streaming support?)
 
 Big & faraway items:
-- [ ] A way to define what inputs go into a psyche. And built-ins for that - "parent_output", "knowledge_blob", "available_files", maybe something else... like tools, agents?? Call that field `awareness`
 - [~] File read tool (done, but untested)
 - [ ] File write tool
 - [ ] !! consider more detailed format for submitting knowledge, allowing UPDATING as well (is a scratchpad, you see?)
@@ -106,11 +108,14 @@ Big & faraway items:
 - [ ] Better tool ecosystem (interpreter, tree, maybe bash/cmd?)
 - [ ] Docs/readme of some kind, or a tutorial
 - [ ] user-informed extra context, on the level of working dir/user themselves (like preferences, maybe info that's general about project, etc... altho project stuff coooould be a file; and maybe the way to do that would be to "pin" it in the tree, so it auto-adds to every new session, but can be picked out? and maybe we also have a way to "memorize" a particular bit of knowledge...)
-- [ ] When files are added/removed, we need to be aware of this... Also maybe pull the list of availabe files up a level, it's more workspace-global than per-context anyway
+- [ ] When files are added/removed, we need to be aware of this...
 
 ---
 
 ## Release Notes
+
+### 0.x.x
+- [x] Move available files tracking out of ContextHolder
 
 ### 0.7.0
 

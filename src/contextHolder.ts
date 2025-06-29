@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { Knowledge, SorceryContext, WorkItem, ContextItem } from './types';
+import { Knowledge, SorceryContext, WorkItem, ContextItem, getAvailableFiles } from './types';
 import { getPsyche, getAllPsycheNames, runPsyche } from './psyche';
 import { toolRegistry } from './tools/ToolRegistry';
 import { Tool } from './tools/Tool';
@@ -13,15 +13,6 @@ export class ContextHolder {
   private tools: Tool[];
   private pendingExecutions: Map<number, NodeJS.Timeout> = new Map();
   private onStateChanged?: () => void;
-  
-  private static availableFiles: string[] = [];
-  public static updateAvailableFiles(files: string[]): void {
-    ContextHolder.availableFiles.length = 0;
-    ContextHolder.availableFiles.push(...files);
-  }
-  public static getAvailableFiles(): string[] {
-    return [...ContextHolder.availableFiles];
-  }
   
   constructor(document: vscode.TextDocument, workspaceName: string, onStateChanged?: () => void) {
     this.document = document;
@@ -146,7 +137,7 @@ export class ContextHolder {
   }
   
   public emitFileKnowledge(filePath: string): Knowledge | null {
-    if (!ContextHolder.availableFiles.includes(filePath)) {
+    if (!getAvailableFiles().includes(filePath)) {
       return null;
     }
     
@@ -276,9 +267,9 @@ export class ContextHolder {
   
   private async buildKnowledgeBlob(): Promise<string> {
     const parts: string[] = [];
-
-    if (ContextHolder.availableFiles.length > 0) {
-      parts.push(`Files index:\n${ContextHolder.availableFiles.join('\n')}`);
+    
+    if (getAvailableFiles().length > 0) {
+      parts.push(`Files index:\n${getAvailableFiles().join('\n')}`);
     }
     
     const allItems = this.context.items;

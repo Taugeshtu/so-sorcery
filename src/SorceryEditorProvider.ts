@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { getFilteredFilePaths } from './fileDiscovery';
 import { ContextHolder } from './contextHolder';
 import { getWebviewHtml } from './webview/htmlTemplate';
+import { updateAvailableFiles, getAvailableFiles } from './types';
 
 export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
   public static readonly viewType = 'sorcery.contextEditor';
@@ -66,11 +67,11 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
   
   private async refreshFiles(panel: vscode.WebviewPanel) {
     const filePaths = await getFilteredFilePaths();
-    ContextHolder.updateAvailableFiles(filePaths);
+    updateAvailableFiles(filePaths);
     
     panel.webview.postMessage({
         command: 'updateFiles',
-        availableFiles: ContextHolder.getAvailableFiles()
+        availableFiles: getAvailableFiles()
     });
   }
   
