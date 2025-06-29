@@ -33,7 +33,26 @@ export class Session {
       }
     }
   }
-
+  
+  // ========================= FILE OPS =========================
+  private async saveToDocument(): Promise<void> {
+    try {
+      const edit = new vscode.WorkspaceEdit();
+      const fullRange = new vscode.Range(
+        this.document.positionAt(0),
+        this.document.positionAt(this.document.getText().length)
+      );
+      
+      edit.replace(this.document.uri, fullRange, JSON.stringify(this.context, null, 2));
+      await vscode.workspace.applyEdit(edit);
+      this.onStateChanged?.();
+      this.document.save();
+    } catch (error) {
+      console.error('Failed to save context to document:', error);
+      vscode.window.showErrorMessage('Failed to save context to .sorcery file');
+    }
+  }
+  
   private loadFromDocument(workspaceName: string): SessionContext {
     try {
       const content = this.document.getText().trim();
@@ -126,6 +145,7 @@ export class Session {
     } as Knowledge;
   }
   
+  // ========================= ITEMS =========================
   public emitKnowledge(source: Knowledge['sourceType'], sourceName: string, content: string): Knowledge {
     const knowledge: Knowledge = {
       id: -1,
@@ -186,6 +206,40 @@ export class Session {
     return false;
   }
   
+  public removeItem(id: number): boolean {
+    // Cancel any pending execution
+    this.cancelPendingExecution(id);
+    
+    const initialLength = this.context.items.length;
+    
+    this.context.items = this.context.items.filter(item => item.id !== id);
+    
+    if (this.context.items.length < initialLength) {
+      // Clean up references in knowledge items
+      this.context.items.forEach(item => {
+        if (this.isKnowledge(item) && item.references) {
+          item.references = item.references.filter(refId => refId !== id);
+        }
+      });
+      
+      this.saveToDocument();
+      return true;
+    }
+    
+    return false;
+  }
+  
+  public toggleItemCollapse(id: number): boolean {
+    const item = this.context.items.find(item => item.id === id);
+    if (item) {
+      item.metadata.collapsed = !item.metadata.collapsed;
+      this.saveToDocument();
+      return true;
+    }
+    return false;
+  }
+  
+  // ========================= WORK =========================
   private scheduleAutoExecution(workItem: WorkItem): void {
     // Find the tool that can handle this work item
     const tool = this.tools.find(t => t.canHandle(workItem));
@@ -228,7 +282,82 @@ export class Session {
       this.pendingExecutions.delete(workItemId);
     }
   }
+  
+  public completeWorkItem(id: number): boolean {
+    const workItem = this.context.items.find(item => 
+      this.isWorkItem(item) && item.id === id
+    ) as WorkItem;
+    
+    if (workItem) {
+      workItem.status = 'done';
+      this.saveToDocument();
+      return true;
+    }
+    return false;
+  }
+  
+  public async executeToolWorkItem(workItemId: number): Promise<boolean> {
+    const workItem = this.context.items.find(item => 
+      this.isWorkItem(item) && item.id === workItemId
+    ) as WorkItem;
+    
+    if (!workItem || workItem.status === 'done') {
+      return false;
+    }
+    
+    if (!workItem.metadata) {
+      workItem.metadata = { timestamp: Date.now(), collapsed: false };
+    }
+    
+    // Find appropriate tool
+    const tool = this.tools.find(t => t.canHandle(workItem));
+    if (!tool) {
+      // Mark as failed
+      workItem.status = 'failed';
+      workItem.metadata.error = 'No tool found to handle this work item';
+      this.saveToDocument();
+      return false;
+    }
+    
+    try {
+      workItem.status = 'running';
+      this.saveToDocument();
+      
+      const result = await tool.execute(workItem);
+      // Add any items produced by the tool
+      if (result.knowledges) {
+        for (const knowledge of result.knowledges) {
+          this.addItem(knowledge);
+        }
+      }
+      
+      if (result.works) {
+        for (const newWork of result.works) {
+          this.addItem(newWork);
+        }
+      }
 
+      // Update work item status
+      if (result.error) {
+        workItem.status = 'failed';
+        workItem.metadata.error = result.error;
+      } else {
+        workItem.status = 'done';
+      }
+
+      this.saveToDocument();
+      return true;
+
+    } catch (error) {
+      workItem.status = 'failed';
+      workItem.metadata.error = error instanceof Error ? error.message : String(error);
+      this.saveToDocument();
+      return false;
+    }
+  }
+  
+  
+  // ========================= RUNNING AGENTS =========================
   public async runPA(): Promise<ExtractionResult> {
     const psycheName = 'project_assistant';
     const psyche = getPsyche(psycheName);
@@ -318,114 +447,9 @@ export class Session {
     
     return parts.join('');
   }
-
-  public removeItem(id: number): boolean {
-    // Cancel any pending execution
-    this.cancelPendingExecution(id);
-    
-    const initialLength = this.context.items.length;
-    
-    this.context.items = this.context.items.filter(item => item.id !== id);
-    
-    if (this.context.items.length < initialLength) {
-      // Clean up references in knowledge items
-      this.context.items.forEach(item => {
-        if (this.isKnowledge(item) && item.references) {
-          item.references = item.references.filter(refId => refId !== id);
-        }
-      });
-      
-      this.saveToDocument();
-      return true;
-    }
-    
-    return false;
-  }
-
-  public completeWorkItem(id: number): boolean {
-    const workItem = this.context.items.find(item => 
-      this.isWorkItem(item) && item.id === id
-    ) as WorkItem;
-    
-    if (workItem) {
-      workItem.status = 'done';
-      this.saveToDocument();
-      return true;
-    }
-    return false;
-  }
   
-  public async executeToolWorkItem(workItemId: number): Promise<boolean> {
-    const workItem = this.context.items.find(item => 
-      this.isWorkItem(item) && item.id === workItemId
-    ) as WorkItem;
-    
-    if (!workItem || workItem.status === 'done') {
-      return false;
-    }
-    
-    if (!workItem.metadata) {
-      workItem.metadata = { timestamp: Date.now(), collapsed: false };
-    }
-    
-    // Find appropriate tool
-    const tool = this.tools.find(t => t.canHandle(workItem));
-    if (!tool) {
-      // Mark as failed
-      workItem.status = 'failed';
-      workItem.metadata.error = 'No tool found to handle this work item';
-      this.saveToDocument();
-      return false;
-    }
-
-    try {
-      workItem.status = 'running';
-      this.saveToDocument();
-
-      const result = await tool.execute(workItem);
-
-      // Add any items produced by the tool
-      if (result.knowledges) {
-        for (const knowledge of result.knowledges) {
-          this.addItem(knowledge);
-        }
-      }
-
-      if (result.works) {
-        for (const newWork of result.works) {
-          this.addItem(newWork);
-        }
-      }
-
-      // Update work item status
-      if (result.error) {
-        workItem.status = 'failed';
-        workItem.metadata.error = result.error;
-      } else {
-        workItem.status = 'done';
-      }
-
-      this.saveToDocument();
-      return true;
-
-    } catch (error) {
-      workItem.status = 'failed';
-      workItem.metadata.error = error instanceof Error ? error.message : String(error);
-      this.saveToDocument();
-      return false;
-    }
-  }
   
-  public toggleItemCollapse(id: number): boolean {
-    const item = this.context.items.find(item => item.id === id);
-    if (item) {
-      item.metadata.collapsed = !item.metadata.collapsed;
-      this.saveToDocument();
-      return true;
-    }
-    return false;
-  }
-
+  // ========================= ACCESSOR TRASH =========================
   public getContext(): SessionContext {
     return { ...this.context };
   }
@@ -464,23 +488,5 @@ export class Session {
 
   private isWorkItem(item: ContextItem): item is WorkItem {
     return 'executor' in item;
-  }
-
-  private async saveToDocument(): Promise<void> {
-    try {
-      const edit = new vscode.WorkspaceEdit();
-      const fullRange = new vscode.Range(
-        this.document.positionAt(0),
-        this.document.positionAt(this.document.getText().length)
-      );
-      
-      edit.replace(this.document.uri, fullRange, JSON.stringify(this.context, null, 2));
-      await vscode.workspace.applyEdit(edit);
-      this.onStateChanged?.();
-      this.document.save();
-    } catch (error) {
-      console.error('Failed to save context to document:', error);
-      vscode.window.showErrorMessage('Failed to save context to .sorcery file');
-    }
   }
 }
