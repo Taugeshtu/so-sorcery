@@ -5,7 +5,7 @@ import * as path from 'path';
 import { Knowledge, WorkItem, SessionContext } from './types';
 import { getAvailableFiles, ContextAwareness, AssembledContext } from './types';
 import { toolRegistry } from './tools/ToolRegistry';
-import { getAllPsycheNames } from './psyche';
+import { psycheRegistry } from './psyche';
 
 export async function assembleContext(
   awareness: ContextAwareness,
@@ -13,31 +13,12 @@ export async function assembleContext(
   parentOutput?: string
 ): Promise<AssembledContext> {
   const assembled: AssembledContext = {};
-  
-  if (awareness.tools) {
-    assembled.tools = buildToolsContext(awareness.tools);
-  }
-  
-  if (awareness.psyches) {
-    assembled.psyches = buildPsychesContext(awareness.psyches);
-  }
-  
-  if (awareness.items) {
-    assembled.items = await buildItemsContext(awareness.items, context);
-  }
-  
-  if (awareness.parent_output && parentOutput) {
-    assembled.parent_output = parentOutput;
-  }
-  
-  if (awareness.project_structure) {
-    assembled.project_structure = buildProjectStructureContext();
-  }
-  
-  if (awareness.files) {
-    assembled.files = buildFilesContext(context);
-  }
-  
+  if (awareness.tools) assembled.tools = buildToolsContext(awareness.tools);
+  if (awareness.psyches) assembled.psyches = buildPsychesContext(awareness.psyches);
+  if (awareness.items) assembled.items = await buildItemsContext(awareness.items, context);
+  if (awareness.parent_output && parentOutput) assembled.parent_output = parentOutput;
+  if (awareness.project_structure) assembled.project_structure = buildProjectStructureContext();
+  if (awareness.files) assembled.files = buildFilesContext(context);
   return assembled;
 }
 

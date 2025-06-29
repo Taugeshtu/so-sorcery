@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { Knowledge, SessionContext, WorkItem, ContextItem, getAvailableFiles, ContextAwareness } from './types';
-import { getPsyche, getAllPsycheNames, Psyche } from './psyche';
+import { psycheRegistry } from './psyche';
 import { toolRegistry } from './tools/ToolRegistry';
 import { Tool } from './tools/Tool';
 import { extract, ExtractionResult } from './Extractor';
@@ -21,9 +21,8 @@ export class Session {
     this.tools = toolRegistry.createTools(this);
     this.onStateChanged = onStateChanged;
     
-    
     // Initialize with all known psyches
-    const psycheNames = getAllPsycheNames();
+    const psycheNames = psycheRegistry.getAllPsyches().map( p => p.name );
     for (const psycheName of psycheNames) {
       if (!(psycheName in this.context.workerOutputs)) {
         this.context.workerOutputs[psycheName] = '';
@@ -368,7 +367,7 @@ export class Session {
     try {
       const environment = this.buildSystemEnvironment();
       const response = await this.runPsyche(paName, environment);
-      const extracted = extract(response, { sourceName: getPsyche(paName)?.displayName, timestamp: Date.now() });
+      const extracted = extract(response, { sourceName: psycheRegistry.getPsyche(paName)?.displayName, timestamp: Date.now() });
       for (const knowledge of extracted.knowledges) {
         this.addItem(knowledge);
       }
@@ -391,7 +390,7 @@ export class Session {
       parentOutput: string,
       currentDepth: number}
   ): Promise<BackendResponse> {
-    const psyche = getPsyche(psycheName);
+    const psyche = psycheRegistry.getPsyche(psycheName);
     if (!psyche) {
       throw new Error(`Psyche ${psycheName} not found`);
     }

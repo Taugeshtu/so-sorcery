@@ -3,12 +3,12 @@ import { Tool } from './Tool';
 import { Session } from '../session';
 
 export class ToolRegistry {
-  private tools: Map<string, new (context: Session) => Tool> = new Map();
-
+  private tools: Map<string, new (session: Session) => Tool> = new Map();
+  
   /**
    * Register a tool class
    */
-  register(toolClass: new (context: Session) => Tool): void {
+  register(toolClass: new (session: Session) => Tool): void {
     const instance = new toolClass({} as Session); // Temporary instance for metadata
     this.tools.set(instance.name, toolClass);
   }
@@ -23,7 +23,7 @@ export class ToolRegistry {
   /**
    * Get available tool names and descriptions
    */
-  getToolInfo(): Array<{ name: string; description: string }> {
+  getToolsInfo(): Array<{ name: string; description: string }> {
     return Array.from(this.tools.values()).map(ToolClass => {
       const instance = new ToolClass({} as Session);
       return { name: instance.name, description: instance.description };

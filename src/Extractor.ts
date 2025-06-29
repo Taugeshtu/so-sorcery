@@ -85,7 +85,7 @@ export function extract(
   // If it didn't terminate cleanly, or extraction failed - just return raw as knowledge
   if (stopReason !== 'designed' || (knowledges.length === 0 && workItems.length === 0)) {
     knowledges.push({
-      id: -1, // Will be assigned proper ID by ContextHolder
+      id: -1, // Will be assigned proper ID by Session
       type: 'knowledge',
       sourceType,
       sourceName,

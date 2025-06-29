@@ -34,7 +34,7 @@ interface PsycheFile {
   };
 }
 
-class PsycheManager {
+class PsycheRegistry {
   private psyches: Map<string, Psyche> = new Map();
   private initialized = false;
   private extensionUri?: vscode.Uri;
@@ -106,21 +106,14 @@ class PsycheManager {
 
   public getPsyche(name: string): Psyche | undefined {
     if (!this.initialized) {
-      throw new Error('PsycheManager not initialized');
+      throw new Error('PsycheRegistry not initialized');
     }
     return this.psyches.get(name);
   }
-
-  public getAllPsycheNames(): string[] {
-    if (!this.initialized) {
-      throw new Error('PsycheManager not initialized');
-    }
-    return Array.from(this.psyches.keys());
-  }
-
+  
   public getAllPsyches(): Psyche[] {
     if (!this.initialized) {
-      throw new Error('PsycheManager not initialized');
+      throw new Error('PsycheRegistry not initialized');
     }
     return Array.from(this.psyches.values());
   }
@@ -132,25 +125,4 @@ class PsycheManager {
 }
 
 // Global instance
-const psycheManager = new PsycheManager();
-
-// Export functions that match the original API
-export async function initializePsyches(extensionUri: vscode.Uri): Promise<void> {
-  await psycheManager.initialize(extensionUri);
-}
-
-export function getPsyche(name: string): Psyche | undefined {
-  return psycheManager.getPsyche(name);
-}
-
-export function getAllPsycheNames(): string[] {
-  return psycheManager.getAllPsycheNames();
-}
-
-export function getAllPsyches(): Psyche[] {
-  return psycheManager.getAllPsyches();
-}
-
-export function addPsyche(psyche: Psyche): void {
-  psycheManager.addPsyche(psyche);
-}
+export const psycheRegistry = new PsycheRegistry();

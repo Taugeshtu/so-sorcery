@@ -1,7 +1,7 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { SorceryEditorProvider } from './SorceryEditorProvider';
-import * as psyche from './psyche'
+import { psycheRegistry } from './psyche';
 import { toolRegistry } from './tools/ToolRegistry';
 import { MultiReadTool } from './tools/MultiReadTool';
 import { FileReadTool } from './tools/FileReadTool';
@@ -12,7 +12,7 @@ let costStatusBarItem: vscode.StatusBarItem;
 
 export async function activate(context: vscode.ExtensionContext) {
   const lifetimeCost = context.globalState.get<number>('sorcery.lifetimeCost', 0);
-  await psyche.initializePsyches(context.extensionUri);
+  await psycheRegistry.initialize(context.extensionUri);
   toolRegistry.register(MultiReadTool);
   // toolRegistry.register(FileReadTool); // file read tool is disabled, this is future stuff
   

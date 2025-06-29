@@ -37,6 +37,12 @@ Sorcery assumes that:
 - User context control is more important than log-style chat memory
 - Good prompting beats long conversations
 
+Therefore, Sorcery is:
+- a sea of knowledge
+- a sea of work
+- a collection of agents and tools to tackle both, and
+- user-informed orchestration of the process
+
 ---
 
 ## Requirements
@@ -95,6 +101,7 @@ Visual & polish:
 - [ ] Parsing "thinking" stages of PA response and displaying them somewhere (couple that with streaming support?)
 
 Big & faraway items:
+- [~] Make it so user inputs are actually work? For PA agent?? could be fun framing
 - [~] File read tool (done, but untested)
 - [ ] File write tool
 - [ ] !! consider more detailed format for submitting knowledge, allowing UPDATING as well (is a scratchpad, you see?)

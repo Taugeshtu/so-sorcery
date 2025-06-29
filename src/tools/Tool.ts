@@ -9,10 +9,10 @@ export interface ToolResult {
 }
 
 export abstract class Tool {
-  protected context: Session;
+  protected session: Session;
   
-  constructor(context: Session) {
-    this.context = context;
+  constructor(session: Session) {
+    this.session = session;
   }
 
   /**
@@ -45,7 +45,7 @@ export abstract class Tool {
   
   protected createKnowledge(content: string, source: 'system' = 'system'): Knowledge {
     return {
-      id: 0, // Will be assigned by ContextHolder
+      id: 0, // Will be assigned by Session
       type: 'knowledge',
       sourceType: source,
       sourceName: this.name,
@@ -67,7 +67,7 @@ export abstract class Tool {
     tool?: string
   ): WorkItem {
     return {
-      id: 0, // Will be assigned by ContextHolder
+      id: 0, // Will be assigned by Session
       type: 'work',
       sourceType: 'system',
       sourceName: this.name,
