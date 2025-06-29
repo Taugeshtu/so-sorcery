@@ -30,11 +30,11 @@ export function formatAwarenessContext(awarenessContext: AssembledContext): stri
   }
   
   if (awarenessContext.tools) {
-    parts.push(`\nAvailable Tools:\n${awarenessContext.tools}`);
+    parts.push(awarenessContext.tools);
   }
   
   if (awarenessContext.psyches) {
-    parts.push(`\nAvailable Psyches:\n${awarenessContext.psyches}`);
+    parts.push(awarenessContext.psyches);
   }
   
   if (awarenessContext.files) {
@@ -55,29 +55,25 @@ export function formatAwarenessContext(awarenessContext: AssembledContext): stri
 export function buildToolsContext(awareness: boolean | string[]): string {
   if (!awareness) return '';
   
-  const toolInfo = toolRegistry.getToolInfo();
-  
-  if (awareness === true) {
-    return toolInfo.map(t => `- ${t.name}: ${t.description}`).join('\n');
-  }
-  
-  // Filter to specific tools
-  const filteredTools = toolInfo.filter(t => (awareness as string[]).includes(t.name));
-  return filteredTools.map(t => `- ${t.name}: ${t.description}`).join('\n');
+  const info = toolRegistry.getToolsInfo();
+  const filtered = (awareness === true)
+                        ? info
+                        : info.filter(t => (awareness as string[]).includes(t.name));
+  const bulletList = filtered.map(t => `- ${t.name}: ${t.description}`).join('\n');
+  const result = `\nAvailable Tools:\n${bulletList}`
+  return result;
 }
 
 export function buildPsychesContext(awareness: boolean | string[]): string {
   if (!awareness) return '';
   
-  const psycheNames = getAllPsycheNames();
-  
-  if (awareness === true) {
-    return psycheNames.map(name => `- ${name}`).join('\n');
-  }
-  
-  // Filter to specific psyches
-  const filteredPsyches = psycheNames.filter(name => (awareness as string[]).includes(name));
-  return filteredPsyches.map(name => `- ${name}`).join('\n');
+  const info = psycheRegistry.getAllPsyches();
+  const filtered = (awareness === true)
+                        ? info
+                        : info.filter(p => (awareness as string[]).includes(p.name));
+  const bulletList = filtered.map(p => `- ${p.name}: ${p.description}`).join('\n');
+  const result = `\nAvailable Agents:\n${bulletList}`
+  return result;
 }
 
 export async function buildItemsContext(
