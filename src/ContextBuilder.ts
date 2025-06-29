@@ -3,16 +3,16 @@ import * as vscode from 'vscode';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { Knowledge, WorkItem, SessionContext } from './types';
-import { getAvailableFiles, ContextAwareness, AssembledContext } from './types';
+import { getAvailableFiles, ContextAwareness, GatheredContext as GatheredContext } from './types';
 import { toolRegistry } from './tools/ToolRegistry';
 import { psycheRegistry } from './psyche';
 
-export async function assembleContext(
+export async function gatherContext(
   awareness: ContextAwareness,
   context: SessionContext,
   parentOutput?: string
-): Promise<AssembledContext> {
-  const assembled: AssembledContext = {};
+): Promise<GatheredContext> {
+  const assembled: GatheredContext = {};
   if (awareness.tools) assembled.tools = buildToolsContext(awareness.tools);
   if (awareness.psyches) assembled.psyches = buildPsychesContext(awareness.psyches);
   if (awareness.items) assembled.items = await buildItemsContext(awareness.items, context);
@@ -22,7 +22,7 @@ export async function assembleContext(
   return assembled;
 }
 
-export function formatAwarenessContext(awarenessContext: AssembledContext): string {
+export function bakeContext(context: GatheredContext): string {
   const parts: string[] = [];
   
   if (awarenessContext.projectStructure) {

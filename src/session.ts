@@ -4,7 +4,7 @@ import { psycheRegistry } from './psyche';
 import { toolRegistry } from './tools/ToolRegistry';
 import { Tool } from './tools/Tool';
 import { extract, ExtractionResult } from './Extractor';
-import { assembleContext, formatAwarenessContext as bakeContext } from './ContextBuilder';
+import { gatherContext, bakeContext as bakeContext } from './ContextBuilder';
 import { BackendResponse } from './llm/types';
 import { Models } from './llm/models';
 
@@ -391,14 +391,10 @@ export class Session {
       currentDepth: number}
   ): Promise<BackendResponse> {
     const psyche = psycheRegistry.getPsyche(psycheName);
-    if (!psyche) {
-      throw new Error(`Psyche ${psycheName} not found`);
-    }
+    if (!psyche) throw new Error(`Psyche ${psycheName} not found`);
     
     const model = Models[psyche.model];
-    if (!model) {
-      throw new Error(`Model ${psyche.model} for ${psyche.name} not found`);
-    }
+    if (!model) throw new Error(`Model ${psyche.model} for ${psyche.name} not found`);
     
     const system = systemContext? `${systemContext}\n\n${psyche.system}` : psyche.system;
     
@@ -407,8 +403,8 @@ export class Session {
         items: "all"
       };
     const awareness = psyche.awareness ? psyche.awareness : defaultAwareness;
-    const assembledContext = await assembleContext(awareness, this.context, chaining?.parentOutput);
-    const bakedContext = bakeContext(assembledContext);
+    const gatheredContext = await gatherContext(awareness, this.context, chaining?.parentOutput);
+    const bakedContext = bakeContext(gatheredContext);
     
     const llmResponse = await model.backend.run(
       model,

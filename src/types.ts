@@ -57,7 +57,7 @@ export interface ContextAwareness {
   files?: boolean;
 }
 
-export interface AssembledContext {
+export interface GatheredContext {
   tools?: string;
   psyches?: string;
   items?: string;
