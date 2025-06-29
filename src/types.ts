@@ -47,3 +47,21 @@ export function updateAvailableFiles(files: string[]): void {
 export function getAvailableFiles(): string[] {
   return availableFiles;
 }
+
+export interface ContextAwareness {
+  tools?: boolean | string[];
+  psyches?: boolean | string[];
+  items?: "all" | "knowledge" | "work";
+  parent_output?: boolean;
+  project_structure?: boolean;
+  files?: boolean;
+}
+
+export interface AssembledContext {
+  tools?: string;
+  psyches?: string;
+  items?: string;
+  parent_output?: string;
+  project_structure?: string;
+  files?: string;
+}

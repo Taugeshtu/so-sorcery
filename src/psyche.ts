@@ -11,6 +11,7 @@ export interface Psyche {
   system: string;
   priming?: string;
   terminators?: string[];
+  awareness?: ContextAwareness;
   post?: {
     psyche: string;
     chaining_depth: number;
@@ -26,6 +27,7 @@ interface PsycheFile {
   system?: string; // Optional in file, will be loaded from .system file if empty
   priming?: string;
   terminators?: string[];
+  awareness?: ContextAwareness;
   post?: {
     psyche: string;
     chaining_depth: number;
