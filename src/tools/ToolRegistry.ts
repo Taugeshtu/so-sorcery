@@ -1,22 +1,22 @@
 // src/tools/ToolRegistry.ts
 import { Tool } from './Tool';
-import { ContextHolder } from '../contextHolder';
+import { Session } from '../session';
 
 export class ToolRegistry {
-  private tools: Map<string, new (context: ContextHolder) => Tool> = new Map();
+  private tools: Map<string, new (context: Session) => Tool> = new Map();
 
   /**
    * Register a tool class
    */
-  register(toolClass: new (context: ContextHolder) => Tool): void {
-    const instance = new toolClass({} as ContextHolder); // Temporary instance for metadata
+  register(toolClass: new (context: Session) => Tool): void {
+    const instance = new toolClass({} as Session); // Temporary instance for metadata
     this.tools.set(instance.name, toolClass);
   }
 
   /**
    * Create tool instances for a given context
    */
-  createTools(context: ContextHolder): Tool[] {
+  createTools(context: Session): Tool[] {
     return Array.from(this.tools.values()).map(ToolClass => new ToolClass(context));
   }
 
@@ -25,7 +25,7 @@ export class ToolRegistry {
    */
   getToolInfo(): Array<{ name: string; description: string }> {
     return Array.from(this.tools.values()).map(ToolClass => {
-      const instance = new ToolClass({} as ContextHolder);
+      const instance = new ToolClass({} as Session);
       return { name: instance.name, description: instance.description };
     });
   }

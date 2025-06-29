@@ -29,7 +29,7 @@ export interface WorkItem extends ContextItem {
   };
 }
 
-export interface SorceryContext {
+export interface SessionContext {
   workspaceName: string;
   items: ContextItem[];
   nextId: number;

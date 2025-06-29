@@ -1,14 +1,14 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { Knowledge, SorceryContext, WorkItem, ContextItem, getAvailableFiles } from './types';
+import { Knowledge, SessionContext, WorkItem, ContextItem, getAvailableFiles } from './types';
 import { getPsyche, getAllPsycheNames, runPsyche } from './psyche';
 import { toolRegistry } from './tools/ToolRegistry';
 import { Tool } from './tools/Tool';
 import { extract, ExtractionResult } from './Extractor';
 
-export class ContextHolder {
-  private context: SorceryContext;
+export class Session {
+  private context: SessionContext;
   private document: vscode.TextDocument;
   private tools: Tool[];
   private pendingExecutions: Map<number, NodeJS.Timeout> = new Map();
@@ -34,7 +34,7 @@ export class ContextHolder {
     }
   }
 
-  private loadFromDocument(workspaceName: string): SorceryContext {
+  private loadFromDocument(workspaceName: string): SessionContext {
     try {
       const content = this.document.getText().trim();
       if (content) {
@@ -54,8 +54,8 @@ export class ContextHolder {
     };
   }
 
-  private validateContext(parsed: any, workspaceName: string): SorceryContext {
-    const context: SorceryContext = {
+  private validateContext(parsed: any, workspaceName: string): SessionContext {
+    const context: SessionContext = {
       workspaceName: parsed.workspaceName || workspaceName,
       items: [],
       nextId: typeof parsed.nextId === 'number' ? parsed.nextId : 1,
@@ -418,7 +418,7 @@ export class ContextHolder {
     return false;
   }
 
-  public getContext(): SorceryContext {
+  public getContext(): SessionContext {
     return { ...this.context };
   }
 

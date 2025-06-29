@@ -1,6 +1,6 @@
 // src/tools/Tool.ts
 import { WorkItem, Knowledge } from '../types';
-import { ContextHolder } from '../contextHolder';
+import { Session } from '../session';
 
 export interface ToolResult {
   knowledges?: Knowledge[];
@@ -9,9 +9,9 @@ export interface ToolResult {
 }
 
 export abstract class Tool {
-  protected context: ContextHolder;
+  protected context: Session;
   
-  constructor(context: ContextHolder) {
+  constructor(context: Session) {
     this.context = context;
   }
 
