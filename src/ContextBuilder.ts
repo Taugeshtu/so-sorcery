@@ -15,41 +15,22 @@ export async function gatherContext(
   const assembled: GatheredContext = {};
   if (awareness.tools) assembled.tools = buildToolsContext(awareness.tools);
   if (awareness.psyches) assembled.psyches = buildPsychesContext(awareness.psyches);
-  if (awareness.items) assembled.items = await buildItemsContext(awareness.items, context);
-  if (awareness.parentOutput && parentOutput) assembled.parentOutput = parentOutput;
   if (awareness.projectStructure) assembled.projectStructure = buildProjectStructureContext();
-  if (awareness.files) assembled.files = buildFilesContext(context);
+  if (awareness.files) assembled.files = await buildFilesContext(context);
+  if (awareness.items) assembled.items = buildItemsContext(awareness.items, context);
+  if (awareness.parentOutput && parentOutput) assembled.parentOutput = parentOutput;
   return assembled;
 }
 
 export function bakeContext(context: GatheredContext): string {
   const parts: string[] = [];
-  
-  if (awarenessContext.projectStructure) {
-    parts.push(awarenessContext.projectStructure);
-  }
-  
-  if (awarenessContext.tools) {
-    parts.push(awarenessContext.tools);
-  }
-  
-  if (awarenessContext.psyches) {
-    parts.push(awarenessContext.psyches);
-  }
-  
-  if (awarenessContext.files) {
-    parts.push(`\n${awarenessContext.files}`);
-  }
-  
-  if (awarenessContext.parentOutput) {
-    parts.push(`\nParent Output:\n${awarenessContext.parentOutput}`);
-  }
-  
-  if (awarenessContext.items) {
-    parts.push(`\n${awarenessContext.items}`);
-  }
-  
-  return parts.join('');
+  if (context.tools) parts.push(context.tools);
+  if (context.psyches) parts.push(context.psyches);
+  if (context.projectStructure) parts.push(context.projectStructure);
+  if (context.files) parts.push(context.files);
+  if (context.items) parts.push(context.items);
+  if (context.parentOutput) parts.push(context.parentOutput);
+  return parts.join('\n\n');
 }
 
 export function buildToolsContext(awareness: boolean | string[]): string {
@@ -60,7 +41,7 @@ export function buildToolsContext(awareness: boolean | string[]): string {
                         ? info
                         : info.filter(t => (awareness as string[]).includes(t.name));
   const bulletList = filtered.map(t => `- ${t.name}: ${t.description}`).join('\n');
-  const result = `\nAvailable Tools:\n${bulletList}`
+  const result = `Available Tools:\n${bulletList}`
   return result;
 }
 
@@ -72,75 +53,70 @@ export function buildPsychesContext(awareness: boolean | string[]): string {
                         ? info
                         : info.filter(p => (awareness as string[]).includes(p.name));
   const bulletList = filtered.map(p => `- ${p.name}: ${p.description}`).join('\n');
-  const result = `\nAvailable Agents:\n${bulletList}`
+  const result = `Available Agents:\n${bulletList}`
   return result;
-}
-
-export async function buildItemsContext(
-  awareness: "all" | "knowledge" | "work",
-  context: SessionContext
-): Promise<string> {
-  const parts: string[] = [];
-  
-  for (const item of context.items) {
-    const isKnowledge = 'source' in item;
-    const isWorkItem = 'executor' in item;
-    
-    // Filter based on awareness setting
-    if (awareness === "knowledge" && !isKnowledge) continue;
-    if (awareness === "work" && !isWorkItem) continue;
-    
-    if (isKnowledge) {
-      const knowledge = item as Knowledge;
-      if (knowledge.sourceType === 'file') {
-        let content = knowledge.content;
-        try {
-          const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-          if (workspaceRoot) {
-            const fullPath = path.join(workspaceRoot, knowledge.content);
-            content = await fs.readFile(fullPath, 'utf-8');
-          }
-        } catch (error) {
-          content = `[File not found]`;
-        }
-        
-        // TODO: don't actually read files lol wtf :D
-        parts.push(`<file>[${knowledge.id}] at: ${knowledge.content}\n${content}\n</file>`);
-      } else {
-        const source = knowledge.sourceType === 'user'
-                      ? knowledge.sourceType
-                      // for agent and system source types (files take a different route altogether)
-                      : `${knowledge.sourceType}(${knowledge.sourceName})`;
-        parts.push(`<knowledge>[${knowledge.id}] from: ${source}\ncontent:\n${knowledge.content}\n</knowledge>`);
-      }
-    } else if (isWorkItem) {
-      const workItem = item as WorkItem;
-      const source = workItem.sourceType === 'user'
-                      ? workItem.sourceType
-                      // for agent and system source types (files take a different route altogether)
-                      : `${workItem.sourceType}(${workItem.sourceName})`;
-      parts.push(`<work>[${workItem.id}] from: ${source} for executor: ${workItem.executor}, status: ${workItem.status}\ncontent:\n${workItem.content}\n</work>`);
-    }
-  }
-  
-  return parts.join('\n');
 }
 
 export function buildProjectStructureContext(): string {
   const availableFiles = getAvailableFiles();
   if (availableFiles.length === 0) return '';
   
-  return `Files index:\n${availableFiles.join('\n')}`;
+  return `Project Files index:\n${availableFiles.join('\n')}`;
 }
 
-export function buildFilesContext(context: SessionContext): string {
-  // Get files that are actually in context (file knowledge items)
-  const filePaths = context.items
-    .filter(i => i.type === "knowledge")
-    .filter(k => k.sourceType === 'file')
-    .map(k => k.sourceName);
+export async function buildFilesContext(context: SessionContext): Promise<string> {
+  const parts: string[] = [];
   
-  if (filePaths.length === 0) return '';
+  for (const item of context.items) {
+    if(item.type !== 'knowledge') continue;
+    if(item.sourceType !== 'file') continue;
+    
+    let content = item.content;
+    try {
+      const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+      if (workspaceRoot) {
+        const fullPath = path.join(workspaceRoot, item.sourceName);
+        content = await fs.readFile(fullPath, 'utf-8');
+      }
+    } catch (error) {
+      content = `[File not found]`;
+    }
+    
+    parts.push(`<file>[${item.id}] at: ${item.sourceName}\n${content}\n</file>`);
+  }
+  return parts.join('\n\n');
+}
+
+export function buildItemsContext(
+  awareness: "all" | "knowledge" | "work",
+  context: SessionContext
+): string {
+  const parts: string[] = [];
   
-  return `Files in context:\n${filePaths.join('\n')}`;
+  for (const item of context.items) {
+    // Filter based on awareness setting
+    if (awareness === "knowledge" && item.type !== 'knowledge') continue;
+    if (awareness === "work" && item.type !== 'work') continue;
+    
+    if (item.type === 'knowledge') {
+      const knowledge = item as Knowledge;
+      if (item.sourceType === 'file') continue;
+      
+      const source = knowledge.sourceType === 'user'
+                    ? knowledge.sourceType
+                    // for agent and system source types (files take a different route altogether)
+                    : `${knowledge.sourceType}(${knowledge.sourceName})`;
+      parts.push(`<knowledge>[${knowledge.id}] from: ${source}\ncontent:\n${knowledge.content}\n</knowledge>`);
+    }
+    if (item.type === 'work') {
+      const workItem = item as WorkItem;
+      const source = workItem.sourceType === 'user'
+                      ? workItem.sourceType
+                      // for agent and system source types (files take a different route altogether)
+                      : `${workItem.sourceType}(${workItem.sourceName})`;
+      parts.push(`<work>[${workItem.id}] from: ${source} for: ${workItem.executor}, status: ${workItem.status}\ncontent:\n${workItem.content}\n</work>`);
+    }
+  }
+  
+  return parts.join('\n');
 }
