@@ -16,8 +16,8 @@ export async function assembleContext(
   if (awareness.tools) assembled.tools = buildToolsContext(awareness.tools);
   if (awareness.psyches) assembled.psyches = buildPsychesContext(awareness.psyches);
   if (awareness.items) assembled.items = await buildItemsContext(awareness.items, context);
-  if (awareness.parent_output && parentOutput) assembled.parent_output = parentOutput;
-  if (awareness.project_structure) assembled.project_structure = buildProjectStructureContext();
+  if (awareness.parentOutput && parentOutput) assembled.parentOutput = parentOutput;
+  if (awareness.projectStructure) assembled.projectStructure = buildProjectStructureContext();
   if (awareness.files) assembled.files = buildFilesContext(context);
   return assembled;
 }
@@ -25,8 +25,8 @@ export async function assembleContext(
 export function formatAwarenessContext(awarenessContext: AssembledContext): string {
   const parts: string[] = [];
   
-  if (awarenessContext.project_structure) {
-    parts.push(awarenessContext.project_structure);
+  if (awarenessContext.projectStructure) {
+    parts.push(awarenessContext.projectStructure);
   }
   
   if (awarenessContext.tools) {
@@ -41,8 +41,8 @@ export function formatAwarenessContext(awarenessContext: AssembledContext): stri
     parts.push(`\n${awarenessContext.files}`);
   }
   
-  if (awarenessContext.parent_output) {
-    parts.push(`\nParent Output:\n${awarenessContext.parent_output}`);
+  if (awarenessContext.parentOutput) {
+    parts.push(`\nParent Output:\n${awarenessContext.parentOutput}`);
   }
   
   if (awarenessContext.items) {

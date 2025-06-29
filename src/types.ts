@@ -52,8 +52,8 @@ export interface ContextAwareness {
   tools?: boolean | string[];
   psyches?: boolean | string[];
   items?: "all" | "knowledge" | "work";
-  parent_output?: boolean;
-  project_structure?: boolean;
+  parentOutput?: boolean;
+  projectStructure?: boolean;
   files?: boolean;
 }
 
@@ -61,7 +61,7 @@ export interface AssembledContext {
   tools?: string;
   psyches?: string;
   items?: string;
-  parent_output?: string;
-  project_structure?: string;
+  parentOutput?: string;
+  projectStructure?: string;
   files?: string;
 }

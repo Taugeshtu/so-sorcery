@@ -403,7 +403,7 @@ export class Session {
     const system = systemContext? `${systemContext}\n\n${psyche.system}` : psyche.system;
     
     const defaultAwareness: ContextAwareness = {
-        project_structure: true,
+        projectStructure: true,
         items: "all"
       };
     const awareness = psyche.awareness ? psyche.awareness : defaultAwareness;
