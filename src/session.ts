@@ -1,11 +1,12 @@
 import * as vscode from 'vscode';
-import * as fs from 'fs/promises';
-import * as path from 'path';
-import { Knowledge, SessionContext, WorkItem, ContextItem, getAvailableFiles } from './types';
-import { getPsyche, getAllPsycheNames, runPsyche } from './psyche';
+import { Knowledge, SessionContext, WorkItem, ContextItem, getAvailableFiles, ContextAwareness } from './types';
+import { getPsyche, getAllPsycheNames, Psyche } from './psyche';
 import { toolRegistry } from './tools/ToolRegistry';
 import { Tool } from './tools/Tool';
 import { extract, ExtractionResult } from './Extractor';
+import { assembleContext, formatAwarenessContext as bakeContext } from './ContextBuilder';
+import { BackendResponse } from './llm/types';
+import { Models } from './llm/models';
 
 export class Session {
   private context: SessionContext;
@@ -20,10 +21,6 @@ export class Session {
     this.tools = toolRegistry.createTools(this);
     this.onStateChanged = onStateChanged;
     
-    // initializing worker outputs:
-    if (!this.context.workerOutputs) {
-      this.context.workerOutputs = {};
-    }
     
     // Initialize with all known psyches
     const psycheNames = getAllPsycheNames();
@@ -69,7 +66,8 @@ export class Session {
       workspaceName,
       items: [],
       nextId: 1,
-      accumulatedCost: 0
+      accumulatedCost: 0,
+      workerOutputs: {}
     };
   }
 
@@ -358,35 +356,25 @@ export class Session {
   
   
   // ========================= RUNNING AGENTS =========================
+  private buildSystemEnvironment(): string {
+    // TODO: refactor this to use ContextBuilder!
+    const toolInfo = this.tools.map(t => `- ${t.name}: ${t.description}`).join('\n');
+    return `Workspace: ${this.context.workspaceName}\n\nAvailable Tools:\n${toolInfo}`;
+  }
+  
   public async runPA(): Promise<ExtractionResult> {
-    const psycheName = 'project_assistant';
-    const psyche = getPsyche(psycheName);
-    if (!psyche) {
-      throw new Error(`Psyche ${psycheName} not found`);
-    }
-    
-    // Build context for the agent
-    const systemEnvironment = this.buildSystemEnvironment();
-    const knowledgeBlob = await this.buildKnowledgeBlob();
+    const paName = 'project_assistant';
     
     try {
-      if (!this.context.workerOutputs) {
-        this.context.workerOutputs = {};
-      }
-      const response = await runPsyche(this.context.workerOutputs, psyche, knowledgeBlob, systemEnvironment);
-      const extractionContext = {
-        sourceName: psyche.displayName,
-        timeStamp: Date.now()
-      }
-      const extracted = extract(response, extractionContext);
+      const environment = this.buildSystemEnvironment();
+      const response = await this.runPsyche(paName, environment);
+      const extracted = extract(response, { sourceName: getPsyche(paName)?.displayName, timestamp: Date.now() });
       for (const knowledge of extracted.knowledges) {
         this.addItem(knowledge);
       }
       for (const work of extracted.works) {
         this.addItem(work);
       }
-      
-      this.context.accumulatedCost += response.cost;
       
       this.saveToDocument();
       return extracted;
@@ -395,57 +383,67 @@ export class Session {
       throw error;
     }
   }
-
-  private buildSystemEnvironment(): string {
-    const toolInfo = this.tools.map(t => `- ${t.name}: ${t.description}`).join('\n');
-    return `Workspace: ${this.context.workspaceName}\n\nAvailable Tools:\n${toolInfo}`;
-  }
   
-  private async buildKnowledgeBlob(): Promise<string> {
-    const parts: string[] = [];
-    
-    if (getAvailableFiles().length > 0) {
-      parts.push(`Files index:\n${getAvailableFiles().join('\n')}`);
+  private async runPsyche(
+    psycheName: string,
+    systemContext?: string,
+    chaining?: {
+      parentOutput: string,
+      currentDepth: number}
+  ): Promise<BackendResponse> {
+    const psyche = getPsyche(psycheName);
+    if (!psyche) {
+      throw new Error(`Psyche ${psycheName} not found`);
     }
     
-    const allItems = this.context.items;
-    if (allItems.length > 0) {
-      parts.push('\n\n');
-      for (const item of allItems) {
-        if (this.isKnowledge(item)) {
-          
-          const knowledge = item as Knowledge;
-          if (knowledge.sourceType === 'file') {
-            let content = knowledge.content;
-            try {
-              const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-              if (workspaceRoot) {
-                const fullPath = path.join(workspaceRoot, knowledge.content);
-                content = await fs.readFile(fullPath, 'utf-8');
-              }
-            } catch (error) {
-              content = `[File not found]`;
-            }
-            parts.push(`\n<file>[${knowledge.id}] at: ${knowledge.content}\n${content}\n</file>`);
-          } else {
-            const source = knowledge.sourceType === 'user'
-                          ? knowledge.sourceType
-                          // for agent or tool source types (because files take a different route altogether):
-                          : `${knowledge.sourceType}(${knowledge.sourceName})`;
-            parts.push(`\n<knowledge>[${knowledge.id}] from: ${source}\ncontent:\n${knowledge.content}\n</knowledge>`);
-          }
-        } else if (this.isWorkItem(item)) {
-          const workItem = item as WorkItem;
-          const source = workItem.sourceType === 'user'
-                          ? workItem.sourceType
-                          // for agent and system source types (files take a different route altogether)
-                          : `${workItem.sourceType}(${workItem.sourceName})`;
-          parts.push(`<work>[${workItem.id}] from: ${source} for executor: ${workItem.executor}, status: ${workItem.status}\ncontent:\n${workItem.content}\n</work>`);
-        }
+    const model = Models[psyche.model];
+    if (!model) {
+      throw new Error(`Model ${psyche.model} for ${psyche.name} not found`);
+    }
+    
+    const system = systemContext? `${systemContext}\n\n${psyche.system}` : psyche.system;
+    
+    const defaultAwareness: ContextAwareness = {
+        project_structure: true,
+        items: "all"
+      };
+    const awareness = psyche.awareness ? psyche.awareness : defaultAwareness;
+    const assembledContext = await assembleContext(awareness, this.context, chaining?.parentOutput);
+    const bakedContext = bakeContext(assembledContext);
+    
+    const llmResponse = await model.backend.run(
+      model,
+      psyche.maxTokens,
+      system,
+      bakedContext,
+      psyche.priming,
+      psyche.terminators
+    );
+    this.context.workerOutputs[psyche.name] = llmResponse.content;
+    this.context.accumulatedCost += llmResponse.cost;
+    // Check for daisy-chaining
+    if (psyche.post) {
+      if( chaining && chaining.currentDepth === 0 ) {
+        vscode.window.showWarningMessage(`Wanting to chain further '${psyche.name}' -> '${psyche.post.psyche}', but out of depth!`);
+        return llmResponse;
       }
+      
+      // Recursively call the next psyche with decremented chain depth
+      const nextStepDepthBudget = chaining
+                                  ? chaining.currentDepth - 1
+                                  : psyche.post.chaining_depth;
+      const nextChain = {
+        parentOutput: llmResponse.content.trim(),
+        currentDepth: nextStepDepthBudget
+      }
+      return await this.runPsyche(
+        psyche.post.psyche,
+        systemContext,
+        nextChain
+      );
     }
     
-    return parts.join('');
+    return llmResponse;
   }
   
   

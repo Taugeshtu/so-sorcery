@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { Models, LLMResponse, BackendResponse } from './llm';
+import { ContextAwareness } from './types';
 
 export interface Psyche {
   name: string;
@@ -153,64 +153,4 @@ export function getAllPsyches(): Psyche[] {
 
 export function addPsyche(psyche: Psyche): void {
   psycheManager.addPsyche(psyche);
-}
-
-export async function runPsyche(
-  traceStore: { [workerKey: string]: string },
-  psyche: Psyche, 
-  input: string, 
-  systemContext?: string, 
-  chainDepth?: number | null,
-  costAccumulated?: number
-): Promise<BackendResponse> {
-  const systemPrompt = systemContext 
-                        ? `${systemContext}\n\n${psyche.system}`
-                        : psyche.system;
-  const model = Models[psyche.model];
-  if (!model) {
-    throw new Error(`Model ${psyche.model} for ${psyche.name} not found`);
-  }
-  
-  const llmResponse = await model.backend.run(
-    model,
-    psyche.maxTokens,
-    systemPrompt,
-    input,
-    psyche.priming,
-    psyche.terminators
-  );
-  traceStore[psyche.name] = llmResponse.content;
-  const totalCostSoFar = (costAccumulated || 0) + llmResponse.cost;
-  
-  // Check for daisy-chaining
-  if (psyche.post) {
-    if( chainDepth && chainDepth === 0 ) {
-      vscode.window.showWarningMessage(`Wanting to chain further '${psyche.name}' -> '${psyche.post.psyche}', but out of depth!`);
-      return llmResponse;
-    }
-    
-    const nextPsyche = getPsyche(psyche.post.psyche);
-    if (!nextPsyche) {
-      vscode.window.showErrorMessage(`Chained psyche '${psyche.post.psyche}' not found`);
-      throw new Error(`Chained psyche '${psyche.post.psyche}' not found`);
-    }
-    
-    // Recursively call the next psyche with decremented chain depth
-    const nextStepDepthBudget = chainDepth
-                                ? chainDepth - 1
-                                : psyche.post.chaining_depth;
-    return await runPsyche(
-      traceStore,
-      nextPsyche,
-      llmResponse.content.trim(),
-      systemContext,
-      nextStepDepthBudget,
-      totalCostSoFar
-    );
-  }
-  
-  return {
-    ...llmResponse,
-    cost: totalCostSoFar
-  };
 }

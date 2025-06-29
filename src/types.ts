@@ -35,7 +35,7 @@ export interface SessionContext {
   workspaceName: string;
   items: ContextItem[];
   nextId: number;
-  workerOutputs?: { [workerKey: string]: string }; // Store latest raw output per worker
+  workerOutputs: { [workerKey: string]: string }; // Store latest raw output per worker
   accumulatedCost: number;
 }
 
