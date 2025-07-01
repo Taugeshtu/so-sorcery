@@ -6,10 +6,6 @@ import { OpenAIBackend } from './backends/OpenAIBackend';
 const claude = new ClaudeBackend();
 const openai = new OpenAIBackend();
 
-export function getSessionCost(): number {
-  return claude.getAccumulatedCost() + openai.getAccumulatedCost();
-}
-
 export const Models: Record<string, Model> = {
   // Anthropic Claude 4
   'claude-opus-4-20250514': new Model('claude-opus-4-20250514', claude, 200_000, 15, 75),

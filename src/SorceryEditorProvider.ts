@@ -3,6 +3,7 @@ import { getFilteredFilePaths } from './fileDiscovery';
 import { SessionController } from './session';
 import { getWebviewHtml } from './webview/htmlTemplate';
 import { updateAvailableFiles, getAvailableFiles } from './types';
+import { updateCostDisplay } from './extension'
 
 export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
   public static readonly viewType = 'sorcery.contextEditor';
@@ -46,9 +47,10 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
     webviewPanel.onDidChangeViewState((e) => {
       if (e.webviewPanel.active) {
         this.currentlyFocusedPanel = e.webviewPanel;
+        updateCostDisplay();
       } else if (this.currentlyFocusedPanel === e.webviewPanel) {
-        // Clear if this panel lost focus
         this.currentlyFocusedPanel = undefined;
+        updateCostDisplay();
       }
     });
     
@@ -184,11 +186,17 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
     return document?.uri;
   }
   
-  public getWorkspaceCost(): number {
-    let total = 0;
-    for (const sessionController of this.sessionControllers.values()) {
-      total += sessionController.getSession().accumulatedCost;
+  public getFocusedSessionCost(): number {
+    if (!this.currentlyFocusedPanel || !this.panelToDocument || !this.sessionControllers) {
+      return 0;
     }
-    return total;
+    
+    const document = this.panelToDocument.get(this.currentlyFocusedPanel);
+    if (!document) {
+      return 0;
+    }
+    
+    const sessionController = this.sessionControllers.get(document.uri.toString());
+    return sessionController ? sessionController.getSession().accumulatedCost : 0;
   }
 }

@@ -7,6 +7,7 @@ import { extract, ExtractionResult } from './Extractor';
 import { gatherContext, bakeContext as bakeContext } from './ContextBuilder';
 import { BackendResponse } from './llm/types';
 import { Models } from './llm/models';
+import { workspaceController } from './workspace';
 
 export class SessionController {
   private context: SessionContext;
@@ -405,6 +406,7 @@ export class SessionController {
     );
     this.context.workerOutputs[psyche.name] = llmResponse.content;
     this.context.accumulatedCost += llmResponse.cost;
+    workspaceController.addCost(llmResponse.cost);
     
     this.psycheExecutionCounts.set(psycheName, (this.psycheExecutionCounts.get(psycheName) || 0) - 1);
     this.onStateChanged?.();

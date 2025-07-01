@@ -1,20 +1,25 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { SorceryEditorProvider } from './SorceryEditorProvider';
+import { workspaceController } from './workspace';
 import { psycheRegistry } from './psyche';
 import { toolRegistry } from './tools/ToolRegistry';
 import { MultiReadTool } from './tools/MultiReadTool';
 import { FileReadTool } from './tools/FileReadTool';
-import { getSessionCost } from './llm/models';
 
 let sorceryEditorProvider: SorceryEditorProvider;
 let costStatusBarItem: vscode.StatusBarItem;
+export let globalState: vscode.Memento;
 
 export async function activate(context: vscode.ExtensionContext) {
-  const lifetimeCost = context.globalState.get<number>('sorcery.lifetimeCost', 0);
+  globalState = context.globalState;
+  await workspaceController.initialize();
   await psycheRegistry.initialize(context.extensionUri);
+  
   toolRegistry.register(MultiReadTool);
   // toolRegistry.register(FileReadTool); // file read tool is disabled, this is future stuff
+  
+  sorceryEditorProvider = new SorceryEditorProvider(context);
   
   // Create status bar item
   costStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
@@ -103,9 +108,6 @@ export async function activate(context: vscode.ExtensionContext) {
       );
     })
   );
-
-  // Create and store reference to SorceryEditorProvider
-  sorceryEditorProvider = new SorceryEditorProvider(context);
   
   context.subscriptions.push(
     vscode.window.registerCustomEditorProvider(
@@ -119,17 +121,20 @@ export async function activate(context: vscode.ExtensionContext) {
   );
 }
 
-function updateCostDisplay() {
-  const sessionCost = getSessionCost();
-  const workspaceCost = sorceryEditorProvider ? sorceryEditorProvider.getWorkspaceCost() : 0;
+export function updateCostDisplay() {
+  const sessionCost = sorceryEditorProvider.getFocusedSessionCost();
+  const workspaceCost = workspaceController.getAccumulatedCost();
+  const lifetimeCost = globalState.get<number>('sorcery.lifetimeCost', 0);
   const formatCost = (cost: number): string => {
     return cost.toFixed(2);
   };
   
+  const lifetimeCostStr = formatCost(lifetimeCost);
   const workspaceCostStr = formatCost(workspaceCost);
   const sessionCostStr = formatCost(sessionCost);
   
-  costStatusBarItem.text = `💰 Sorcery: ${workspaceCostStr} (+${sessionCostStr})`;
+  costStatusBarItem.text = `💰 Sorcery: ${sessionCostStr} /${workspaceCostStr}`;
+  costStatusBarItem.tooltip = `Cost tracking: this session /total for workspace | ${lifetimeCostStr} = lifetime`;
   costStatusBarItem.show();
 }
 
