@@ -13,6 +13,7 @@ export class SessionController {
   private document: vscode.TextDocument;
   private tools: Tool[];
   private pendingExecutions: Map<number, NodeJS.Timeout> = new Map();
+  private psycheExecutionCounts: Map<string, number> = new Map();
   private onStateChanged?: () => void;
   
   constructor(document: vscode.TextDocument, workspaceName: string, onStateChanged?: () => void) {
@@ -379,6 +380,9 @@ export class SessionController {
     const model = Models[psyche.model];
     if (!model) throw new Error(`Model ${psyche.model} for ${psyche.name} not found`);
     
+    this.psycheExecutionCounts.set(psycheName, (this.psycheExecutionCounts.get(psycheName) || 0) + 1);
+    this.onStateChanged?.();
+    
     const system = systemContext? `${systemContext}\n\n${psyche.system}` : psyche.system;
     
     const defaultAwareness: ContextAwareness = {
@@ -401,6 +405,10 @@ export class SessionController {
     );
     this.context.workerOutputs[psyche.name] = llmResponse.content;
     this.context.accumulatedCost += llmResponse.cost;
+    
+    this.psycheExecutionCounts.set(psycheName, (this.psycheExecutionCounts.get(psycheName) || 0) - 1);
+    this.onStateChanged?.();
+    
     // Check for daisy-chaining
     if (psyche.post) {
       if( chaining && chaining.currentDepth === 0 ) {
@@ -430,5 +438,16 @@ export class SessionController {
   // ========================= ACCESSOR TRASH =========================
   public getSession(): SessionContext {
     return { ...this.context };
+  }
+  
+  public getPsycheExecutionStates(): [string, string, boolean][] {
+    const states: [string, string, boolean][] = [];
+    
+    for (const psyche of psycheRegistry.getAllPsyches()) {
+      const isExecuting = (this.psycheExecutionCounts.get(psyche.name) || 0) > 0;
+      states.push([psyche.name, psyche.displayName, isExecuting]);
+    }
+    
+    return states;
   }
 }

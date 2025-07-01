@@ -15,19 +15,31 @@ export class WorkerManager {
             copyWorkerOutputButton.addEventListener('click', this.copyWorkerOutput.bind(this));
         }
     }
-
-    updateWorkerButtons(workerOutputs) {
+    
+    updateWorkerButtons(workerOutputs, psycheStates = []) {
         const workerButtonsContainer = document.getElementById('workerButtons');
         if (!workerButtonsContainer) return;
 
         workerButtonsContainer.innerHTML = '';
         const workerNames = Object.keys(workerOutputs || {});
         
+        const executionStates = {};
+        if (Array.isArray(psycheStates)) {
+            psycheStates.forEach(([name, displayName, isExecuting]) => {
+                executionStates[name] = {displayName, isExecuting};
+            });
+        }
+        
         workerNames.forEach(workerName => {
             const button = document.createElement('button');
             button.className = 'worker-button';
-            button.textContent = workerName;
+            button.textContent = executionStates[workerName].displayName;
             button.dataset.workerName = workerName;
+            
+            const isBusy = executionStates[workerName].isExecuting || false;
+            if (isBusy) {
+                button.classList.add('busy');
+            }
             
             // Set active state if this worker is currently shown
             if (this.stateManager.currentWorkerView === workerName) {
@@ -45,7 +57,7 @@ export class WorkerManager {
             workerButtonsContainer.appendChild(button);
         });
     }
-
+    
     showWorkerOutput(workerName) {
         this.stateManager.setCurrentWorkerView(workerName);
         

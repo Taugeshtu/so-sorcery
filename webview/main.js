@@ -31,7 +31,7 @@ class SorceryWebview {
 
     setupMessageHandlers() {
         this.messageHandler.on('updateState', (message) => {
-            this.handleStateUpdate(message.context);
+            this.handleStateUpdate(message.context, message.psycheStates);
         });
         
         this.messageHandler.on('updateFiles', (message) => {
@@ -48,7 +48,7 @@ class SorceryWebview {
         // Most event listeners are now handled by individual managers
     }
 
-    handleStateUpdate(context) {
+    handleStateUpdate(context, psycheStates) {
         // Update state manager
         this.stateManager.updateContext(context);
         
@@ -60,7 +60,7 @@ class SorceryWebview {
         
         // Update worker buttons and outputs
         // TODO: ideally we want psyche's display names here...
-        this.workerManager.updateWorkerButtons(context.workerOutputs || {});
+        this.workerManager.updateWorkerButtons(context.workerOutputs || {}, psycheStates);
     }
     
     handleFilesUpdate(availableFiles) {

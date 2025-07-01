@@ -81,11 +81,12 @@ Functional:
 
 Bugs:
 - [ ] the way "run" button blocks between "run" and "+ & Run" is somehow different
-    - move the "busy" state into a composite extractor method on SessionController? Which can check its workers... Will also let UI show WHICH of the workers is busy
+    - this won't be a big deal once the "work for agent" system (`@`) is implemented; then "run" kind of loses its meaning? Either you @ someone, or you don't; then it's just work dispatch...
 - [ ] "+ & Run" doesn't seem to work :D
 - [ ] Feels like cost calc is somewhat buggy... Needs a second pass
 
 Visual & polish:
+- [ ] split up the css, it's getting ridiculous!
 - [ ] when we add an item, we lose focus from the input field. Not nice!
 - [ ] Accumulate costs also over all workspaces
 - [ ] Starting a new session from a file should maybe pull that file into context from the get-go?..
@@ -121,6 +122,9 @@ Big & faraway items:
 ---
 
 ## Release Notes
+
+### 0.9.x
+- [x] move the "busy" state into a composite extractor method on SessionController? Which can check its workers... Will also let UI show WHICH of the workers is busy
 
 ### 0.8.x
 - [x] somehow agent things are added as "undefined" in the source; OR they are displayed as such??..

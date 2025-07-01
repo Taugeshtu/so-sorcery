@@ -77,10 +77,12 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
   
   private async updateWebviewState(panel: vscode.WebviewPanel, sessionController: SessionController) {
     const session = sessionController.getSession();
+    const psycheStates = sessionController.getPsycheExecutionStates();
     
     panel.webview.postMessage({
         command: 'updateState',
-        context: session
+        context: session,
+        psycheStates
     });
   }
   
