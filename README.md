@@ -70,52 +70,55 @@ Therefore, Sorcery is:
 
 ## Known Issues / TODO
 
-Functional:
-- [ ] Images handling
+Polish:
+- [ ] when we add an item, we lose focus from the input field. Not nice!
+- [ ] Starting a new session from a file should maybe pull that file into context from the get-go?..
+- [ ] Starting a new session from a file WITH SELECTION pulls a file AND generates that selection as a knowledge item?
+- [ ] Searched, added item - search didn't clear, BUT filter did drop. Hmmm... Dunno which should happen, but not that
+
+Function:
 - [ ] Extractor misses code blocks, no bueno
 - [ ] PA hallucinates a bit about files; may need prompt massaging
 - [~] Improve the system: agent is low on self-reflection, doesn't recognize refactoring, doesn't recognize the files are actual files it seems...
     this needs re-testing on larger contexts and deeper convos. Maybe two-stage format helps with that?
     did catch a hallucination once about file contents which wasn't present in context... Time to bring back "list the unknowns"!
 - [ ] System: PA really loves repeating what's already in the knowledge...
+- [ ] Undo/Redo (VS Code's built-in document undo should work?)
+- [~] File read tool (done, but untested)
+- [ ] File write tool
+- [ ] "Patcher" psyche
 
 Bugs:
 - [ ] the way "run" button blocks between "run" and "+ & Run" is somehow different
     - this won't be a big deal once the "work for agent" system (`@`) is implemented; then "run" kind of loses its meaning? Either you @ someone, or you don't; then it's just work dispatch...
 - [ ] "+ & Run" doesn't seem to work :D
 
-Visual & polish:
+Refactoring:
+- [ ] Make it so user inputs are actually work? For PA agent?? could be fun framing
 - [ ] split up the css, it's getting ridiculous!
-- [ ] when we add an item, we lose focus from the input field. Not nice!
-- [ ] Starting a new session from a file should maybe pull that file into context from the get-go?..
-- [ ] Starting a new session from a file WITH SELECTION pulls a file AND generates that selection as a knowledge item?
-- [ ] Searched, added item - search didn't clear, BUT filter did drop. Hmmm... Dunno which should happen, but not that
+
+Big && / || faraway items:
 - [ ] Auto-focusing the input field whenever Sorcery editor is activated
-- [ ] Undo/Redo (VS Code's built-in document undo should work?)
 - [ ] Settings: custom additional ignore
-- [ ] Somehow pipe psyches' display names into the frontend... wait, can we use display names to store? Probably not a good idea, BUT we do need them unique, maybe?..
+- [ ] Parsing & making jumpable `[[wikilinks]]`, obsidian-style, for IDs and files
+- [ ] psyche editor (ideally storing them into user-global storage but not settings)
+- [ ] Better tool ecosystem (interpreter, tree, maybe bash/cmd?)
+- [ ] Docs/readme of some kind, or a tutorial
+- [~] user-informed extra context, on the level of working dir/user themselves (like preferences, maybe info that's general about project, etc... altho project stuff coooould be a file; and maybe the way to do that would be to "pin" it in the tree, so it auto-adds to every new session, but can be picked out? and maybe we also have a way to "memorize" a particular bit of knowledge...)
+- [ ] When files are added/removed, we need to be aware of this...
+- [ ] Images handling
 - [ ] Add a button somewhere in the UI to fork a session?
 - [ ] Make completed work auto-disappears? (at least for Tool ops?) (I do like being able to see what's going on... provide an event log?) Maybe it becomes omitted?
-- [ ] A way to navigate focus from files search to results
-- [ ] Folders on top in files tree
-- [ ] ?? Remove collapse button if item is short enough to fit
 
-Big & faraway items:
-- [ ] Make it so user inputs are actually work? For PA agent?? could be fun framing
-- [~] File read tool (done, but untested)
-- [ ] File write tool
-- [ ] !! consider more detailed format for submitting knowledge, allowing UPDATING as well (is a scratchpad, you see?)
-- [ ] Parsing & making jumpable `[[wikilinks]]`, obsidian-style, for IDs and files
-- [ ] Multiple agent types ("psyches": autopath, patcher...)
+Maybes:
+- [ ] Folders on top in files tree
+- [ ] A way to navigate focus from files search to results
+- [ ] more detailed format for submitting knowledge, allowing UPDATING as well (is a scratchpad, you see?)
+- [ ] streaming support?
 - [ ] Knowledge auto-naming & summary (Haiku to the rescue?)
 - [ ] Reference arrows (this is the big visual feature!)
 - [ ] building PA input with graph pull
-- [ ] psyche editor (ideally storing them into user-global storage but not settings)
-- [ ] maybe streaming support?
-- [ ] Better tool ecosystem (interpreter, tree, maybe bash/cmd?)
-- [ ] Docs/readme of some kind, or a tutorial
-- [ ] user-informed extra context, on the level of working dir/user themselves (like preferences, maybe info that's general about project, etc... altho project stuff coooould be a file; and maybe the way to do that would be to "pin" it in the tree, so it auto-adds to every new session, but can be picked out? and maybe we also have a way to "memorize" a particular bit of knowledge...)
-- [ ] When files are added/removed, we need to be aware of this...
+- [ ] ?? Remove collapse button if item is short enough to fit
 
 ---
 
@@ -126,6 +129,7 @@ Big & faraway items:
 - [x] Accumulate costs also over all workspaces
 - [x] Feels like cost calc is somewhat buggy... Needs a second pass
     - turned out the problem was that until the .sorcery file was pulled into the editor, it didn't count. Couldn't find a more elegant way to solve this other than workspace-wide storage `sorcery.mem` in project root. All good; that's going to also store workspace-wide memories later
+- [x] Somehow pipe psyches' display names into the frontend... wait, can we use display names to store? Probably not a good idea, BUT we do need them unique, maybe?..
 - [x] move the "busy" state into a composite extractor method on SessionController? Which can check its workers... Will also let UI show WHICH of the workers is busy
 
 ### 0.8.x
