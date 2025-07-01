@@ -16,8 +16,8 @@ export class ToolRegistry {
   /**
    * Create tool instances for a given context
    */
-  createTools(context: SessionController): Tool[] {
-    return Array.from(this.tools.values()).map(ToolClass => new ToolClass(context));
+  createTools(session: SessionController): Tool[] {
+    return Array.from(this.tools.values()).map(ToolClass => new ToolClass(session));
   }
 
   /**

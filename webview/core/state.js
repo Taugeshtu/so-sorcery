@@ -9,7 +9,7 @@ export class StateManager {
     updateContext(context) {
         this.currentContext = context;
         this.fileKnowledges = this.currentContext.items.filter(item => 
-            'source' in item && item.source === 'file'
+            item.sourceType === 'file'
         );
     }
     
@@ -18,7 +18,7 @@ export class StateManager {
     }
 
     getIncludedFilePaths() {
-        return this.fileKnowledges.map(k => k.content).filter(Boolean);
+        return this.fileKnowledges.map(k => k.sourceName).filter(Boolean);
     }
 
     getAvailableFiles() {

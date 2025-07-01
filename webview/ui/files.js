@@ -40,8 +40,8 @@ export class FileManager {
             fileKnowledges.forEach(knowledge => {
                 const li = document.createElement('li');
                 li.className = 'included-file-item';
-                li.textContent = this.getFileName(knowledge.content);
-                li.title = knowledge.content;
+                li.textContent = this.getFileName(knowledge.sourceName);
+                li.title = knowledge.sourceName;
                 li.onclick = () => this.removeFile(knowledge.id);
                 includedFilesList.appendChild(li);
             });

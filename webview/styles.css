@@ -244,11 +244,11 @@ body {
 }
 
 .user-knowledge {
-  margin-right: 20px; /* Push left by reducing right margin */
+  margin-right: 50px; /* Push left by reducing right margin */
 }
 
 .agent-knowledge {
-  margin-left: 20px; /* Push right */
+  margin-left: 50px; /* Push right */
 }
 
 .knowledge-header {

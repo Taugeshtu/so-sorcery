@@ -17,7 +17,7 @@ export class ItemsManager {
         knowledgesList.innerHTML = '';
         
         const displayItems = items
-            .filter(item => !('source' in item && item.source === 'file'))
+            .filter(item => !(item.sourceType === 'file'))
             .sort((a, b) => {
                 const aTime = a.metadata?.timestamp || 0;
                 const bTime = b.metadata?.timestamp || 0;
@@ -31,11 +31,9 @@ export class ItemsManager {
         
         displayItems.forEach((item, index) => {
             let itemCard;
-            if ('source' in item) {
-                // It's a knowledge item
+            if (item.type === 'knowledge') {
                 itemCard = this.createKnowledgeCard(item);
-            } else if ('executor' in item) {
-                // It's a work item
+            } else if (item.type === 'work') {
                 itemCard = this.createWorkItemCard(item);
             }
             
@@ -67,7 +65,7 @@ export class ItemsManager {
 
     createKnowledgeCard(knowledge) {
         const card = document.createElement('div');
-        card.className = `knowledge-card ${knowledge.source}-knowledge ${knowledge.collapsed ? 'collapsed' : 'expanded'}`;
+        card.className = `knowledge-card ${knowledge.sourceType}-knowledge ${knowledge.metadata.collapsed ? 'collapsed' : 'expanded'}`;
         card.dataset.knowledgeId = knowledge.id;
         
         // Header
@@ -92,7 +90,7 @@ export class ItemsManager {
         
         const collapseIndicator = document.createElement('span');
         collapseIndicator.className = 'collapse-indicator';
-        collapseIndicator.textContent = knowledge.collapsed ? '▶' : '▼';
+        collapseIndicator.textContent = knowledge.metadata.collapsed ? '▶' : '▼';
         
         const nameSpan = document.createElement('span');
         nameSpan.className = 'knowledge-name';
@@ -100,7 +98,7 @@ export class ItemsManager {
         
         const sourceSpan = document.createElement('span');
         sourceSpan.className = 'knowledge-source';
-        sourceSpan.textContent = `[${knowledge.source}]`;
+        sourceSpan.textContent = `[${knowledge.sourceName}]`;
         
         headerLeft.appendChild(collapseIndicator);
         headerLeft.appendChild(nameSpan);
@@ -144,7 +142,7 @@ export class ItemsManager {
         const content = document.createElement('div');
         content.className = 'knowledge-content';
         
-        if (knowledge.collapsed) {
+        if (knowledge.metadata.collapsed) {
             // Show truncated content (8 lines max)
             const lines = knowledge.content.split('\n');
             const truncatedContent = lines.slice(0, 8).join('\n');

@@ -6,7 +6,7 @@ import { updateAvailableFiles, getAvailableFiles } from './types';
 
 export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
   public static readonly viewType = 'sorcery.contextEditor';
-  private contextHolders = new Map<string, SessionController>();
+  private sessionControllers = new Map<string, SessionController>();
   private currentlyFocusedPanel: vscode.WebviewPanel | undefined;
   private panelToDocument = new Map<vscode.WebviewPanel, vscode.TextDocument>();
   
@@ -30,15 +30,15 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
     this.refreshFiles( webviewPanel );
     
     // Create or get context holder for this document
-    const contextHolder = new SessionController(document, workspaceName, () => this.updateWebviewState(webviewPanel, contextHolder));
-    this.contextHolders.set(document.uri.toString(), contextHolder);
+    const sessionController = new SessionController(document, workspaceName, () => this.updateWebviewState(webviewPanel, sessionController));
+    this.sessionControllers.set(document.uri.toString(), sessionController);
 
     webviewPanel.webview.options = { enableScripts: true };
     webviewPanel.webview.html = this.getHtml(webviewPanel.webview);
     
     // Set up message handling
     webviewPanel.webview.onDidReceiveMessage(
-      message => this.handleWebviewMessage(message, contextHolder, webviewPanel),
+      message => this.handleWebviewMessage(message, sessionController, webviewPanel),
       undefined,
       this.context.subscriptions
     );
@@ -54,7 +54,7 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
     
     // Clean up on dispose
     webviewPanel.onDidDispose(() => {
-      this.contextHolders.delete(document.uri.toString());
+      this.sessionControllers.delete(document.uri.toString());
       if (this.currentlyFocusedPanel === webviewPanel) {
         this.currentlyFocusedPanel = undefined;
       }
@@ -62,7 +62,7 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
     });
     
     // Initialize webview with current state
-    this.updateWebviewState(webviewPanel, contextHolder);
+    this.updateWebviewState(webviewPanel, sessionController);
   }
   
   private async refreshFiles(panel: vscode.WebviewPanel) {
@@ -75,18 +75,18 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
     });
   }
   
-  private async updateWebviewState(panel: vscode.WebviewPanel, contextHolder: SessionController) {
-    const context = contextHolder.getContext();
+  private async updateWebviewState(panel: vscode.WebviewPanel, sessionController: SessionController) {
+    const session = sessionController.getSession();
     
     panel.webview.postMessage({
         command: 'updateState',
-        context
+        context: session
     });
   }
   
   private async handleWebviewMessage(
     message: any, 
-    contextHolder: SessionController, 
+    sessionController: SessionController, 
     panel: vscode.WebviewPanel
   ) {
     switch (message.command) {
@@ -97,9 +97,9 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
       
       case 'addFileToContext':
         try {
-          const knowledge = contextHolder.emitFileKnowledge( message.filePath );
+          const knowledge = sessionController.emitFileKnowledge( message.filePath );
           if (knowledge) {
-            contextHolder.addItem( knowledge );
+            sessionController.addItem( knowledge );
           } else {
             vscode.window.showErrorMessage(`Failed to include file: ${message.filePath}`);
           }
@@ -109,11 +109,11 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
         break;
       
       case 'removeItem':
-        contextHolder.removeItem(message.id);
+        sessionController.removeItem(message.id);
         break;
       
       case 'toggleItemCollapse':
-        contextHolder.toggleItemCollapse(message.id);
+        sessionController.toggleItemCollapse(message.id);
         break;
       
       case 'showInformationMessage':
@@ -121,8 +121,8 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
         break;
       
       case 'addUserKnowledge':
-        const emitted = contextHolder.emitKnowledge('user', 'user', message.content);
-        contextHolder.addItem(emitted);
+        const emitted = sessionController.emitKnowledge('user', 'user', message.content);
+        sessionController.addItem(emitted);
         break;
       
       case 'runAgent':
@@ -132,7 +132,7 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
             running: true
           });
           
-          const response = await contextHolder.runPA();
+          const response = await sessionController.runPA();
           
           panel.webview.postMessage({
             command: 'setAgentRunning',
@@ -151,7 +151,7 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
       
       case 'executeWorkItem':
         try {
-          contextHolder.executeToolWorkItem(message.id);
+          sessionController.executeToolWorkItem(message.id);
         } catch (error) {
           vscode.window.showErrorMessage(`Work item execution failed: ${error}`);
         }
@@ -184,8 +184,8 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
   
   public getWorkspaceCost(): number {
     let total = 0;
-    for (const contextHolder of this.contextHolders.values()) {
-      total += contextHolder.getAccumulatedCost();
+    for (const sessionController of this.sessionControllers.values()) {
+      total += sessionController.getSession().accumulatedCost;
     }
     return total;
   }

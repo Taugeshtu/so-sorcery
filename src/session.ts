@@ -101,45 +101,32 @@ export class SessionController {
     const baseItem: ContextItem = {
       id: item.id || 0,
       type: item.type || 'knowledge',
-      sourceType: item.sourceType || 'system',
+      sourceType: item.sourceType || item.source || 'user', // Handle legacy 'source'
       sourceName: item.sourceName || 'system',
       content: item.content || '',
-      // todo: if validation failed on any field, we can maybe populate metadata.error with info??
       metadata: {
         timestamp: item.metadata?.timestamp || Date.now(),
-        collapsed: item.collapsed || false,
+        collapsed: item.metadata?.collapsed || item.collapsed || false,
         error: item.metadata?.error
       }
     };
-
-    // Determine if it's a Knowledge or WorkItem based on properties
-    if ('source' in item || 'content' in item) {
-      if ('executor' in item || 'status' in item) {
-        // It's a WorkItem
-        return {
-          ...baseItem,
-          executor: item.executor || 'user',
-          content: item.content || '',
-          status: item.status || 'cold'
-        } as WorkItem;
-      } else {
-        // It's a Knowledge
-        return {
-          ...baseItem,
-          sourceType: item.source || 'user',
-          content: item.content || '',
-          references: Array.isArray(item.references) ? item.references : []
-        } as Knowledge;
-      }
+    
+    // Check if it's a WorkItem first (more specific)
+    if ('executor' in item || 'status' in item || item.type === 'work') {
+      return {
+        ...baseItem,
+        type: 'work',
+        executor: item.executor || 'user',
+        status: item.status || 'cold'
+      } as WorkItem;
+    } else {
+      // Default to Knowledge
+      return {
+        ...baseItem,
+        type: 'knowledge',
+        references: Array.isArray(item.references) ? item.references : []
+      } as Knowledge;
     }
-
-    // Default to Knowledge if unclear
-    return {
-      ...baseItem,
-      sourceType: 'user',
-      content: '',
-      references: []
-    } as Knowledge;
   }
   
   // ========================= ITEMS =========================
@@ -165,7 +152,7 @@ export class SessionController {
     }
     
     const existingKnowledge = this.context.items.find(item => 
-      this.isKnowledge(item) && item.sourceType === 'file' && item.sourceName === filePath
+      item.type === 'knowledge' && item.sourceType === 'file' && item.sourceName === filePath
     ) as Knowledge;
     
     if (existingKnowledge) {
@@ -182,7 +169,7 @@ export class SessionController {
     this.context.items.push(item);
     
     // If it's a work item, schedule auto-execution
-    if (this.isWorkItem(item)) {
+    if (item.type === 'work') {
       this.scheduleAutoExecution(item as WorkItem);
     }
     
@@ -193,7 +180,7 @@ export class SessionController {
   public removeFileFromContext(filePath: string): boolean {
     // Find and remove the file knowledge
     const knowledge = this.context.items.find(item => 
-      this.isKnowledge(item) && item.sourceType === 'file' && item.sourceName === filePath
+      item.type === 'knowledge' && item.sourceType === 'file' && item.sourceName === filePath
     );
 
     if (knowledge) {
@@ -214,8 +201,8 @@ export class SessionController {
     if (this.context.items.length < initialLength) {
       // Clean up references in knowledge items
       this.context.items.forEach(item => {
-        if (this.isKnowledge(item) && item.references) {
-          item.references = item.references.filter(refId => refId !== id);
+        if (item.metadata.references) {
+          item.metadata.references = item.metadata.references.filter(refId => refId !== id);
         }
       });
       
@@ -256,8 +243,8 @@ export class SessionController {
       
       // Double-check item still exists
       const currentItem = this.context.items.find(item => item.id === workItem.id);
-      if (!currentItem || !this.isWorkItem(currentItem)) {
-        return; // Item was deleted, skip execution
+      if (!currentItem) {
+        return;
       }
 
       // Execute the tool
@@ -281,9 +268,7 @@ export class SessionController {
   }
   
   public completeWorkItem(id: number): boolean {
-    const workItem = this.context.items.find(item => 
-      this.isWorkItem(item) && item.id === id
-    ) as WorkItem;
+    const workItem = this.context.items.find(item => item.type === 'work' && item.id === id) as WorkItem;
     
     if (workItem) {
       workItem.status = 'done';
@@ -294,9 +279,7 @@ export class SessionController {
   }
   
   public async executeToolWorkItem(workItemId: number): Promise<boolean> {
-    const workItem = this.context.items.find(item => 
-      this.isWorkItem(item) && item.id === workItemId
-    ) as WorkItem;
+    const workItem = this.context.items.find(item => item.type === 'work' && item.id === workItemId) as WorkItem;
     
     if (!workItem || workItem.status === 'done') {
       return false;
@@ -445,43 +428,7 @@ export class SessionController {
   
   
   // ========================= ACCESSOR TRASH =========================
-  public getContext(): SessionContext {
+  public getSession(): SessionContext {
     return { ...this.context };
-  }
-
-  public getItems(): ContextItem[] {
-    return [...this.context.items];
-  }
-
-  public getKnowledges(): Knowledge[] {
-    return this.context.items.filter(this.isKnowledge) as Knowledge[];
-  }
-
-  public getWorkItems(): WorkItem[] {
-    return this.context.items.filter(this.isWorkItem) as WorkItem[];
-  }
-  
-  public getAvailableTools(): Array<{ name: string; description: string }> {
-    return this.tools.map(t => ({ name: t.name, description: t.description }));
-  }
-  
-  public getWorkerOutput(psycheName: string): string | undefined {
-    return this.context.workerOutputs?.[psycheName];
-  }
-
-  public getAllWorkerOutputs(): { [workerKey: string]: string } {
-    return { ...(this.context.workerOutputs || {}) };
-  }
-  
-  public getAccumulatedCost(): number {
-    return this.context.accumulatedCost;
-  }
-
-  private isKnowledge(item: ContextItem): item is Knowledge {
-    return 'source' in item;
-  }
-
-  private isWorkItem(item: ContextItem): item is WorkItem {
-    return 'executor' in item;
   }
 }

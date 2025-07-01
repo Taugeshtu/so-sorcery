@@ -71,7 +71,6 @@ Therefore, Sorcery is:
 ## Known Issues / TODO
 
 Functional:
-- [ ] A way to define what inputs go into a psyche. And built-ins for that - "parent_output", "knowledge_blob", "available_files", maybe something else... like tools, agents?? Call that field `awareness`
 - [ ] Images handling
 - [ ] Extractor misses code blocks, no bueno
 - [ ] PA hallucinates a bit about files; may need prompt massaging
@@ -80,12 +79,15 @@ Functional:
     did catch a hallucination once about file contents which wasn't present in context... Time to bring back "list the unknowns"!
 - [ ] System: PA really loves repeating what's already in the knowledge...
 
+Bugs:
+- [ ] the way "run" button blocks between "run" and "+ & Run" is somehow different
+    - move the "busy" state into a composite extractor method on SessionController? Which can check its workers... Will also let UI show WHICH of the workers is busy
+- [ ] "+ & Run" doesn't seem to work :D
+- [ ] Feels like cost calc is somewhat buggy... Needs a second pass
+
 Visual & polish:
-- [ ] the way "run" button blocks between "run" and "+ & run" is somehow different
 - [ ] when we add an item, we lose focus from the input field. Not nice!
 - [ ] Accumulate costs also over all workspaces
-- [ ] Feels like cost calc is somewhat buggy... Needs a second pass
-- [ ] Add a list of agents to system environment for PA
 - [ ] Starting a new session from a file should maybe pull that file into context from the get-go?..
 - [ ] Starting a new session from a file WITH SELECTION pulls a file AND generates that selection as a knowledge item?
 - [ ] Searched, added item - search didn't clear, BUT filter did drop. Hmmm... Dunno which should happen, but not that
@@ -98,10 +100,9 @@ Visual & polish:
 - [ ] A way to navigate focus from files search to results
 - [ ] Folders on top in files tree
 - [ ] ?? Remove collapse button if item is short enough to fit
-- [ ] Parsing "thinking" stages of PA response and displaying them somewhere (couple that with streaming support?)
 
 Big & faraway items:
-- [~] Make it so user inputs are actually work? For PA agent?? could be fun framing
+- [ ] Make it so user inputs are actually work? For PA agent?? could be fun framing
 - [~] File read tool (done, but untested)
 - [ ] File write tool
 - [ ] !! consider more detailed format for submitting knowledge, allowing UPDATING as well (is a scratchpad, you see?)
@@ -121,7 +122,11 @@ Big & faraway items:
 
 ## Release Notes
 
-### 0.x.x
+### 0.8.x
+- [x] somehow agent things are added as "undefined" in the source; OR they are displayed as such??..
+    - not just agents! `items.js` bug?
+- [x] Add a list of agents to system environment for PA
+- [x] A way to define what inputs go into a psyche. And built-ins for that - "parent_output", "knowledge_blob", "available_files", maybe something else... like tools, agents?? Call that field `awareness`
 - [x] Move available files tracking out of ContextHolder
 
 ### 0.7.0

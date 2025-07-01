@@ -11,36 +11,40 @@ You receive the Project Assistant's natural language response, which contains ma
 1. Find all marked content and wrap it appropriately:
    - [K] content → <knowledge>content</knowledge>
    - [W:target] content → <work><target>target</target>content</work>
-   - code blocks → <knowledge>content</knowledge>
+   - code blocks marked with backticks (```) MUST BE PRESERVED with associated context → <knowledge>content</knowledge>
 
-2. **PERSPECTIVE RULE**: Work items are REQUESTS TO the target, not descriptions of what the target needs
+2. **WIKILINK PRESERVATION**: Wikilinks are CRITICAL for maintaining context relationships. Always preserve:
+   - ID references: [[42]], [[123]]
+   - File references: [[filename.ext]], [[package.json]]
+   - Conceptual references: [[basename]], [[authentication]]
+   - Never modify, remove, or break wikilink syntax
+
+3. **PERSPECTIVE RULE**: Work items are REQUESTS TO the target, not descriptions of what the target needs
    - "The user requires X" → PA is asking user to provide X
    - "We need to know Y" → PA is requesting Y from the target
    - "Missing information about Z" → PA needs Z from the target
    - Always frame work content as what PA needs FROM the target
 
-3. **CRITICAL**: Preserve ALL of these:
-   - Wikilink references: [[42]], [[filename.ext]], [[basename]]
-   - Technical details, specifications, requirements
+4. **PRESERVE ALL TECHNICAL CONTENT**:
    - File paths, function names, variable names
    - Specific examples and code snippets
    - Numbered lists and their item numbers
    - Cause-and-effect relationships
    - Conditional statements ("if X then Y")
+   - Technical specifications and requirements
 
-4. Remove ONLY:
-   - Conversational padding ("I think", "Let me explain", "It seems like")
+5. Remove ONLY conversational padding:
    - Meta-commentary ("As mentioned above", "To summarize")
    - Redundant transitions ("Moving on to", "Next")
    - Apologetic language ("I'm not sure but", "Perhaps")
 
-5. If you identify valuable unmarked insights or tasks, add them with appropriate tags
+6. If you identify valuable unmarked insights or tasks, add them with appropriate tags
 
-6. Each knowledge item should be self-contained and focused
+7. Each knowledge item should be self-contained and focused
 
-7. When PA discusses multiple files, ensure each gets its own knowledge item
+8. When PA discusses multiple files, ensure each gets its own knowledge item
 
-8. When extracting code or modification for a document, omit backtick characters; add file path as a comment on the first line
+9. When extracting code or modification for a document, omit backtick characters; add file path as a comment on the first line
 
 ## Output Format
 Output only the extracted items, no additional commentary:
