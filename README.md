@@ -73,12 +73,6 @@ Therefore, Sorcery is:
 Polish:
 
 Function:
-- [ ] Extractor misses code blocks, no bueno
-- [ ] PA hallucinates a bit about files; may need prompt massaging
-- [~] Improve the system: agent is low on self-reflection, doesn't recognize refactoring, doesn't recognize the files are actual files it seems...
-    this needs re-testing on larger contexts and deeper convos. Maybe two-stage format helps with that?
-    did catch a hallucination once about file contents which wasn't present in context... Time to bring back "list the unknowns"!
-- [ ] System: PA really loves repeating what's already in the knowledge...
 - [ ] Undo/Redo (VS Code's built-in document undo should work?)
 - [~] File read tool (done, but untested)
 - [ ] File write tool
@@ -87,7 +81,6 @@ Function:
 Bugs:
 - [ ] the way "run" button blocks between "run" and "+ & Run" is somehow different
     - this won't be a big deal once the "work for agent" system (`@`) is implemented; then "run" kind of loses its meaning? Either you @ someone, or you don't; then it's just work dispatch...
-- [ ] "+ & Run" doesn't seem to work :D
 
 Refactoring:
 - [ ] Make it so user inputs are actually work? For PA agent?? could be fun framing
@@ -119,7 +112,16 @@ Maybes:
 
 ## Release Notes
 
+### 0.10.x
+- [ ] Extractor misses code blocks, no bueno
+- [ ] PA hallucinates a bit about files; may need prompt massaging
+- [~] Improve the system: agent is low on self-reflection, doesn't recognize refactoring, doesn't recognize the files are actual files it seems...
+    this needs re-testing on larger contexts and deeper convos. Maybe two-stage format helps with that?
+    did catch a hallucination once about file contents which wasn't present in context... Time to bring back "list the unknowns"!
+- [ ] System: PA really loves repeating what's already in the knowledge...
+
 ### 0.9.x
+- [x] "+ & Run" doesn't seem to work :D
 - [x] Auto-focusing the input field whenever Sorcery editor is activated
 - [x] Starting a new session from a file should maybe pull that file into context from the get-go?..
 - [x] Starting a new session from a file WITH SELECTION pulls a file AND generates that selection as a knowledge item?

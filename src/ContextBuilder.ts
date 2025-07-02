@@ -18,7 +18,7 @@ export async function gatherContext(
   if (awareness.projectStructure) assembled.projectStructure = buildProjectStructureContext();
   if (awareness.files) assembled.files = await buildFilesContext(context);
   if (awareness.items) assembled.items = buildItemsContext(awareness.items, context);
-  if (awareness.parentOutput && parentOutput) assembled.parentOutput = parentOutput;
+  if (awareness.parentOutput && parentOutput) assembled.parentOutput = `<previous_agent_output>\n${parentOutput}\n</previous_agent_output>`;
   return assembled;
 }
 
