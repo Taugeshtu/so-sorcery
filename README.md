@@ -71,7 +71,6 @@ Therefore, Sorcery is:
 ## Known Issues / TODO
 
 Polish:
-- [ ] when we add an item, we lose focus from the input field. Not nice!
 - [ ] Starting a new session from a file should maybe pull that file into context from the get-go?..
 - [ ] Starting a new session from a file WITH SELECTION pulls a file AND generates that selection as a knowledge item?
 - [ ] Searched, added item - search didn't clear, BUT filter did drop. Hmmm... Dunno which should happen, but not that
@@ -125,6 +124,7 @@ Maybes:
 ## Release Notes
 
 ### 0.9.x
+- [x] when we add an item, we lose focus from the input field. Not nice!
 - [x] Maybe cost tracker should show not "since vscode start", but "currently active .sorcery"?
 - [x] Accumulate costs also over all workspaces
 - [x] Feels like cost calc is somewhat buggy... Needs a second pass

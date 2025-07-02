@@ -85,6 +85,7 @@ export class ButtonManager {
 
         // Clear input
         userInput.value = '';
+        userInput.focus();
         this.updateButtonText();
         
         // Re-enable buttons (they'll be disabled again if agent is running)
@@ -114,11 +115,9 @@ export class ButtonManager {
     setButtonsEnabled(enabled) {
         const addButton = document.getElementById('addButton');
         const runButton = document.getElementById('runButton');
-        const userInput = document.getElementById('userInput');
         
         if (addButton) addButton.disabled = !enabled;
         if (runButton) runButton.disabled = !enabled;
-        if (userInput) userInput.disabled = !enabled;
     }
 
     // Public method to get current input value
