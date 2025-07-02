@@ -9,6 +9,11 @@ export class ButtonManager {
     init() {
         this.setupEventListeners();
         this.updateButtonText();
+        
+        setTimeout(() => {
+            const userInput = document.getElementById('userInput');
+            userInput.focus();
+        }, 100);
     }
     
     setupVSCodeMessageHandling() {

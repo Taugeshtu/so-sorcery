@@ -71,8 +71,6 @@ Therefore, Sorcery is:
 ## Known Issues / TODO
 
 Polish:
-- [ ] Starting a new session from a file should maybe pull that file into context from the get-go?..
-- [ ] Starting a new session from a file WITH SELECTION pulls a file AND generates that selection as a knowledge item?
 
 Function:
 - [ ] Extractor misses code blocks, no bueno
@@ -96,7 +94,6 @@ Refactoring:
 - [ ] split up the css, it's getting ridiculous!
 
 Big && / || faraway items:
-- [ ] Auto-focusing the input field whenever Sorcery editor is activated
 - [ ] Settings: custom additional ignore
 - [ ] Parsing & making jumpable `[[wikilinks]]`, obsidian-style, for IDs and files
 - [ ] psyche editor (ideally storing them into user-global storage but not settings)
@@ -123,6 +120,9 @@ Maybes:
 ## Release Notes
 
 ### 0.9.x
+- [x] Auto-focusing the input field whenever Sorcery editor is activated
+- [x] Starting a new session from a file should maybe pull that file into context from the get-go?..
+- [x] Starting a new session from a file WITH SELECTION pulls a file AND generates that selection as a knowledge item?
 - [x] Searched, added item - search didn't clear, BUT filter did drop. Hmmm... Dunno which should happen, but not that
 - [x] when we add an item, we lose focus from the input field. Not nice!
 - [x] Maybe cost tracker should show not "since vscode start", but "currently active .sorcery"?

@@ -57,14 +57,22 @@ export async function activate(context: vscode.ExtensionContext) {
         return vscode.window.showErrorMessage('Please open a folder first.');
       }
       
+      // Capture current editor state
+      const activeEditor = vscode.window.activeTextEditor;
+      const contextFile = activeEditor?.document.uri;
+      const selection = activeEditor?.selection;
+      const selectedText = selection && !selection.isEmpty 
+        ? activeEditor.document.getText(selection) 
+        : undefined;
+      
       const sorceryDir = vscode.Uri.joinPath(wsFolder.uri, '.sorcery');
       await vscode.workspace.fs.createDirectory(sorceryDir);
       
       const fileName = await pickNewSessionName(sorceryDir);
       const fileUri = vscode.Uri.joinPath(sorceryDir, fileName+'.sorcery');
       
-      const initial = JSON.stringify({ chat: '' }, null, 2);
-      await vscode.workspace.fs.writeFile(fileUri, Buffer.from(initial, 'utf8'));
+      const initialSession = createInitialSession(contextFile, selectedText, wsFolder);
+      await vscode.workspace.fs.writeFile(fileUri, Buffer.from(JSON.stringify(initialSession, null, 2), 'utf8'));
       
       await vscode.commands.executeCommand(
         'vscode.openWith',
@@ -119,6 +127,60 @@ export async function activate(context: vscode.ExtensionContext) {
       }
     )
   );
+}
+
+function createInitialSession(
+  contextFile?: vscode.Uri, 
+  selectedText?: string, 
+  wsFolder?: vscode.WorkspaceFolder
+): any {
+  const workspaceName = vscode.workspace.name || 'Unknown Workspace';
+  const session: any = {
+    workspaceName,
+    items: [],
+    nextId: 1,
+    accumulatedCost: 0,
+    workerOutputs: {}
+  };
+  
+  if (contextFile && wsFolder) {
+    // Get relative path for the file
+    const relativePath = vscode.workspace.asRelativePath(contextFile, false);
+    
+    // Add file knowledge item
+    const fileKnowledge = {
+      id: session.nextId++,
+      type: 'knowledge',
+      sourceType: 'file',
+      sourceName: relativePath,
+      content: '',
+      references: [],
+      metadata: {
+        timestamp: Date.now(),
+        collapsed: false // Show file context by default
+      }
+    };
+    session.items.push(fileKnowledge);
+    
+    // Add selection knowledge if present
+    if (selectedText && selectedText.trim()) {
+      const selectionKnowledge = {
+        id: session.nextId++,
+        type: 'knowledge',
+        sourceType: 'user',
+        sourceName: 'user',
+        content: `Selected from ${relativePath}:\n\n${selectedText}`,
+        references: [fileKnowledge.id], // Reference the file
+        metadata: {
+          timestamp: Date.now(),
+          collapsed: false // Show selection by default
+        }
+      };
+      session.items.push(selectionKnowledge);
+    }
+  }
+  
+  return session;
 }
 
 export function updateCostDisplay() {
