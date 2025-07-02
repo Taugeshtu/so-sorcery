@@ -73,7 +73,6 @@ Therefore, Sorcery is:
 Polish:
 - [ ] Starting a new session from a file should maybe pull that file into context from the get-go?..
 - [ ] Starting a new session from a file WITH SELECTION pulls a file AND generates that selection as a knowledge item?
-- [ ] Searched, added item - search didn't clear, BUT filter did drop. Hmmm... Dunno which should happen, but not that
 
 Function:
 - [ ] Extractor misses code blocks, no bueno
@@ -124,6 +123,7 @@ Maybes:
 ## Release Notes
 
 ### 0.9.x
+- [x] Searched, added item - search didn't clear, BUT filter did drop. Hmmm... Dunno which should happen, but not that
 - [x] when we add an item, we lose focus from the input field. Not nice!
 - [x] Maybe cost tracker should show not "since vscode start", but "currently active .sorcery"?
 - [x] Accumulate costs also over all workspaces

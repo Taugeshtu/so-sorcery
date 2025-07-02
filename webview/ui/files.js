@@ -133,6 +133,8 @@ export class FileManager {
 
     addFileToContext(filePath) {
         this.messageHandler.send('addFileToContext', { filePath });
+        const searchInput = document.getElementById('fileSearchInput');
+        searchInput.value = '';
     }
 
     removeFile(id) {
