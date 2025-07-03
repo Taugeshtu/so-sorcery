@@ -388,4 +388,9 @@ export class SessionController {
   public notifyStateChanged(): void {
     this.onStateChanged?.();
   }
+  
+  public addCost(cost: number): void {
+    this.context.accumulatedCost += cost;
+    this.saveToDocument();
+  }
 }

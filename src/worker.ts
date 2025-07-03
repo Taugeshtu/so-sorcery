@@ -99,9 +99,7 @@ export class PsycheWorker extends Worker {
       );
       
       // Update session state
-      const sessionContext = this.session.getSession();
-      sessionContext.workerOutputs[psyche.name] = llmResponse.content;
-      sessionContext.accumulatedCost += llmResponse.cost;
+      this.session.addCost(llmResponse.cost);
       workspaceController.addCost(llmResponse.cost);
       
       // Check for daisy-chaining
