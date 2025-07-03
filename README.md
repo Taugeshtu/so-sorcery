@@ -74,8 +74,8 @@ Polish:
 
 Function:
 - [ ] Undo/Redo (VS Code's built-in document undo should work?)
-- [~] File read tool (done, but untested)
-- [ ] File write tool
+- [~] File read tool (done, untested)
+- [~] File write tool (done, untested)
 - [ ] "Patcher" psyche
 - [ ] A way to hide a tool/psyche from context!!
 
@@ -84,7 +84,6 @@ Bugs:
     - this won't be a big deal once the "work for agent" system (`@`) is implemented; then "run" kind of loses its meaning? Either you @ someone, or you don't; then it's just work dispatch...
 
 Refactoring:
-- [ ] Make it so user inputs are actually work? For PA agent?? could be fun framing
 - [ ] split up the css, it's getting ridiculous!
 
 Big && / || faraway items:
@@ -114,12 +113,15 @@ Maybes:
 ## Release Notes
 
 ### 0.10.x
-- [ ] Extractor misses code blocks, no bueno
-- [ ] PA hallucinates a bit about files; may need prompt massaging
-- [~] Improve the system: agent is low on self-reflection, doesn't recognize refactoring, doesn't recognize the files are actual files it seems...
+- [ ] parsing "@" in user inputs, and converting items into work if this is the case
+- [ ] I think "autorun" needs to be more complex - no automatic running, auto-triggered when "run" is happening, or full-auto
+- [x] Make it so user inputs are actually work? For PA agent?? could be fun framing
+- [x] Extractor misses code blocks, no bueno
+- [x] PA hallucinates a bit about files; may need prompt massaging
+- [x] Improve the system: agent is low on self-reflection, doesn't recognize refactoring, doesn't recognize the files are actual files it seems...
     this needs re-testing on larger contexts and deeper convos. Maybe two-stage format helps with that?
     did catch a hallucination once about file contents which wasn't present in context... Time to bring back "list the unknowns"!
-- [ ] System: PA really loves repeating what's already in the knowledge...
+- [x] System: PA really loves repeating what's already in the knowledge...
 
 ### 0.9.x
 - [x] "+ & Run" doesn't seem to work :D

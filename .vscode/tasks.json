@@ -2,6 +2,7 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "compile-once",
             "type": "npm",
             "script": "compile",
             "group": "build",

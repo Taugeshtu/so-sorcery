@@ -14,7 +14,7 @@ Break into pieces and COPY content EXACTLY AS WRITTEN. Include associated contex
 ## What to Extract
 1. **Code blocks with ```** → Copy the ENTIRE block + relevant context (what file it relates to, if any)
 2. **Lists** (numbered or bulleted) → Important content, include with their context. COPY VERBATIM.
-3. **[W:target] markers** → Copy the work item verbatim
+3. **[W:target] markers** → Produce the work item that complies with the tool expectations, or is suitable for the agent's description
 4. **High-signal paragraphs** → Copy those that contain [[references]], and compress all the rest
 
 ## Critical Rules
@@ -44,6 +44,16 @@ Output: <knowledge>Key insights:
 1. First insight
 2. Second insight
 </knowledge>
+
+Input: I need to examine these files:
+- some/folder/one.txt
+- some/folder/two.md
+
+Output: <work>
+<taget>multiread</target>
+some/folder/one.txt
+some/folder/two.md
+</work>
 
 ## DO NOT
 - Extract "Available Tools/Agents/Project Files" sections

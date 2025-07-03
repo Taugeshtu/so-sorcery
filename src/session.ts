@@ -248,12 +248,15 @@ export class SessionController {
       this.pendingExecutions.delete(workItem.id);
       
       // Double-check item still exists
-      const currentItem = this.context.items.find(item => item.id === workItem.id);
-      if (!currentItem) {
+      const currentWorkItem = this.context.items.find(item => item.id === workItem.id) as WorkItem;
+      if (!currentWorkItem) {
         return;
       }
       
-      // Execute the tool
+      if (currentWorkItem.status !== 'cold') {
+        return;
+      }
+      
       try {
         await this.executeWorkItem(workItem.id);
       } catch (error) {
