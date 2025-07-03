@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import { Knowledge, SessionContext, WorkItem, ContextItem, getAvailableFiles, ContextAwareness } from './types';
-import { psycheRegistry } from './psyche';
+import { psycheRegistry } from './PsycheRegistry';
 import { toolRegistry } from './tools/ToolRegistry';
-import { Tool } from './tools/Tool';
+import { PsycheWorker, Tool } from './worker';
 import { extract, ExtractionResult } from './Extractor';
 import { gatherContext, bakeContext as bakeContext } from './ContextBuilder';
 import { BackendResponse } from './llm/types';
@@ -12,20 +12,20 @@ import { workspaceController } from './workspace';
 export class SessionController {
   private context: SessionContext;
   private document: vscode.TextDocument;
-  private tools: Tool[];
+  private tools: Map<string, Tool>;
+  private psyches: Map<string, PsycheWorker>;
   private pendingExecutions: Map<number, NodeJS.Timeout> = new Map();
-  private psycheExecutionCounts: Map<string, number> = new Map();
   private onStateChanged?: () => void;
   
   constructor(document: vscode.TextDocument, workspaceName: string, onStateChanged?: () => void) {
     this.document = document;
     this.context = this.loadFromDocument(workspaceName);
-    this.tools = toolRegistry.createTools(this);
+    this.tools = toolRegistry.getTools(this);
+    this.psyches = psycheRegistry.getPsyches(this);
     this.onStateChanged = onStateChanged;
     
     // Initialize with all known psyches
-    const psycheNames = psycheRegistry.getAllPsyches().map( p => p.name );
-    for (const psycheName of psycheNames) {
+    for (const psycheName of this.psyches.keys()) {
       if (!(psycheName in this.context.workerOutputs)) {
         this.context.workerOutputs[psycheName] = '';
       }
@@ -172,7 +172,7 @@ export class SessionController {
     
     // If it's a work item, schedule auto-execution
     if (item.type === 'work') {
-      this.scheduleAutoExecution(item as WorkItem);
+      this.tryScheduleAutoExecution(item as WorkItem);
     }
     
     this.saveToDocument();
@@ -226,11 +226,11 @@ export class SessionController {
   }
   
   // ========================= WORK =========================
-  private scheduleAutoExecution(workItem: WorkItem): void {
+  private tryScheduleAutoExecution(workItem: WorkItem): void {
     // Find the tool that can handle this work item
-    const tool = this.tools.find(t => t.canHandle(workItem));
+    const tool = this.tools.has(workItem.executor) ? this.tools.get(workItem.executor) : null;
     
-    if (!tool || !tool.autoRun) {
+    if (!tool || !tool.descriptor.autoRun) {
       return; // Tool doesn't support auto-run
     }
 
@@ -283,7 +283,7 @@ export class SessionController {
   public async executeToolWorkItem(workItemId: number): Promise<boolean> {
     const workItem = this.context.items.find(item => item.type === 'work' && item.id === workItemId) as WorkItem;
     
-    if (!workItem || workItem.status === 'done') {
+    if (!workItem || workItem.status !== 'cold') {
       return false;
     }
     
@@ -292,7 +292,7 @@ export class SessionController {
     }
     
     // Find appropriate tool
-    const tool = this.tools.find(t => t.canHandle(workItem));
+    const tool = this.tools.has(workItem.executor) ? this.tools.get(workItem.executor) : null;
     if (!tool) {
       // Mark as failed
       workItem.status = 'failed';
@@ -340,102 +340,54 @@ export class SessionController {
   
   
   // ========================= RUNNING AGENTS =========================
-  private buildSystemEnvironment(): string {
-    // TODO: refactor this to use ContextBuilder!
-    const toolInfo = this.tools.map(t => `- ${t.name}: ${t.description}`).join('\n');
-    return `Workspace: ${this.context.workspaceName}\n\nAvailable Tools:\n${toolInfo}`;
-  }
-  
-  public async runPA(): Promise<ExtractionResult> {
-    const paName = 'project_assistant';
+  public async runPA(): Promise<void> {
+    const paWorker = this.psyches.get('project_assistant');
+    if (!paWorker) {
+      throw new Error('Project Assistant psyche not found');
+    }
+    
+    // Create a dummy work item for the PA
+    // hoooow exactly... are we gonna do that?..
+    
+    
+    const workItem: WorkItem = {
+      id: -1, // Temporary ID
+      type: 'work',
+      sourceType: 'system',
+      sourceName: 'runPA',
+      executor: 'project_assistant',
+      content: 'Run Project Assistant',
+      status: 'running',
+      metadata: {
+        timestamp: Date.now(),
+        collapsed: false
+      }
+    };
     
     try {
-      const environment = this.buildSystemEnvironment();
-      const response = await this.runPsyche(paName, environment);
-      const extracted = extract(response, { sourceName: psycheRegistry.getPsyche(paName)?.displayName, timestamp: Date.now() });
-      for (const knowledge of extracted.knowledges) {
-        this.addItem(knowledge);
+      const result = await paWorker.execute(workItem);
+      
+      // Add extracted items to session
+      if (result.knowledges) {
+        for (const knowledge of result.knowledges) {
+          this.addItem(knowledge);
+        }
       }
-      for (const work of extracted.works) {
-        this.addItem(work);
+      if (result.works) {
+        for (const work of result.works) {
+          this.addItem(work);
+        }
       }
       
-      this.saveToDocument();
-      return extracted;
+      if (result.error) {
+        throw new Error(result.error);
+      }
+      
     } catch (error) {
       console.error('Agent run failed:', error);
       throw error;
     }
   }
-  
-  private async runPsyche(
-    psycheName: string,
-    systemContext?: string,
-    chaining?: {
-      parentOutput: string,
-      currentDepth: number}
-  ): Promise<BackendResponse> {
-    const psyche = psycheRegistry.getPsyche(psycheName);
-    if (!psyche) throw new Error(`Psyche ${psycheName} not found`);
-    
-    const model = Models[psyche.model];
-    if (!model) throw new Error(`Model ${psyche.model} for ${psyche.name} not found`);
-    
-    this.psycheExecutionCounts.set(psycheName, (this.psycheExecutionCounts.get(psycheName) || 0) + 1);
-    this.onStateChanged?.();
-    
-    const system = systemContext? `${systemContext}\n\n${psyche.system}` : psyche.system;
-    
-    const defaultAwareness: ContextAwareness = {
-        projectStructure: true,
-        items: "all",
-        files: true,
-        parentOutput: true
-      };
-    const awareness = psyche.awareness ? psyche.awareness : defaultAwareness;
-    const gatheredContext = await gatherContext(awareness, this.context, chaining?.parentOutput);
-    const bakedContext = bakeContext(gatheredContext);
-    
-    const llmResponse = await model.backend.run(
-      model,
-      psyche.maxTokens,
-      system,
-      bakedContext,
-      psyche.priming,
-      psyche.terminators
-    );
-    this.context.workerOutputs[psyche.name] = llmResponse.content;
-    this.context.accumulatedCost += llmResponse.cost;
-    workspaceController.addCost(llmResponse.cost);
-    
-    this.psycheExecutionCounts.set(psycheName, (this.psycheExecutionCounts.get(psycheName) || 0) - 1);
-    this.onStateChanged?.();
-    
-    // Check for daisy-chaining
-    if (psyche.post) {
-      if( chaining && chaining.currentDepth === 0 ) {
-        vscode.window.showWarningMessage(`Wanting to chain further '${psyche.name}' -> '${psyche.post.psyche}', but out of depth!`);
-        return llmResponse;
-      }
-      
-      // Recursively call the next psyche with decremented chain depth
-      const nextStepDepthBudget = chaining
-                                  ? chaining.currentDepth - 1
-                                  : psyche.post.chaining_depth;
-      const nextChain = {
-        parentOutput: llmResponse.content.trim(),
-        currentDepth: nextStepDepthBudget
-      }
-      return await this.runPsyche(
-        psyche.post.psyche,
-        systemContext,
-        nextChain
-      );
-    }
-    
-    return llmResponse;
-  }
-  
   
   // ========================= ACCESSOR TRASH =========================
   public getSession(): SessionContext {
@@ -445,11 +397,20 @@ export class SessionController {
   public getPsycheExecutionStates(): [string, string, boolean][] {
     const states: [string, string, boolean][] = [];
     
-    for (const psyche of psycheRegistry.getAllPsyches()) {
-      const isExecuting = (this.psycheExecutionCounts.get(psyche.name) || 0) > 0;
+    for (const psyche of psycheRegistry.getPsychesInfo()) {
+      const worker = this.psyches.get(psyche.name);
+      const isExecuting = worker ? worker.isBusy : false;
       states.push([psyche.name, psyche.displayName, isExecuting]);
     }
     
     return states;
+  }
+  
+  public getPsycheWorker(psycheName: string): PsycheWorker | undefined {
+    return this.psyches.get(psycheName);
+  }
+  
+  public notifyStateChanged(): void {
+    this.onStateChanged?.();
   }
 }

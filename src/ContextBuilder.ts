@@ -5,7 +5,7 @@ import * as path from 'path';
 import { Knowledge, WorkItem, SessionContext } from './types';
 import { getAvailableFiles, ContextAwareness, GatheredContext as GatheredContext } from './types';
 import { toolRegistry } from './tools/ToolRegistry';
-import { psycheRegistry } from './psyche';
+import { psycheRegistry } from './PsycheRegistry';
 
 export async function gatherContext(
   awareness: ContextAwareness,
@@ -48,7 +48,7 @@ export function buildToolsContext(awareness: boolean | string[]): string {
 export function buildPsychesContext(awareness: boolean | string[]): string {
   if (!awareness) return '';
   
-  const info = psycheRegistry.getAllPsyches();
+  const info = psycheRegistry.getPsychesInfo();
   const filtered = (awareness === true)
                         ? info
                         : info.filter(p => (awareness as string[]).includes(p.name));

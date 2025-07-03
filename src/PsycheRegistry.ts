@@ -1,41 +1,11 @@
+import { PsycheDescriptor } from './types';
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { ContextAwareness } from './types';
-
-export interface Psyche {
-  name: string;
-  displayName: string;
-  description: string;
-  model: string;
-  maxTokens: number;
-  system: string;
-  priming?: string;
-  terminators?: string[];
-  awareness?: ContextAwareness;
-  post?: {
-    psyche: string;
-    chaining_depth: number;
-  };
-}
-
-interface PsycheFile {
-  name: string;
-  displayName: string;
-  description: string;
-  model: string;
-  maxTokens: number;
-  system?: string; // Optional in file, will be loaded from .system file if empty
-  priming?: string;
-  terminators?: string[];
-  awareness?: ContextAwareness;
-  post?: {
-    psyche: string;
-    chaining_depth: number;
-  };
-}
+import { PsycheWorker } from './worker';
+import { SessionController } from './session';
 
 class PsycheRegistry {
-  private psyches: Map<string, Psyche> = new Map();
+  private psyches: Map<string, PsycheDescriptor> = new Map();
   private initialized = false;
   private extensionUri?: vscode.Uri;
 
@@ -79,7 +49,7 @@ class PsycheRegistry {
     const psycheData = await vscode.workspace.fs.readFile(psycheUri);
     const psycheText = new TextDecoder().decode(psycheData);
     
-    const psycheFile: PsycheFile = JSON.parse(psycheText);
+    const psycheFile: PsycheDescriptor = JSON.parse(psycheText);
     
     // Load system prompt if not provided in the psyche file
     let systemPrompt = psycheFile.system || '';
@@ -96,7 +66,7 @@ class PsycheRegistry {
       }
     }
 
-    const psyche: Psyche = {
+    const psyche: PsycheDescriptor = {
       ...psycheFile,
       system: systemPrompt
     };
@@ -104,23 +74,28 @@ class PsycheRegistry {
     this.psyches.set(psyche.name, psyche);
   }
 
-  public getPsyche(name: string): Psyche | undefined {
+  public getPsyche(name: string): PsycheDescriptor | undefined {
     if (!this.initialized) {
       throw new Error('PsycheRegistry not initialized');
     }
     return this.psyches.get(name);
   }
   
-  public getAllPsyches(): Psyche[] {
+  public getPsyches(session: SessionController): Map<string, PsycheWorker> {
+    const result: Map<string, PsycheWorker> = new Map();
+    
+    for (const descriptor of this.psyches.values()) {
+        result.set(descriptor.name, new PsycheWorker(session, descriptor));
+    }
+    
+    return result;
+  }
+  
+  public getPsychesInfo(): PsycheDescriptor[] {
     if (!this.initialized) {
       throw new Error('PsycheRegistry not initialized');
     }
     return Array.from(this.psyches.values());
-  }
-
-  // Method to add user-generated psyches at runtime
-  public addPsyche(psyche: Psyche): void {
-    this.psyches.set(psyche.name, psyche);
   }
 }
 

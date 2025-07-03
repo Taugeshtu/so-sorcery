@@ -2,10 +2,8 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { SorceryEditorProvider } from './SorceryEditorProvider';
 import { workspaceController } from './workspace';
-import { psycheRegistry } from './psyche';
+import { psycheRegistry } from './PsycheRegistry';
 import { toolRegistry } from './tools/ToolRegistry';
-import { MultiReadTool } from './tools/MultiReadTool';
-import { FileReadTool } from './tools/FileReadTool';
 
 let sorceryEditorProvider: SorceryEditorProvider;
 let costStatusBarItem: vscode.StatusBarItem;
@@ -15,9 +13,7 @@ export async function activate(context: vscode.ExtensionContext) {
   globalState = context.globalState;
   await workspaceController.initialize();
   await psycheRegistry.initialize(context.extensionUri);
-  
-  toolRegistry.register(MultiReadTool);
-  // toolRegistry.register(FileReadTool); // file read tool is disabled, this is future stuff
+  toolRegistry.initialize();
   
   sorceryEditorProvider = new SorceryEditorProvider(context);
   
@@ -169,7 +165,7 @@ function createInitialSession(
         type: 'knowledge',
         sourceType: 'user',
         sourceName: 'user',
-        content: `Selected from ${relativePath}:\n\n${selectedText}`,
+        content: `Selected from [[${relativePath}]]:\n\n${selectedText}`,
         references: [fileKnowledge.id], // Reference the file
         metadata: {
           timestamp: Date.now(),

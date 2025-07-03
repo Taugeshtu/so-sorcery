@@ -1,33 +1,55 @@
-// src/tools/ToolRegistry.ts
-import { Tool } from './Tool';
 import { SessionController } from '../session';
+import { ToolDescriptor } from '../types';
+import { Tool } from '../worker'
 
 export class ToolRegistry {
-  private tools: Map<string, new (session: SessionController) => Tool> = new Map();
+  private toolDescriptors: Map<string, ToolDescriptor> = new Map();
   
-  /**
-   * Register a tool class
-   */
-  register(toolClass: new (session: SessionController) => Tool): void {
-    const instance = new toolClass({} as SessionController); // Temporary instance for metadata
-    this.tools.set(instance.name, toolClass);
+  register(descriptor: ToolDescriptor): void {
+    this.toolDescriptors.set(descriptor.name, descriptor);
   }
+  
+  initialize(): void {
+    // Import tool classes dynamically to avoid circular dependencies
+    // const { FileReadTool } = require('./FileReadTool');
+    const { FileWriteTool } = require('./FileWriteTool');
+    const { MultiReadTool } = require('./MultiReadTool');
 
-  /**
-   * Create tool instances for a given context
-   */
-  createTools(session: SessionController): Tool[] {
-    return Array.from(this.tools.values()).map(ToolClass => new ToolClass(session));
+    // this.register(FileReadTool.getDescriptor());
+    this.register(FileWriteTool.getDescriptor());
+    this.register(MultiReadTool.getDescriptor());
   }
-
-  /**
-   * Get available tool names and descriptions
-   */
+  
+  getTools(session: SessionController): Map<string, Tool> {
+    const result: Map<string, Tool> = new Map();
+    
+    for (const descriptor of this.toolDescriptors.values()) {
+      switch (descriptor.workerClass) {
+        case 'FileReadTool':
+          const { FileReadTool } = require('./FileReadTool');
+          result.set(descriptor.name, new FileReadTool(session, descriptor));
+          break;
+        case 'FileWriteTool':
+          const { FileWriteTool } = require('./FileWriteTool');
+          result.set(descriptor.name, new FileWriteTool(session, descriptor));
+          break;
+        case 'MultiReadTool':
+          const { MultiReadTool } = require('./MultiReadTool');
+          result.set(descriptor.name, new MultiReadTool(session, descriptor));
+          break;
+        default:
+          console.warn(`Unknown tool class: ${descriptor.workerClass}`);
+      }
+    }
+    
+    return result;
+  }
+  
   getToolsInfo(): Array<{ name: string; description: string }> {
-    return Array.from(this.tools.values()).map(ToolClass => {
-      const instance = new ToolClass({} as SessionController);
-      return { name: instance.name, description: instance.description };
-    });
+    return Array.from(this.toolDescriptors.values()).map(descriptor => ({
+      name: descriptor.name,
+      description: descriptor.description
+    }));
   }
 }
 

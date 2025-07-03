@@ -1,24 +1,22 @@
-// src/tools/FileReadTool.ts
-import { Tool, ToolResult } from './Tool';
-import { WorkItem } from '../types';
+import { Tool } from '../worker';
+import { WorkItem, WorkResult, ToolDescriptor } from '../types';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
 export class FileReadTool extends Tool {
-  get name(): string {
-    return 'file_read';
-  }
-
-  get description(): string {
-    return 'Read the contents of a file from the workspace and add them as a standalone synthetic knowledge';
+  static getDescriptor(): ToolDescriptor {
+    return {
+      name: 'file_read',
+      displayName: 'File Read', 
+      description: 'Read the contents of a file from the workspace and add them as a standalone synthetic knowledge',
+      autoRun: true,
+      type: 'tool',
+      workerClass: 'FileReadTool'
+    };
   }
   
-  get autoRun(): boolean {
-    return true;
-  }
-
-  async execute(workItem: WorkItem): Promise<ToolResult> {
+  async execute(workItem: WorkItem): Promise<WorkResult> {
     try {
       // Extract file path from work item content
       const filePath = this.extractFilePath(workItem.content);

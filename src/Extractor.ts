@@ -18,18 +18,18 @@ export function extract(
     response: BackendResponse | string, 
     context: ExtractionContext = {}
   ): ExtractionResult {
-    const rawResponse = typeof response === 'string' ? response : response.content;
-    const stopReason = typeof response === 'string' ? 'designed' : response.stopReason;
-    const sourceType = context.sourceType || 'agent'; // an assumption, but not a bad one
-    const sourceName = context.sourceName || 'unknown';
-    const timestamp = context.timestamp || Date.now();
+  const rawResponse = typeof response === 'string' ? response : response.content;
+  const stopReason = typeof response === 'string' ? 'designed' : response.stopReason;
+  const sourceType = context.sourceType || 'agent'; // an assumption, but not a bad one
+  const sourceName = context.sourceName || 'unknown';
+  const timestamp = context.timestamp || Date.now();
   
   const knowledges: Knowledge[] = [];
   const workItems: WorkItem[] = [];
   
   // Parse XML blocks
   if (stopReason === 'designed') {
-    const responseBlock = Block.fromString('\n'+rawResponse+'\n');
+    const responseBlock = Block.fromString(`\n${rawResponse}\n`);
     
     const knowledgeBlocks = responseBlock.extractAll('\n<knowledge>', '</knowledge>\n');
     for (const block of knowledgeBlocks) {

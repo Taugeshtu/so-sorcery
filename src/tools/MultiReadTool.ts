@@ -1,21 +1,19 @@
-// src/tools/MultiReadTool.ts
-import { Tool, ToolResult } from './Tool';
-import { WorkItem } from '../types';
+import { Tool } from '../worker';
+import { WorkItem, WorkResult, ToolDescriptor } from '../types';
 
 export class MultiReadTool extends Tool {
-  get name(): string {
-    return 'multiread';
+  static getDescriptor(): ToolDescriptor {
+    return {
+      name: 'multiread',
+      displayName: 'Multi-read', 
+      description: 'Add multiple files to the context from the list of available project files. Provide newline-separated file paths and nothing else, and they will be added to the context.',
+      autoRun: true,
+      type: 'tool',
+      workerClass: 'MultiReadTool'
+    };
   }
   
-  get description(): string {
-    return 'Add multiple files to the context from the list of available project files. Provide newline-separated file paths and nothing else, and they will be added to the context.';
-  }
-  
-  get autoRun(): boolean {
-    return true;
-  }
-
-  async execute(workItem: WorkItem): Promise<ToolResult> {
+  async execute(workItem: WorkItem): Promise<WorkResult> {
     try {
       // Extract file paths from work item content
       const filePaths = this.extractFilePaths(workItem.content);

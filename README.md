@@ -77,6 +77,7 @@ Function:
 - [~] File read tool (done, but untested)
 - [ ] File write tool
 - [ ] "Patcher" psyche
+- [ ] A way to hide a tool/psyche from context!!
 
 Bugs:
 - [ ] the way "run" button blocks between "run" and "+ & Run" is somehow different

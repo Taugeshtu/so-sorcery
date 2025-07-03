@@ -65,3 +65,36 @@ export interface GatheredContext {
   projectStructure?: string;
   files?: string;
 }
+
+export interface WorkerDescriptor {
+  name: string;
+  displayName: string;
+  description: string;
+  autoRun: boolean;
+  type: 'agent' | 'tool';
+}
+
+export interface PsycheDescriptor extends WorkerDescriptor {
+  type: 'agent';
+  model: string;
+  maxTokens: number;
+  system: string;
+  priming?: string;
+  terminators?: string[];
+  awareness?: ContextAwareness;
+  post?: {
+    psyche: string;
+    chaining_depth: number;
+  };
+}
+
+export interface ToolDescriptor extends WorkerDescriptor {
+  type: 'tool';
+  workerClass: string; // Class name to instantiate
+}
+
+export interface WorkResult {
+  knowledges?: Knowledge[];
+  works?: WorkItem[];
+  error?: string;
+}

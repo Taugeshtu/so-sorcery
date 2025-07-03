@@ -14,6 +14,7 @@ Given the context, infer user's most recent intent. Outline the direction toward
 
 Orient:
 Relative to the immediate next steps, assess what knowledge and context is provided, and what is missing or too big to tackle in one or two steps. Omit concerns and gaps that are already provided in the context.
+Outline what you can deliver right now, with knowns, and what would require subsequent iterations, once the unknowns have been provided.
 
 Deliver:
 Produce useful output - code, snippets, writing, instructions, work. Use [[references]] generously. Ask for clarifications if intent is unclear, or there are gaps in understanding. If there's no suitable agent to perform the work, do your best to provide knowledge.
