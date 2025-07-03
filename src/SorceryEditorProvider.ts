@@ -155,7 +155,7 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
       
       case 'executeWorkItem':
         try {
-          sessionController.executeToolWorkItem(message.id);
+          sessionController.executeWorkItem(message.id);
         } catch (error) {
           vscode.window.showErrorMessage(`Work item execution failed: ${error}`);
         }

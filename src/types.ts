@@ -24,7 +24,7 @@ export interface Knowledge extends ContextItem {
 
 export interface WorkItem extends ContextItem {
   type: 'work';
-  executor: 'multiread' | 'file_read' | 'file_write' | 'user' | 'agent';
+  executor: string;
   status: 'cold' | 'running' | 'done' | 'failed';
   metadata: ContextItemMetadata & {
     // WorkItem-specific metadata can be added here if needed

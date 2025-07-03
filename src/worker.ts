@@ -160,7 +160,7 @@ export abstract class Tool extends Worker {
   }
   
   protected createWorkItem(
-    type: WorkItem['executor'], 
+    executor: string,
     content: string, 
     tool?: string
   ): WorkItem {
@@ -169,7 +169,7 @@ export abstract class Tool extends Worker {
       type: 'work',
       sourceType: 'system',
       sourceName: this.descriptor.name,
-      executor: type,
+      executor,
       content,
       status: 'cold',
       metadata: {

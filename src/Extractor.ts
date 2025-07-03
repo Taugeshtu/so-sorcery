@@ -50,19 +50,10 @@ export function extract(
     const workBlocks = responseBlock.extractAll('\n<work>', '</work>\n');
     for (const block of workBlocks) {
       const target = block.extract('<target>', '</target>');
+      const executor = (target.length > 0) ? target.extracted : 'user';
       const extractedContent = (target.length > 0)
                       ? Block.fromString(block.extracted + "==terminator").extract('</target>', '==terminator')
                       : block;
-      
-      let workType: WorkItem['executor'] = 'agent';
-      if (target.length > 0) {
-        const extractedTarget = target.extracted;
-        if (extractedTarget === 'user') {
-          workType = 'user';
-        } else if (['multiread', 'file_read', 'file_write'].includes(extractedTarget)) {
-          workType = extractedTarget as WorkItem['executor'];
-        }
-      }
       
       if (extractedContent.length > 0) {
         workItems.push({
@@ -71,7 +62,7 @@ export function extract(
           sourceType,
           sourceName,
           content: extractedContent.extracted,
-          executor: workType,
+          executor,
           status: 'cold',
           metadata: {
             timestamp,

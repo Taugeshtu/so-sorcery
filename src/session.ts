@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { Knowledge, SessionContext, WorkItem, ContextItem, getAvailableFiles, ContextAwareness } from './types';
 import { psycheRegistry } from './PsycheRegistry';
 import { toolRegistry } from './tools/ToolRegistry';
-import { PsycheWorker, Tool } from './worker';
+import { PsycheWorker, Tool, Worker } from './worker';
 import { extract, ExtractionResult } from './Extractor';
 import { gatherContext, bakeContext as bakeContext } from './ContextBuilder';
 import { BackendResponse } from './llm/types';
@@ -14,6 +14,7 @@ export class SessionController {
   private document: vscode.TextDocument;
   private tools: Map<string, Tool>;
   private psyches: Map<string, PsycheWorker>;
+  private executors: Map<string, Worker> = new Map();
   private pendingExecutions: Map<number, NodeJS.Timeout> = new Map();
   private onStateChanged?: () => void;
   
@@ -22,6 +23,11 @@ export class SessionController {
     this.context = this.loadFromDocument(workspaceName);
     this.tools = toolRegistry.getTools(this);
     this.psyches = psycheRegistry.getPsyches(this);
+    for (const tool of this.tools.values())
+      this.executors.set(tool.descriptor.name, tool);
+    for (const psyche of this.psyches.values())
+      this.executors.set(psyche.descriptor.name, psyche);
+    
     this.onStateChanged = onStateChanged;
     
     // Initialize with all known psyches
@@ -114,7 +120,7 @@ export class SessionController {
     };
     
     // Check if it's a WorkItem first (more specific)
-    if ('executor' in item || 'status' in item || item.type === 'work') {
+    if (item.type === 'work') {
       return {
         ...baseItem,
         type: 'work',
@@ -227,17 +233,15 @@ export class SessionController {
   
   // ========================= WORK =========================
   private tryScheduleAutoExecution(workItem: WorkItem): void {
-    // Find the tool that can handle this work item
-    const tool = this.tools.has(workItem.executor) ? this.tools.get(workItem.executor) : null;
-    
-    if (!tool || !tool.descriptor.autoRun) {
-      return; // Tool doesn't support auto-run
+    const executor = this.executors.has(workItem.executor) ? this.executors.get(workItem.executor) : null;
+    if (!executor || !executor.descriptor.autoRun) {
+      return;
     }
-
+    
     // Get configured delay
     const config = vscode.workspace.getConfiguration('sorcery');
     const delay = config.get<number>('autoRunDelay', 2000);
-
+    
     // Schedule execution
     const timeout = setTimeout(async () => {
       // Remove from pending map
@@ -248,10 +252,10 @@ export class SessionController {
       if (!currentItem) {
         return;
       }
-
+      
       // Execute the tool
       try {
-        await this.executeToolWorkItem(workItem.id);
+        await this.executeWorkItem(workItem.id);
       } catch (error) {
         console.error('Auto-execution failed:', error);
       }
@@ -280,9 +284,8 @@ export class SessionController {
     return false;
   }
   
-  public async executeToolWorkItem(workItemId: number): Promise<boolean> {
+  public async executeWorkItem(workItemId: number): Promise<boolean> {
     const workItem = this.context.items.find(item => item.type === 'work' && item.id === workItemId) as WorkItem;
-    
     if (!workItem || workItem.status !== 'cold') {
       return false;
     }
@@ -291,12 +294,11 @@ export class SessionController {
       workItem.metadata = { timestamp: Date.now(), collapsed: false };
     }
     
-    // Find appropriate tool
-    const tool = this.tools.has(workItem.executor) ? this.tools.get(workItem.executor) : null;
-    if (!tool) {
+    const executor = this.executors.has(workItem.executor) ? this.executors.get(workItem.executor) : null;
+    if (!executor) {
       // Mark as failed
       workItem.status = 'failed';
-      workItem.metadata.error = 'No tool found to handle this work item';
+      workItem.metadata.error = 'No executor found to handle this work item';
       this.saveToDocument();
       return false;
     }
@@ -305,8 +307,7 @@ export class SessionController {
       workItem.status = 'running';
       this.saveToDocument();
       
-      const result = await tool.execute(workItem);
-      // Add any items produced by the tool
+      const result = await executor.execute(workItem);
       if (result.knowledges) {
         for (const knowledge of result.knowledges) {
           this.addItem(knowledge);
@@ -318,7 +319,7 @@ export class SessionController {
           this.addItem(newWork);
         }
       }
-
+      
       // Update work item status
       if (result.error) {
         workItem.status = 'failed';
@@ -326,10 +327,9 @@ export class SessionController {
       } else {
         workItem.status = 'done';
       }
-
+      
       this.saveToDocument();
       return true;
-
     } catch (error) {
       workItem.status = 'failed';
       workItem.metadata.error = error instanceof Error ? error.message : String(error);
@@ -341,52 +341,24 @@ export class SessionController {
   
   // ========================= RUNNING AGENTS =========================
   public async runPA(): Promise<void> {
-    const paWorker = this.psyches.get('project_assistant');
-    if (!paWorker) {
-      throw new Error('Project Assistant psyche not found');
-    }
-    
-    // Create a dummy work item for the PA
-    // hoooow exactly... are we gonna do that?..
-    
-    
+    // this is legacy, just trying to trigger new system before "@" tag-in system is implemented:
     const workItem: WorkItem = {
-      id: -1, // Temporary ID
+      id: this.context.nextId++,
       type: 'work',
       sourceType: 'system',
-      sourceName: 'runPA',
+      sourceName: 'system',
       executor: 'project_assistant',
-      content: 'Run Project Assistant',
-      status: 'running',
+      content: 'Please do something useful with all this',
+      status: 'cold',
       metadata: {
         timestamp: Date.now(),
         collapsed: false
       }
     };
     
-    try {
-      const result = await paWorker.execute(workItem);
-      
-      // Add extracted items to session
-      if (result.knowledges) {
-        for (const knowledge of result.knowledges) {
-          this.addItem(knowledge);
-        }
-      }
-      if (result.works) {
-        for (const work of result.works) {
-          this.addItem(work);
-        }
-      }
-      
-      if (result.error) {
-        throw new Error(result.error);
-      }
-      
-    } catch (error) {
-      console.error('Agent run failed:', error);
-      throw error;
-    }
+    this.context.items.push( workItem );
+    this.saveToDocument();
+    this.executeWorkItem( workItem.id );
   }
   
   // ========================= ACCESSOR TRASH =========================
