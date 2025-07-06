@@ -234,13 +234,15 @@ export class SessionController {
   // ========================= WORK =========================
   private tryScheduleAutoExecution(workItem: WorkItem): void {
     const executor = this.executors.has(workItem.executor) ? this.executors.get(workItem.executor) : null;
-    if (!executor || !executor.descriptor.autoRun) {
+    if (!executor || executor.descriptor.autoRun.mode !== 'always') {
       return;
     }
     
     // Get configured delay
     const config = vscode.workspace.getConfiguration('sorcery');
-    const delay = config.get<number>('autoRunDelay', 2000);
+    const delay = (executor.descriptor.autoRun.delay)
+                  ? executor.descriptor.autoRun.delay
+                  : config.get<number>('autoRunDelay', 2000);
     
     // Schedule execution
     const timeout = setTimeout(async () => {

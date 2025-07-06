@@ -51,7 +51,8 @@ export function getAvailableFiles(): string[] {
 export interface ContextAwareness {
   tools?: boolean | string[];
   psyches?: boolean | string[];
-  items?: "all" | "knowledge" | "work";
+  knowledge?: boolean;
+  work?: "all" | "mine" | "current";
   parentOutput?: boolean;
   projectStructure?: boolean;
   files?: boolean;
@@ -66,11 +67,18 @@ export interface GatheredContext {
   files?: string;
 }
 
+export type AutoRunMode = 'never' | 'on-run' | 'always';
+
+export interface AutoRunConfig {
+  mode: AutoRunMode;
+  delay?: number; // Optional delay override
+}
+
 export interface WorkerDescriptor {
   name: string;
   displayName: string;
   description: string;
-  autoRun: boolean;
+  autoRun: AutoRunConfig;
   type: 'agent' | 'tool';
 }
 

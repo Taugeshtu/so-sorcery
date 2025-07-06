@@ -10,7 +10,7 @@ export class FileReadTool extends Tool {
       name: 'file_read',
       displayName: 'File Read', 
       description: 'Read the contents of a file from the workspace and add them as a standalone synthetic knowledge',
-      autoRun: true,
+      autoRun: {mode: 'always', delay: 0},
       type: 'tool',
       workerClass: 'FileReadTool'
     };

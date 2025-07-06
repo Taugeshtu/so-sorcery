@@ -7,11 +7,16 @@
   "system": null,
   "priming": null,
   "terminators": ["=handover_protocol="],
+  "autoRun": {
+    "mode": "on-run",
+    "delay": 0
+  }
   "awareness": {
     "tools": true,
     "psyches": true,
     "projectStructure": true,
-    "items": "all",
+    "knowledge": true,
+    "work": "all",
     "files": true
   },
   "post": {

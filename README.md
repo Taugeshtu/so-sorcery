@@ -113,6 +113,7 @@ Maybes:
 ## Release Notes
 
 ### 0.10.x
+- [ ] recent output seems to have broken xD
 - [ ] parsing "@" in user inputs, and converting items into work if this is the case
 - [ ] I think "autorun" needs to be more complex - no automatic running, auto-triggered when "run" is happening, or full-auto
 - [x] Make it so user inputs are actually work? For PA agent?? could be fun framing
