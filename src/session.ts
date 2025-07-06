@@ -3,11 +3,6 @@ import { Knowledge, SessionContext, WorkItem, ContextItem, getAvailableFiles, Co
 import { psycheRegistry } from './PsycheRegistry';
 import { toolRegistry } from './tools/ToolRegistry';
 import { PsycheWorker, Tool, Worker } from './worker';
-import { extract, ExtractionResult } from './Extractor';
-import { gatherContext, bakeContext as bakeContext } from './ContextBuilder';
-import { BackendResponse } from './llm/types';
-import { Models } from './llm/models';
-import { workspaceController } from './workspace';
 
 export class SessionController {
   private context: SessionContext;

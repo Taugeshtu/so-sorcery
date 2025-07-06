@@ -10,6 +10,8 @@ import { psycheRegistry } from './PsycheRegistry';
 export async function gatherContext(
   awareness: ContextAwareness,
   context: SessionContext,
+  currentWorkItem?: WorkItem,
+  executorName?: string,
   parentOutput?: string
 ): Promise<GatheredContext> {
   const assembled: GatheredContext = {};
@@ -17,7 +19,9 @@ export async function gatherContext(
   if (awareness.psyches) assembled.psyches = buildPsychesContext(awareness.psyches);
   if (awareness.projectStructure) assembled.projectStructure = buildProjectStructureContext();
   if (awareness.files) assembled.files = await buildFilesContext(context);
-  if (awareness.items) assembled.items = buildItemsContext(awareness.items, context);
+  if (awareness.knowledge || awareness.work) {
+    assembled.items = buildItemsContext(awareness, context, executorName, currentWorkItem);
+  }
   if (awareness.parentOutput && parentOutput) assembled.parentOutput = `<previous_agent_output>\n${parentOutput}\n</previous_agent_output>`;
   return assembled;
 }
@@ -88,31 +92,55 @@ export async function buildFilesContext(context: SessionContext): Promise<string
 }
 
 export function buildItemsContext(
-  awareness: "all" | "knowledge" | "work",
-  context: SessionContext
+  awareness: ContextAwareness,
+  context: SessionContext,
+  executorName?: string,
+  currentWorkItem?: WorkItem
 ): string {
   const parts: string[] = [];
   
   for (const item of context.items) {
-    // Filter based on awareness setting
-    if (awareness === "knowledge" && item.type !== 'knowledge') continue;
-    if (awareness === "work" && item.type !== 'work') continue;
-    
+    // Handle knowledge items
     if (item.type === 'knowledge') {
-      const knowledge = item as Knowledge;
+      // Skip if only work items are requested
+      if (awareness.work && !awareness.knowledge) continue;
+      
+      // Skip file-sourced knowledge items (they're handled separately in buildFilesContext)
       if (item.sourceType === 'file') continue;
       
+      const knowledge = item as Knowledge;
       const source = knowledge.sourceType === 'user'
                     ? knowledge.sourceType
-                    // for agent and system source types (files take a different route altogether)
                     : `${knowledge.sourceType}(${knowledge.sourceName})`;
       parts.push(`<knowledge>[${knowledge.id}] from: ${source}\ncontent:\n${knowledge.content}\n</knowledge>`);
     }
+    
+    // Handle work items
     if (item.type === 'work') {
+      // Skip if only knowledge items are requested
+      if (awareness.knowledge && !awareness.work) continue;
+      
       const workItem = item as WorkItem;
+      
+      // Apply work filtering
+      if (awareness.work) {
+        switch (awareness.work) {
+          case 'current':
+            // Only include the current work item being executed
+            if (!currentWorkItem || workItem.id !== currentWorkItem.id) continue;
+            break;
+          case 'mine':
+            // Only include work items for the current executor
+            if (!executorName || workItem.executor !== executorName) continue;
+            break;
+          case 'all':
+            // Include all work items (no filtering)
+            break;
+        }
+      }
+      
       const source = workItem.sourceType === 'user'
                       ? workItem.sourceType
-                      // for agent and system source types (files take a different route altogether)
                       : `${workItem.sourceType}(${workItem.sourceName})`;
       parts.push(`<work>[${workItem.id}] from: ${source} for: ${workItem.executor}, status: ${workItem.status}\ncontent:\n${workItem.content}\n</work>`);
     }

@@ -77,7 +77,6 @@ Function:
 - [~] File read tool (done, untested)
 - [~] File write tool (done, untested)
 - [ ] "Patcher" psyche
-- [ ] A way to hide a tool/psyche from context!!
 
 Bugs:
 - [ ] the way "run" button blocks between "run" and "+ & Run" is somehow different
@@ -114,6 +113,7 @@ Maybes:
 
 ### 0.10.x
 - [ ] recent output seems to have broken xD
+- [ ] A way to hide a tool/psyche from context!!
 - [ ] parsing "@" in user inputs, and converting items into work if this is the case
 - [ ] I think "autorun" needs to be more complex - no automatic running, auto-triggered when "run" is happening, or full-auto
 - [x] Make it so user inputs are actually work? For PA agent?? could be fun framing

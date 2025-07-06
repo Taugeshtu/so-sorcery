@@ -37,7 +37,11 @@ export class PsycheWorker extends Worker {
       const psycheDescriptor = this.descriptor as PsycheDescriptor;
       const environment = `Workspace: ${this.session.getSession().workspaceName}\n\n`;
       
-      const response = await this.runPsyche(psycheDescriptor.name, environment);
+      const response = await this.runPsyche(
+        psycheDescriptor.name, 
+        environment, 
+        workItem
+      );
       
       // Extract knowledge and work items from the response
       const extracted = extract(response, { 
@@ -60,6 +64,7 @@ export class PsycheWorker extends Worker {
   private async runPsyche(
     psycheName: string,
     systemContext?: string,
+    currentWorkItem?: WorkItem,
     chaining?: {
       parentOutput: string,
       currentDepth: number
@@ -81,12 +86,19 @@ export class PsycheWorker extends Worker {
       
       const defaultAwareness: ContextAwareness = {
         projectStructure: true,
-        items: "all",
+        knowledge: true,
+        work: "all",
         files: true,
         parentOutput: true
       };
       const awareness = psyche.awareness ? psyche.awareness : defaultAwareness;
-      const gatheredContext = await gatherContext(awareness, this.session.getSession(), chaining?.parentOutput);
+      const gatheredContext = await gatherContext(
+        awareness, 
+        this.session.getSession(), 
+        currentWorkItem,
+        psyche.name,
+        chaining?.parentOutput
+      );
       const bakedContext = bakeContext(gatheredContext);
       
       const llmResponse = await model.backend.run(
@@ -126,6 +138,7 @@ export class PsycheWorker extends Worker {
         return await nextPsycheWorker.runPsyche(
           psyche.post.psyche,
           systemContext,
+          currentWorkItem,
           nextChain
         );
       }
