@@ -10,7 +10,7 @@ export class FileWriteTool extends Tool {
     return {
       name: 'file_write',
       displayName: 'File Write', 
-      description: 'Write content to a file in the workspace. Expects content in format:\nfilepath\n```\nfile content\n```',
+      description: 'Write content to a file in the workspace. Expects content in format:\nfilepath\n```\nfile content\n```. NO LANGUAGE SPECIFICATION.',
       autoRun: {mode: 'never', delay: 0},
       type: 'tool',
       workerClass: 'FileWriteTool'

@@ -41,11 +41,26 @@ export function buildToolsContext(awareness: boolean | string[]): string {
   if (!awareness) return '';
   
   const info = toolRegistry.getToolsInfo();
-  const filtered = (awareness === true)
-                        ? info
-                        : info.filter(t => (awareness as string[]).includes(t.name));
+  let filtered;
+  
+  if (awareness === true) {
+    filtered = info;
+  } else {
+    const stringArray = awareness as string[];
+    const isNegativeMask = stringArray.length > 0 && stringArray.every(item => item.startsWith('!'));
+    
+    if (isNegativeMask) {
+      // Remove the '!' prefix and exclude those tools
+      const excludeNames = stringArray.map(item => item.substring(1));
+      filtered = info.filter(t => !excludeNames.includes(t.name));
+    } else {
+      // Positive filtering (existing behavior)
+      filtered = info.filter(t => stringArray.includes(t.name));
+    }
+  }
+  
   const bulletList = filtered.map(t => `- ${t.name}: ${t.description}`).join('\n');
-  const result = `Available Tools:\n${bulletList}`
+  const result = `Available Tools:\n${bulletList}`;
   return result;
 }
 
@@ -53,11 +68,26 @@ export function buildPsychesContext(awareness: boolean | string[]): string {
   if (!awareness) return '';
   
   const info = psycheRegistry.getPsychesInfo();
-  const filtered = (awareness === true)
-                        ? info
-                        : info.filter(p => (awareness as string[]).includes(p.name));
+  let filtered;
+  
+  if (awareness === true) {
+    filtered = info;
+  } else {
+    const stringArray = awareness as string[];
+    const isNegativeMask = stringArray.length > 0 && stringArray.every(item => item.startsWith('!'));
+    
+    if (isNegativeMask) {
+      // Remove the '!' prefix and exclude those psyches
+      const excludeNames = stringArray.map(item => item.substring(1));
+      filtered = info.filter(p => !excludeNames.includes(p.name));
+    } else {
+      // Positive filtering (existing behavior)
+      filtered = info.filter(p => stringArray.includes(p.name));
+    }
+  }
+  
   const bulletList = filtered.map(p => `- ${p.name}: ${p.description}`).join('\n');
-  const result = `Available Agents:\n${bulletList}`
+  const result = `Available Agents:\n${bulletList}`;
   return result;
 }
 
