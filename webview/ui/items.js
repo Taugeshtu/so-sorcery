@@ -156,7 +156,10 @@ export class ItemsManager {
 
     createWorkItemCard(workItem) {
         const card = document.createElement('div');
-        card.className = `work-item-card ${workItem.type}-work`;
+        
+        // Add status and executor type classes
+        const executorType = this.categorizeExecutor(workItem.executor, this.stateManager);
+        card.className = `work-item-card ${workItem.type}-work status-${workItem.status} executor-${executorType}`;
         card.dataset.workItemId = workItem.id;
         
         // Header
@@ -244,6 +247,27 @@ export class ItemsManager {
         });
         
         return container;
+    }
+    
+    categorizeExecutor(executor, stateManager) {
+        // Check if executor is "user"
+        if (executor === 'user') {
+            return 'user';
+        }
+        
+        // Check if executor matches any known psyche/agent
+        // Access psyches through stateManager if available
+        if (stateManager && stateManager.currentContext) {
+            // This assumes psyches are available in state - may need adjustment
+            // based on how psyches are stored in the frontend
+            const knownAgents = ['project_assistant', 'extractor']; // Add more as needed
+            if (knownAgents.includes(executor)) {
+                return 'agent';
+            }
+        }
+        
+        // Default to tool for anything else
+        return 'tool';
     }
 
     toggleKnowledge(id) {

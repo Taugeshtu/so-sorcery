@@ -85,6 +85,7 @@ Bugs:
 Refactoring:
 
 Big && / || faraway items:
+- [ ] @ mentions having a pop-up with selection on the frontend?
 - [ ] Settings: custom additional ignore
 - [ ] Parsing & making jumpable `[[wikilinks]]`, obsidian-style, for IDs and files
 - [ ] psyche editor (ideally storing them into user-global storage but not settings)
@@ -112,7 +113,7 @@ Maybes:
 
 ### 0.10.x
 - [ ] "Go" button for work items actually working
-- [ ] Work items showing their status with color??..
+- [x] Work items showing their status with color??..
 - [x] parsing "@" in user inputs, and converting items into work if this is the case
 - [x] awaiting workspace & psyches initialization is sequential - should be parallel
 - [x] psyches loading is awaiting sequentially - bad

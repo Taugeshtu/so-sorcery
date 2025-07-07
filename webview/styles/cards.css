@@ -151,20 +151,38 @@
   border-left: 3px solid var(--vscode-charts-orange);
 }
 
-.user_task-work .work-item-content {
+/* Work item status colors - left border */
+.work-item-card.status-cold .work-item-content {
   border-left: 3px solid var(--vscode-charts-blue);
 }
 
-.agent_task-work .work-item-content {
+.work-item-card.status-running .work-item-content {
   border-left: 3px solid var(--vscode-charts-orange);
 }
 
-.file_read-work .work-item-content {
+.work-item-card.status-done .work-item-content {
   border-left: 3px solid var(--vscode-charts-green);
 }
 
-.file_write-work .work-item-content {
+.work-item-card.status-failed .work-item-content {
   border-left: 3px solid var(--vscode-charts-red);
+}
+
+/* Executor type header gradients */
+.work-item-card.executor-user .work-item-header {
+  background-color: var(--vscode-badge-background); /* Keep current solid background */
+}
+
+.work-item-card.executor-agent .work-item-header {
+  background: linear-gradient(to right, 
+    transparent 0%, 
+    rgba(128, 128, 128, 0.5) 100%);
+}
+
+.work-item-card.executor-tool .work-item-header {
+  background: linear-gradient(to right, 
+    transparent 0%, 
+    rgba(0, 122, 204, 0.5) 100%);
 }
 
 /* Reference arrows */
