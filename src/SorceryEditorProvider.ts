@@ -136,7 +136,7 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
             running: true
           });
           
-          await sessionController.runPA();
+          await sessionController.run();
           
           panel.webview.postMessage({
             command: 'setAgentRunning',

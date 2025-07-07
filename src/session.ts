@@ -340,25 +340,128 @@ export class SessionController {
   
   
   // ========================= RUNNING AGENTS =========================
-  public async runPA(): Promise<void> {
-    // this is legacy, just trying to trigger new system before "@" tag-in system is implemented:
-    const workItem: WorkItem = {
-      id: this.context.nextId++,
-      type: 'work',
-      sourceType: 'system',
-      sourceName: 'system',
-      executor: 'project_assistant',
-      content: 'Please do something useful with all this',
-      status: 'cold',
-      metadata: {
-        timestamp: Date.now(),
-        collapsed: false
+  private getFilteredWork(executorName: string): WorkItem[] {
+    return this.context.items
+      .filter(item =>
+        item.type === 'work' &&
+        (item as WorkItem).status === 'cold' &&
+        (item as WorkItem).executor === executorName
+      )
+      .map(item => item as WorkItem)
+      .sort((a, b) => a.id - b.id); // Oldest first
+  }
+
+  private setWorkItemsStatus(workIds: number[], status: WorkItem['status']): void {
+    this.context.items.forEach(item => {
+      if (item.type === 'work' && workIds.includes(item.id)) {
+        (item as WorkItem).status = status;
       }
-    };
+    });
+  }
+
+  private resetFailedWork(workIds: number[], executedWorkId: number): void {
+    this.context.items.forEach(item => {
+      if (item.type === 'work' && 
+          workIds.includes(item.id) && 
+          item.id !== executedWorkId &&
+          (item as WorkItem).status === 'running') {
+        (item as WorkItem).status = 'cold';
+      }
+    });
+  }
+
+  public async executeWorker(executorName: string): Promise<boolean> {
+    const selectedWork = this.getFilteredWork(executorName);
     
-    this.context.items.push( workItem );
-    this.saveToDocument();
-    this.executeWorkItem( workItem.id );
+    if (selectedWork.length === 0 && executorName !== 'project_assistant') {
+      return false; // No work to execute
+    }
+    
+    const executor = this.executors.get(executorName);
+    if (!executor) {
+      return false; // No executor found
+    }
+    
+    const workIds = selectedWork.map(w => w.id);
+    const oldestWork = selectedWork[0];
+    
+    try {
+      // Mark all selected work as running
+      this.setWorkItemsStatus(workIds, 'running');
+      this.saveToDocument();
+      
+      // Execute the oldest work item
+      const result = await executor.execute(oldestWork);
+      
+      // Process results
+      if (result.knowledges) {
+        for (const knowledge of result.knowledges) {
+          this.addItem(knowledge);
+        }
+      }
+      
+      if (result.works) {
+        for (const newWork of result.works) {
+          this.addItem(newWork);
+        }
+      }
+      
+      // Update executed work item status
+      if (result.error) {
+        oldestWork.status = 'failed';
+        oldestWork.metadata.error = result.error;
+      } else {
+        oldestWork.status = 'done';
+      }
+      
+      // Reset other work items back to cold (they weren't actually executed)
+      this.resetFailedWork(workIds, oldestWork.id);
+      
+      this.saveToDocument();
+      return true;
+      
+    } catch (error) {
+      // Reset all work items back to cold on failure
+      this.resetFailedWork(workIds, -1); // -1 means reset all
+      
+      // Mark the attempted work item as failed
+      oldestWork.status = 'failed';
+      oldestWork.metadata.error = error instanceof Error ? error.message : String(error);
+      
+      this.saveToDocument();
+      return false;
+    }
+  }
+
+  public async run(): Promise<void> {
+    // Discover executors that have cold work and support on-run
+    const eligibleExecutors = new Set<string>();
+    
+    for (const item of this.context.items) {
+      if (item.type === 'work' && (item as WorkItem).status === 'cold') {
+        const workItem = item as WorkItem;
+        const executor = this.executors.get(workItem.executor);
+        
+        if (executor && executor.descriptor.autoRun.mode === 'on-run') {
+          eligibleExecutors.add(workItem.executor);
+        }
+      }
+    }
+    
+    if(eligibleExecutors.size === 0)
+      eligibleExecutors.add('project_assistant');
+    
+    // Execute all eligible executors in parallel
+    const executionPromises = Array.from(eligibleExecutors).map(executorName => 
+      this.executeWorker(executorName)
+    );
+    
+    try {
+      await Promise.all(executionPromises);
+    } catch (error) {
+      console.error('Error during batch execution:', error);
+      // Individual executor failures are already handled in executeWorker
+    }
   }
   
   // ========================= ACCESSOR TRASH =========================

@@ -112,10 +112,13 @@ Maybes:
 ## Release Notes
 
 ### 0.10.x
+- [ ] psyches loading is awaiting sequentially - bad
+- [ ] awaiting tools & psyches initialization is sequential - should be parallel
 - [ ] recent output seems to have broken xD
 - [ ] A way to hide a tool/psyche from context!!
 - [ ] parsing "@" in user inputs, and converting items into work if this is the case
-- [ ] I think "autorun" needs to be more complex - no automatic running, auto-triggered when "run" is happening, or full-auto
+- [x] PA should still auto-run even if there's no work for it, methinks.. Just streamlines everything
+- [x] I think "autorun" needs to be more complex - no automatic running, auto-triggered when "run" is happening, or full-auto
 - [x] Make it so user inputs are actually work? For PA agent?? could be fun framing
 - [x] Extractor misses code blocks, no bueno
 - [x] PA hallucinates a bit about files; may need prompt massaging
