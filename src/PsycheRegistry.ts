@@ -28,13 +28,15 @@ class PsycheRegistry {
         .filter(([name, type]) => type === vscode.FileType.File && name.endsWith('.psyche'))
         .map(([name]) => name);
 
-      for (const fileName of psycheFiles) {
-        try {
-          await this.loadPsycheFromFile(fileName);
-        } catch (error) {
+      // Load all psyches in parallel instead of sequentially
+      const loadPromises = psycheFiles.map(fileName => 
+        this.loadPsycheFromFile(fileName).catch(error => {
           console.error(`Failed to load psyche from ${fileName}:`, error);
-        }
-      }
+          return null; // Continue with other psyches even if one fails
+        })
+      );
+
+      await Promise.all(loadPromises);
     } catch (error) {
       console.error('Failed to read resources directory:', error);
     }

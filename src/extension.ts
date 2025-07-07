@@ -11,8 +11,11 @@ export let globalState: vscode.Memento;
 
 export async function activate(context: vscode.ExtensionContext) {
   globalState = context.globalState;
-  await workspaceController.initialize();
-  await psycheRegistry.initialize(context.extensionUri);
+  await Promise.all([
+    await workspaceController.initialize(),
+    await psycheRegistry.initialize(context.extensionUri)
+  ]);
+    
   toolRegistry.initialize();
   
   sorceryEditorProvider = new SorceryEditorProvider(context);
