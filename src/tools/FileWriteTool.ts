@@ -73,7 +73,9 @@ export class FileWriteTool extends Tool {
   }
 
   private extractFileData(content: string): { filePath: string | null; content: string | null } {
-    const lines = content.split('\n');
+    const trimmedContent = content.trim();
+    const lines = trimmedContent.split('\n');
+    
     if (lines.length >= 2) {
       const firstLine = lines[0].trim();
       const restContent = lines.slice(1).join('\n');
