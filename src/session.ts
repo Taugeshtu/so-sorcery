@@ -366,62 +366,35 @@ export class SessionController {
     return false;
   }
   
-  public async executeWorkItem(workItemId: number): Promise<boolean> {
-    const workItem = this.context.items.find(item => item.type === 'work' && item.id === workItemId) as WorkItem;
-    if (!workItem || workItem.status === 'running' || workItem.status === 'done') {
-      return false;
-    }
+  
+  // ========================= EXECUTIONS =========================
+  private handleExecutionError(workItem: WorkItem, error: string, context?: string): void {
+    // Set the work item status and metadata as before
+    workItem.status = 'failed';
+    workItem.metadata.error = error;
     
-    if (!workItem.metadata) {
-      workItem.metadata = { timestamp: Date.now(), collapsed: false };
-    }
+    // Create a knowledge item to make the error visible to users
+    const errorKnowledge = this.emitKnowledge(
+      'system',
+      'execution_error',
+      `**Execution Error for Work Item [${workItem.id}]**
+
+**Executor:** ${workItem.executor}
+**Work Content:** ${workItem.content || '(empty)'}
+${context ? `**Context:** ${context}` : ''}
+
+**Error:** ${error}
+
+**Timestamp:** ${new Date().toISOString()}`
+    );
     
-    const executor = this.executors.has(workItem.executor) ? this.executors.get(workItem.executor) : null;
-    if (!executor) {
-      // Mark as failed
-      workItem.status = 'failed';
-      workItem.metadata.error = 'No executor found to handle this work item';
-      this.saveToDocument();
-      return false;
-    }
+    // Add references to link the error back to the failed work item
+    errorKnowledge.references = [workItem.id];
     
-    try {
-      workItem.status = 'running';
-      this.saveToDocument();
-      
-      const result = await executor.execute(workItem);
-      if (result.knowledges) {
-        for (const knowledge of result.knowledges) {
-          this.addItem(knowledge);
-        }
-      }
-      
-      if (result.works) {
-        for (const newWork of result.works) {
-          this.addItem(newWork);
-        }
-      }
-      
-      // Update work item status
-      if (result.error) {
-        workItem.status = 'failed';
-        workItem.metadata.error = result.error;
-      } else {
-        workItem.status = 'done';
-      }
-      
-      this.saveToDocument();
-      return true;
-    } catch (error) {
-      workItem.status = 'failed';
-      workItem.metadata.error = error instanceof Error ? error.message : String(error);
-      this.saveToDocument();
-      return false;
-    }
+    // Add the error knowledge to the context
+    this.addItem(errorKnowledge);
   }
-  
-  
-  // ========================= RUNNING AGENTS =========================
+
   private getFilteredWork(executorName: string): WorkItem[] {
     return this.context.items
       .filter(item =>
@@ -451,7 +424,58 @@ export class SessionController {
       }
     });
   }
-
+  
+  public async executeWorkItem(workItemId: number): Promise<boolean> {
+    const workItem = this.context.items.find(item => item.type === 'work' && item.id === workItemId) as WorkItem;
+    if (!workItem || workItem.status === 'running' || workItem.status === 'done') {
+      return false;
+    }
+    
+    if (!workItem.metadata) {
+      workItem.metadata = { timestamp: Date.now(), collapsed: false };
+    }
+    
+    const executor = this.executors.has(workItem.executor) ? this.executors.get(workItem.executor) : null;
+    if (!executor) {
+      this.handleExecutionError(workItem, 'No executor found to handle this work item', `Available executors: ${Array.from(this.executors.keys()).join(', ')}`);
+      this.saveToDocument();
+      return false;
+    }
+    
+    try {
+      workItem.status = 'running';
+      this.saveToDocument();
+      
+      const result = await executor.execute(workItem);
+      if (result.knowledges) {
+        for (const knowledge of result.knowledges) {
+          this.addItem(knowledge);
+        }
+      }
+      
+      if (result.works) {
+        for (const newWork of result.works) {
+          this.addItem(newWork);
+        }
+      }
+      
+      // Update work item status
+      if (result.error) {
+        this.handleExecutionError(workItem, result.error, 'Executor returned error result');
+      } else {
+        workItem.status = 'done';
+      }
+      
+      this.saveToDocument();
+      return true;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      this.handleExecutionError(workItem, errorMessage, 'Exception during execution');
+      this.saveToDocument();
+      return false;
+    }
+  }
+  
   public async executeWorker(executorName: string): Promise<boolean> {
     const selectedWork = this.getFilteredWork(executorName);
     
@@ -504,11 +528,11 @@ export class SessionController {
       
     } catch (error) {
       // Reset all work items back to cold on failure
-      this.resetFailedWork(workIds, -1); // -1 means reset all
+      this.resetFailedWork(workIds, -1);
       
-      // Mark the attempted work item as failed
-      oldestWork.status = 'failed';
-      oldestWork.metadata.error = error instanceof Error ? error.message : String(error);
+      // Handle the error transparently
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      this.handleExecutionError(oldestWork, errorMessage, `Batch execution failure for executor: ${executorName}`);
       
       this.saveToDocument();
       return false;
