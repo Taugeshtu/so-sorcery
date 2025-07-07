@@ -209,7 +209,7 @@ export class ItemsManager {
         goButton.textContent = 'Go';
         goButton.onclick = (e) => {
             e.stopPropagation();
-            this.copyToClipboard(workItem.content);
+            this.messageHandler.send('executeWorkItem', { id: workItem.id });
         };
 
         const deleteButton = document.createElement('button');

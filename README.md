@@ -112,7 +112,7 @@ Maybes:
 ## Release Notes
 
 ### 0.10.x
-- [ ] "Go" button for work items actually working
+- [x] "Go" button for work items actually working
 - [x] Work items showing their status with color??..
 - [x] parsing "@" in user inputs, and converting items into work if this is the case
 - [x] awaiting workspace & psyches initialization is sequential - should be parallel
