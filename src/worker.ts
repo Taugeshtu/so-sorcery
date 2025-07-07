@@ -116,6 +116,8 @@ export class PsycheWorker extends Worker {
       this.session.addCost(llmResponse.cost);
       workspaceController.addCost(llmResponse.cost);
       
+      this.session.getSession().workerOutputs[psyche.name] = llmResponse.content;
+      this.session.notifyStateChanged();
     } finally {
       // Clear busy state immediately after THIS psyche completes its core work
       this.executionCount--;

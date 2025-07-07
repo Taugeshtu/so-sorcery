@@ -113,10 +113,10 @@ Maybes:
 ### 0.10.x
 - [ ] psyches loading is awaiting sequentially - bad
 - [ ] awaiting tools & psyches initialization is sequential - should be parallel
-- [ ] recent output seems to have broken xD
 - [ ] parsing "@" in user inputs, and converting items into work if this is the case
 - [ ] "Go" button for work items actually working
 - [ ] Work items showing their status with color??..
+- [x] recent output seems to have broken xD
 - [x] "busy" indicator on a psyche continues to spin for PA when executor is running... Whyyy?
 - [x] split up the css, it's getting ridiculous!
 - [x] A way to hide a tool/psyche from context!!
