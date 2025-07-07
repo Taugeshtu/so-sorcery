@@ -1,0 +1,58 @@
+/* Worker output display and controls */
+#workerOutput {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  overflow: hidden;
+}
+
+#workerOutput.hidden {
+  display: none;
+}
+
+#workerOutputHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+#workerOutputTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--vscode-foreground);
+}
+
+#copyWorkerOutputButton {
+  background-color: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+  border: 1px solid var(--vscode-button-border, var(--vscode-panel-border));
+  border-radius: 3px;
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+#copyWorkerOutputButton:hover {
+  background-color: var(--vscode-button-secondaryHoverBackground);
+}
+
+#workerOutputContent {
+  flex: 1;
+  overflow-y: auto;
+  background-color: var(--vscode-editor-background);
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 3px;
+  padding: 12px;
+  font-family: var(--vscode-editor-font-family, 'Courier New', monospace);
+  font-size: var(--vscode-editor-font-size, 13px);
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  color: var(--vscode-editor-foreground);
+}

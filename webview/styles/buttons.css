@@ -1,0 +1,170 @@
+/* Button styles and variants */
+.primary-button, .secondary-button {
+  padding: 6px 12px;
+  border: 1px solid;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.primary-button {
+  background-color: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  border-color: var(--vscode-button-background);
+}
+
+.primary-button:hover {
+  background-color: var(--vscode-button-hoverBackground);
+}
+
+.primary-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.secondary-button {
+  background-color: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+  border-color: var(--vscode-button-border, var(--vscode-panel-border));
+}
+
+.secondary-button:hover {
+  background-color: var(--vscode-button-secondaryHoverBackground);
+}
+
+.secondary-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.delete-button {
+  background: none;
+  border: none;
+  color: var(--vscode-descriptionForeground);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+}
+
+.delete-button:hover {
+  background-color: var(--vscode-errorBackground);
+  color: var(--vscode-errorForeground);
+}
+
+.copy-button {
+  background: none;
+  border: none;
+  color: var(--vscode-descriptionForeground);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px 6px;
+  margin-right: 4px;
+  border-radius: 3px;
+  transition: background-color 0.2s ease;
+}
+
+.copy-button:hover {
+  background-color: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+}
+
+.go-button {
+  background: none;
+  border: none;
+  color: var(--vscode-descriptionForeground);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px 6px;
+  margin-right: 4px;
+  border-radius: 3px;
+}
+
+.go-button:hover {
+  background-color: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+}
+
+.icon-button {
+  padding: 6px 8px;
+  border: 1px solid var(--vscode-button-border, var(--vscode-panel-border));
+  border-radius: 3px;
+  font-size: 16px;
+  cursor: pointer;
+  background-color: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+  transition: background-color 0.2s ease;
+  min-width: 32px;
+  text-align: center;
+}
+
+.icon-button:hover {
+  background-color: var(--vscode-button-secondaryHoverBackground);
+}
+
+.icon-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.refresh-button {
+  background-color: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+  border: 1px solid var(--vscode-button-border, var(--vscode-panel-border));
+  border-radius: 3px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.refresh-button:hover {
+  background-color: var(--vscode-button-secondaryHoverBackground);
+}
+
+/* Worker buttons */
+.worker-button {
+  padding: 4px 8px;
+  border: 1px solid var(--vscode-button-border, var(--vscode-panel-border));
+  border-radius: 3px;
+  font-size: 12px;
+  cursor: pointer;
+  background-color: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+  transition: all 0.2s ease;
+  min-width: 60px;
+  text-align: center;
+}
+
+.worker-button:hover {
+  background-color: var(--vscode-button-secondaryHoverBackground);
+}
+
+.worker-button.active {
+  background-color: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  border-color: var(--vscode-button-background);
+}
+
+.worker-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.worker-button.busy {
+  position: relative;
+}
+
+/* Busy state for main buttons */
+.primary-button.busy,
+.secondary-button.busy {
+  position: relative;
+  pointer-events: none;
+  opacity: 0.7;
+}

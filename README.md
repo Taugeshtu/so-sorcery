@@ -83,7 +83,6 @@ Bugs:
     - this won't be a big deal once the "work for agent" system (`@`) is implemented; then "run" kind of loses its meaning? Either you @ someone, or you don't; then it's just work dispatch...
 
 Refactoring:
-- [ ] split up the css, it's getting ridiculous!
 
 Big && / || faraway items:
 - [ ] Settings: custom additional ignore
@@ -119,6 +118,7 @@ Maybes:
 - [ ] parsing "@" in user inputs, and converting items into work if this is the case
 - [ ] "Go" button for work items actually working
 - [ ] Work items showing their status with color??..
+- [x] split up the css, it's getting ridiculous!
 - [x] A way to hide a tool/psyche from context!!
 - [x] PA should still auto-run even if there's no work for it, methinks.. Just streamlines everything
 - [x] I think "autorun" needs to be more complex - no automatic running, auto-triggered when "run" is happening, or full-auto

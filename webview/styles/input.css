@@ -1,0 +1,59 @@
+/* Input section and user input area */
+#inputSection {
+  border-top: 1px solid var(--vscode-panel-border);
+  background-color: var(--vscode-editor-background);
+  flex-shrink: 0;
+}
+
+#buttonContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px 8px 16px;
+  border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+#leftButtons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+#rightButtons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+#workerButtons {
+  display: flex;
+  gap: 4px;
+}
+
+#textareaContainer {
+  position: relative;
+}
+
+#userInput {
+  width: 100%; /* Add this to make it full width */
+  box-sizing: border-box; /* Add this to include padding in width calculation */
+  border: none;
+  outline: none;
+  background-color: transparent;
+  color: var(--vscode-editor-foreground);
+  font-family: var(--vscode-editor-font-family, 'Courier New', monospace);
+  font-size: var(--vscode-editor-font-size, 13px);
+  line-height: 1.4;
+  padding: 8px 12px;
+  resize: none;
+  height: 120px;
+  overflow-y: auto;
+}
+
+#userInput:focus {
+  background-color: var(--vscode-editor-background);
+}
+
+#userInput::placeholder {
+  color: var(--vscode-input-placeholderForeground);
+}

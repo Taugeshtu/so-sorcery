@@ -1,0 +1,49 @@
+/* Base layout and typography */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--vscode-font-family);
+  height: 100vh;
+  overflow: hidden;
+}
+
+#container {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+}
+
+#main {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#knowledgesList {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  position: relative; /* For arrow positioning */
+}
+
+#resizer {
+  width: 4px;
+  background-color: var(--vscode-panel-border);
+  cursor: col-resize;
+  flex-shrink: 0;
+  transition: background-color 0.2s ease;
+}
+
+#resizer:hover {
+  background-color: var(--vscode-focusBorder);
+}
+
+.empty-state {
+  color: var(--vscode-descriptionForeground);
+  font-style: italic;
+  padding: 20px;
+  text-align: center;
+  font-size: 14px;
+}

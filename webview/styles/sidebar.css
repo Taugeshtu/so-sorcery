@@ -1,0 +1,115 @@
+/* Sidebar and file browser styles */
+#sidebar {
+  width: 300px;
+  min-width: 200px;
+  max-width: 600px;
+  background-color: var(--vscode-sideBar-background);
+  border-left: 1px solid var(--vscode-panel-border);
+  padding: 16px;
+  overflow-y: auto;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.included-files-section {
+  margin-bottom: 20px;
+}
+
+.included-files-section h3 {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--vscode-foreground);
+}
+
+#includedFilesList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.included-file-item {
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 3px;
+  margin-bottom: 2px;
+  background-color: var(--vscode-badge-background);
+  color: var(--vscode-badge-foreground);
+  font-size: 12px;
+}
+
+.included-file-item:hover {
+  background-color: var(--vscode-list-hoverBackground);
+  color: var(--vscode-foreground);
+}
+
+.search-section {
+  margin-bottom: 20px;
+}
+
+#fileSearchInput {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--vscode-input-border);
+  background-color: var(--vscode-input-background);
+  color: var(--vscode-input-foreground);
+  border-radius: 3px;
+  font-size: 13px;
+}
+
+#fileSearchInput:focus {
+  outline: none;
+  border-color: var(--vscode-inputOption-activeBorder);
+}
+
+.available-files-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.available-files-section h3 {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--vscode-foreground);
+}
+
+.available-files-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.available-files-header h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--vscode-foreground);
+}
+
+#availableFilesTree {
+  flex: 1;
+  overflow-y: auto;
+  font-size: 13px;
+}
+
+.file-item, .folder-item {
+  padding: 2px 4px;
+  cursor: pointer;
+  border-radius: 2px;
+  line-height: 1.4;
+}
+
+.file-item:hover {
+  background-color: var(--vscode-list-hoverBackground);
+}
+
+.folder-item.folder {
+  color: var(--vscode-directory-foreground, var(--vscode-foreground));
+  cursor: default;
+}

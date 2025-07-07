@@ -1,0 +1,66 @@
+/* Animations and transitions */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--vscode-descriptionForeground);
+  border-radius: 50%;
+  border-top-color: var(--vscode-button-background);
+  animation: spin 1s ease-in-out infinite;
+  margin-left: 4px;
+}
+
+.worker-button.busy::after {
+  content: '';
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: spin 1s linear infinite;
+}
+
+.primary-button.busy::after,
+.secondary-button.busy::after {
+  content: '';
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 12px;
+  height: 12px;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: spin 1s linear infinite;
+}
+
+/* Transition effects */
+#resizer {
+  transition: background-color 0.2s ease;
+}
+
+.primary-button, .secondary-button {
+  transition: background-color 0.2s ease;
+}
+
+.worker-button {
+  transition: all 0.2s ease;
+}
+
+.copy-button {
+  transition: background-color 0.2s ease;
+}
+
+.reference-arrow:hover {
+  transform: scale(1.1);
+}

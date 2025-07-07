@@ -1,0 +1,193 @@
+/* Knowledge and work item cards */
+.knowledge-card {
+  border: 1px solid var(--vscode-panel-border);
+  margin-bottom: 16px;
+  font-family: var(--vscode-editor-font-family, 'Courier New', monospace);
+  position: relative;
+  z-index: 2; /* Above arrows */
+}
+
+.user-knowledge {
+  margin-right: 50px; /* Push left by reducing right margin */
+}
+
+.agent-knowledge {
+  margin-left: 50px; /* Push right */
+}
+
+.knowledge-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: var(--vscode-editor-background);
+  border-bottom: 1px solid var(--vscode-panel-border);
+  cursor: pointer;
+  user-select: none;
+}
+
+.knowledge-header:hover {
+  background-color: var(--vscode-list-hoverBackground);
+}
+
+.knowledge-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.collapse-indicator {
+  font-size: 12px;
+  color: var(--vscode-foreground);
+  width: 12px;
+  text-align: center;
+}
+
+.knowledge-name {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--vscode-foreground);
+}
+
+.knowledge-source {
+  font-size: 11px;
+  color: var(--vscode-descriptionForeground);
+  font-weight: normal;
+}
+
+.knowledge-header-right {
+  display: flex;
+  align-items: center;
+}
+
+.knowledge-content {
+  padding: 12px;
+  background-color: var(--vscode-editor-background);
+  font-size: var(--vscode-editor-font-size, 13px);
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  color: var(--vscode-editor-foreground);
+  position: relative;
+}
+
+.knowledge-card.collapsed .knowledge-content {
+  max-height: calc(1.4em * 8); /* 8 lines */
+  overflow: hidden;
+}
+
+.knowledge-card.collapsed .knowledge-content::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2em;
+  background: linear-gradient(transparent, var(--vscode-editor-background));
+  pointer-events: none;
+  z-index: 1;
+}
+
+.knowledge-spacer {
+  height: 8px;
+}
+
+/* Work item cards */
+.work-item-card {
+  border: 1px solid var(--vscode-panel-border);
+  margin: 16px auto; /* Center with auto margins */
+  width: 70%; /* 70% width as requested */
+  font-family: var(--vscode-editor-font-family, 'Courier New', monospace);
+  position: relative;
+  z-index: 2;
+  background-color: var(--vscode-editor-background);
+}
+
+.work-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: var(--vscode-badge-background);
+  border-bottom: 1px solid var(--vscode-panel-border);
+  cursor: default;
+  user-select: none;
+}
+
+.work-item-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.work-item-name {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--vscode-badge-foreground);
+}
+
+.work-item-type {
+  font-size: 11px;
+  color: var(--vscode-descriptionForeground);
+  font-weight: normal;
+  background-color: var(--vscode-button-secondaryBackground);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.work-item-header-right {
+  display: flex;
+  align-items: center;
+}
+
+.work-item-content {
+  padding: 12px;
+  background-color: var(--vscode-editor-background);
+  font-size: var(--vscode-editor-font-size, 13px);
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  color: var(--vscode-editor-foreground);
+  border-left: 3px solid var(--vscode-charts-orange);
+}
+
+.user_task-work .work-item-content {
+  border-left: 3px solid var(--vscode-charts-blue);
+}
+
+.agent_task-work .work-item-content {
+  border-left: 3px solid var(--vscode-charts-orange);
+}
+
+.file_read-work .work-item-content {
+  border-left: 3px solid var(--vscode-charts-green);
+}
+
+.file_write-work .work-item-content {
+  border-left: 3px solid var(--vscode-charts-red);
+}
+
+/* Reference arrows */
+.arrow-container {
+  position: relative;
+  height: 20px;
+  z-index: 1; /* Under cards */
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding-right: 50px;
+  margin-bottom: 8px;
+}
+
+.reference-arrow {
+  font-size: 18px;
+  color: var(--vscode-charts-blue);
+  margin-left: 8px;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.reference-arrow:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
