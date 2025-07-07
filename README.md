@@ -111,9 +111,9 @@ Maybes:
 ## Release Notes
 
 ### 0.10.x
-- [ ] parsing "@" in user inputs, and converting items into work if this is the case
 - [ ] "Go" button for work items actually working
 - [ ] Work items showing their status with color??..
+- [x] parsing "@" in user inputs, and converting items into work if this is the case
 - [x] awaiting workspace & psyches initialization is sequential - should be parallel
 - [x] psyches loading is awaiting sequentially - bad
 - [x] recent output seems to have broken xD

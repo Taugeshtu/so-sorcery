@@ -166,8 +166,90 @@ export class SessionController {
     return this.emitKnowledge('file', filePath, '');
   }
   
+  private parseAtMention(content: string): { isWorkItem: boolean; executor?: string; workContent?: string } {
+    // Check if content starts with @
+    if (!content.startsWith('@')) {
+      return { isWorkItem: false };
+    }
+    
+    // Extract the mention part (everything up to first space or end of string)
+    const mentionMatch = content.match(/^@(\S+)(?:\s+(.*))?$/s);
+    if (!mentionMatch) {
+      return { isWorkItem: false };
+    }
+    
+    const mentionTarget = mentionMatch[1];
+    const workContent = mentionMatch[2] || '';
+    
+    // Check against executor names (exact match)
+    if (this.executors.has(mentionTarget)) {
+      return {
+        isWorkItem: true,
+        executor: mentionTarget,
+        workContent: workContent
+      };
+    }
+    
+    // Check against psyche display names
+    for (const psyche of psycheRegistry.getPsychesInfo()) {
+      if (psyche.displayName === mentionTarget) {
+        return {
+          isWorkItem: true,
+          executor: psyche.name,
+          workContent: workContent
+        };
+      }
+    }
+    
+    // Check against tool display names
+    for (const tool of this.tools.values()) {
+      if (tool.descriptor.displayName === mentionTarget) {
+        return {
+          isWorkItem: true,
+          executor: tool.descriptor.name,
+          workContent: workContent
+        };
+      }
+    }
+    
+    return { isWorkItem: false };
+  }
+  
+  // Modify the existing addItem method
   public addItem(item: ContextItem): ContextItem {
-    // Assign ID and add to context
+    // Check for @ mentions in user knowledge items
+    if (item.type === 'knowledge' && item.sourceType === 'user') {
+      const parseResult = this.parseAtMention(item.content);
+      
+      if (parseResult.isWorkItem && parseResult.executor) {
+        // Convert to work item
+        const workItem: WorkItem = {
+          id: -1, // Will be assigned below
+          type: 'work',
+          sourceType: 'user',
+          sourceName: 'user',
+          content: parseResult.workContent || '',
+          executor: parseResult.executor,
+          status: 'cold',
+          metadata: {
+            timestamp: Date.now(),
+            collapsed: false
+          }
+        };
+        
+        // Assign ID and add to context
+        workItem.id = this.context.nextId++;
+        this.context.items.push(workItem);
+        
+        // Schedule auto-execution
+        this.tryScheduleAutoExecution(workItem);
+        
+        this.saveToDocument();
+        return workItem;
+      }
+    }
+    
+    // Original addItem logic for non-@ mentions
     item.id = this.context.nextId++;
     this.context.items.push(item);
     
