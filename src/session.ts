@@ -368,7 +368,7 @@ export class SessionController {
   
   public async executeWorkItem(workItemId: number): Promise<boolean> {
     const workItem = this.context.items.find(item => item.type === 'work' && item.id === workItemId) as WorkItem;
-    if (!workItem || workItem.status !== 'cold') {
+    if (!workItem || workItem.status === 'running' || workItem.status === 'done') {
       return false;
     }
     
