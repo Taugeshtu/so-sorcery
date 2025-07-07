@@ -76,11 +76,12 @@ export class PsycheWorker extends Worker {
     const model = Models[psyche.model];
     if (!model) throw new Error(`Model ${psyche.model} for ${psyche.name} not found`);
     
-    // Track busy state
+    // Track busy state for THIS psyche execution only
     this.executionCount++;
     this.isBusy = (this.executionCount > 0);
     this.session.notifyStateChanged();
     
+    let llmResponse: BackendResponse;
     try {
       const system = systemContext ? `${systemContext}\n\n${psyche.system}` : psyche.system;
       
@@ -101,7 +102,8 @@ export class PsycheWorker extends Worker {
       );
       const bakedContext = bakeContext(gatheredContext);
       
-      const llmResponse = await model.backend.run(
+      // Core LLM execution - this is what we're primarily guarding
+      llmResponse = await model.backend.run(
         model,
         psyche.maxTokens,
         system,
@@ -110,46 +112,49 @@ export class PsycheWorker extends Worker {
         psyche.terminators
       );
       
-      // Update session state
+      // Update session state - also needs guarding for consistency
       this.session.addCost(llmResponse.cost);
       workspaceController.addCost(llmResponse.cost);
       
-      // Check for daisy-chaining
-      if (psyche.post) {
-        if (chaining && chaining.currentDepth === 0) {
-          console.warn(`Wanting to chain further '${psyche.name}' -> '${psyche.post.psyche}', but out of depth!`);
-          return llmResponse;
-        }
-        
-        // Get the next psyche worker and call it
-        const nextPsycheWorker = this.session.getPsycheWorker(psyche.post.psyche);
-        if (!nextPsycheWorker) {
-          throw new Error(`Next psyche ${psyche.post.psyche} not found for chaining`);
-        }
-        
-        const nextStepDepthBudget = chaining
-          ? chaining.currentDepth - 1
-          : psyche.post.chaining_depth;
-        const nextChain = {
-          parentOutput: llmResponse.content.trim(),
-          currentDepth: nextStepDepthBudget
-        };
-        
-        return await nextPsycheWorker.runPsyche(
-          psyche.post.psyche,
-          systemContext,
-          currentWorkItem,
-          nextChain
-        );
-      }
-      
-      return llmResponse;
-      
     } finally {
+      // Clear busy state immediately after THIS psyche completes its core work
       this.executionCount--;
       this.isBusy = (this.executionCount > 0);
       this.session.notifyStateChanged();
     }
+    
+    // Post-processing and chaining happens outside execution tracking
+    // Each chained psyche will manage its own busy state independently
+    if (psyche.post && llmResponse) {
+      if (chaining && chaining.currentDepth === 0) {
+        console.warn(`Wanting to chain further '${psyche.name}' -> '${psyche.post.psyche}', but out of depth!`);
+        return llmResponse;
+      }
+      
+      // Get the next psyche worker and call it
+      const nextPsycheWorker = this.session.getPsycheWorker(psyche.post.psyche);
+      if (!nextPsycheWorker) {
+        throw new Error(`Next psyche ${psyche.post.psyche} not found for chaining`);
+      }
+      
+      const nextStepDepthBudget = chaining
+        ? chaining.currentDepth - 1
+        : psyche.post.chaining_depth;
+      const nextChain = {
+        parentOutput: llmResponse.content.trim(),
+        currentDepth: nextStepDepthBudget
+      };
+      
+      // This call will manage its own busy state
+      return await nextPsycheWorker.runPsyche(
+        psyche.post.psyche,
+        systemContext,
+        currentWorkItem,
+        nextChain
+      );
+    }
+    
+    return llmResponse;
   }
 }
 
