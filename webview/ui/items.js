@@ -10,7 +10,10 @@ export class ItemsManager {
         // All interactions are handled through dynamically created elements
     }
     
-    updateItemsList(items) {
+    updateItemsList(items, psycheStates = []) {
+        // Store psycheStates for use in categorizeExecutor
+        this.psycheStates = psycheStates;
+        
         const knowledgesList = document.getElementById('knowledgesList');
         if (!knowledgesList) return;
         
@@ -255,12 +258,9 @@ export class ItemsManager {
             return 'user';
         }
         
-        // Check if executor matches any known psyche/agent
-        // Access psyches through stateManager if available
-        if (stateManager && stateManager.currentContext) {
-            // This assumes psyches are available in state - may need adjustment
-            // based on how psyches are stored in the frontend
-            const knownAgents = ['project_assistant', 'extractor']; // Add more as needed
+        // Check if executor matches any known psyche from the dynamic list
+        if (this.psycheStates && Array.isArray(this.psycheStates)) {
+            const knownAgents = this.psycheStates.map(([name, displayName, isExecuting]) => name);
             if (knownAgents.includes(executor)) {
                 return 'agent';
             }

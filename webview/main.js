@@ -63,14 +63,13 @@ class SorceryWebview {
         // Update state manager
         this.stateManager.updateContext(context);
         
-        // Update items display
-        this.itemsManager.updateItemsList(context.items);
+        // Update items display with psyche states
+        this.itemsManager.updateItemsList(context.items, psycheStates);
         
         // Update file lists, because we might've touched file knowledge
         this.fileManager.updateFileLists();
         
         // Update worker buttons and outputs
-        // TODO: ideally we want psyche's display names here...
         this.workerManager.updateWorkerButtons(context.workerOutputs || {}, psycheStates);
     }
     

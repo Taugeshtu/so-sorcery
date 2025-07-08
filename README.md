@@ -80,7 +80,6 @@ Function:
 
 Bugs:
 - [ ] Do we have a problem when PA still runs when there's work for other agents and we "Run"?
-- [ ] Work for Patcher for some reason has a gray header
 - [ ] the way "run" button blocks between "run" and "+ & Run" is somehow different
 - [ ] work CAN get stuck in "running" state, and there's no way to recover from that. One maybe-fix would be to drop work down to "cold" when we're opening a file?
 - [ ] When "+ & Run", the input field didn't clear :D uhhh.. something to do with undo I'm sure
@@ -116,6 +115,7 @@ Maybes:
 ## Release Notes
 
 ### 0.15.x
+- [x] Work for Patcher for some reason has a gray header
 - [x] Folders on top in files tree
 - [x] Undo/Redo (VS Code's built-in document undo should work?)
 - [x] "Sidebar" psyche - Opus that only knows its own work, for one-offs
