@@ -208,7 +208,7 @@ export function buildItemsContext(
       // Skip if only knowledge items are requested
       if (awareness.knowledge && !awareness.work) continue;
       
-      const workItem = item as WorkItem;
+      let workItem = item as WorkItem;
       
       // Apply work filtering
       if (awareness.work) {
@@ -216,6 +216,7 @@ export function buildItemsContext(
           case 'current':
             // Only include the current work item being executed
             if (!currentWorkItem || workItem.id !== currentWorkItem.id) continue;
+            workItem = currentWorkItem; // substitute for the most recent/specially massaged work
             break;
           case 'mine':
             // Only include work items for the current executor
