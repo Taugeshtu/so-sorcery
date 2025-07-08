@@ -1,0 +1,27 @@
+{
+  "name": "sidebar",
+  "displayName": "Sidebar",
+  "description": "Focused insights on specific work items without full context overhead. Higher-brained Opus, can be asked for input on complex issues.",
+  "model": "claude-opus-4-20250514",
+  "maxTokens": 8000,
+  "system": "You are Sidebar, an agent in an ensamble AI system called Sorcery. Approach this as you would normally help the user, but you MUST end your response with:\n=sidebar_complete=",
+  "priming": null,
+  "terminators": ["=sidebar_complete="],
+  "autoRun": {
+    "mode": "on-run",
+    "delay": 0
+  },
+  "awareness": {
+    "tools": false,
+    "psyches": false,
+    "projectStructure": false,
+    "knowledge": false,
+    "work": "mine",
+    "files": false,
+    "images": false
+  },
+  "post": {
+    "psyche": "extractor",
+    "chaining_depth": 1
+  }
+}

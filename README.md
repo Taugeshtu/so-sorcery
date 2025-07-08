@@ -77,7 +77,6 @@ Function:
 - [ ] Undo/Redo (VS Code's built-in document undo should work?)
 - [ ] Parsing & making jumpable `[[wikilinks]]`, obsidian-style, for IDs and files
 - [ ] Better tool ecosystem (interpreter, tree, maybe bash/cmd?)
-- [ ] "Vanilla" Opus and maybe CG psyches?
 
 Bugs:
 - [ ] the way "run" button blocks between "run" and "+ & Run" is somehow different
@@ -98,6 +97,7 @@ Big && / || faraway items:
 - [ ] Make completed work auto-disappears? (at least for Tool ops?) (I do like being able to see what's going on... provide an event log?) Maybe it becomes omitted?
 
 Maybes:
+- [ ] "Vanilla" Opus and maybe CG psyches?
 - [~] File read tool (done, untested, don't really see a massive need since multiread is working already?)
 - [ ] Folders on top in files tree
 - [ ] A way to navigate focus from files search to results
@@ -115,6 +115,7 @@ Maybes:
 ## Release Notes
 
 ### 0.15.x
+- [x] "Sidebar" psyche - Opus that only knows its own work, for one-offs
 - [x] When running patcher, not cool that the whole content gets chucked into the work item :D
 - [x] Maybe forking should drop the "spent-on-session" counter?.. Since that spend was already accounted for in the parent session...
 - [x] Settings: custom additional ignore
