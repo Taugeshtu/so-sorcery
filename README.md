@@ -77,6 +77,7 @@ Function:
 - [ ] Undo/Redo (VS Code's built-in document undo should work?)
 - [ ] Parsing & making jumpable `[[wikilinks]]`, obsidian-style, for IDs and files
 - [ ] Better tool ecosystem (interpreter, tree, maybe bash/cmd?)
+- [ ] "Vanilla" Opus and maybe CG psyches?
 
 Bugs:
 - [ ] the way "run" button blocks between "run" and "+ & Run" is somehow different
@@ -114,7 +115,7 @@ Maybes:
 ## Release Notes
 
 ### 0.15.x
-- [ ] Maybe forking should drop the "spent-on-session" counter?.. Since that spend was already accounted for in the parent session...
+- [x] Maybe forking should drop the "spent-on-session" counter?.. Since that spend was already accounted for in the parent session...
 - [x] Settings: custom additional ignore
 
 

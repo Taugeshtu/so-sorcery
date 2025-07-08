@@ -104,8 +104,13 @@ export async function activate(context: vscode.ExtensionContext) {
       
       // Read current session content and clone it
       const currentContent = await vscode.workspace.fs.readFile(currentUri);
+      const sessionData = JSON.parse(currentContent.toString());
+
+      // Reset the accumulated cost for the fork
+      sessionData.accumulatedCost = 0;
+
       const forkUri = vscode.Uri.joinPath(parentDir, forkName + '.sorcery');
-      await vscode.workspace.fs.writeFile(forkUri, currentContent);
+      await vscode.workspace.fs.writeFile(forkUri, Buffer.from(JSON.stringify(sessionData, null, 2), 'utf8'));
       
       // Open the forked session
       await vscode.commands.executeCommand(
