@@ -39,6 +39,7 @@ export interface SessionContext {
   nextId: number;
   workerOutputs: { [workerKey: string]: string }; // Store latest raw output per worker
   accumulatedCost: number;
+  inputDraft?: string;
 }
 
 let availableFiles: string[] = [];

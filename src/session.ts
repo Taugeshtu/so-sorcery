@@ -79,7 +79,8 @@ export class SessionController {
       items: [],
       nextId: typeof parsed.nextId === 'number' ? parsed.nextId : 1,
       accumulatedCost: typeof parsed.accumulatedCost === 'number' ? parsed.accumulatedCost : 0,
-      workerOutputs: parsed.workerOutputs || {} 
+      workerOutputs: parsed.workerOutputs || {},
+      inputDraft: parsed.inputDraft || ''
     };
 
     // Handle legacy format with separate knowledges/workItems arrays
@@ -306,6 +307,11 @@ export class SessionController {
       return true;
     }
     return false;
+  }
+  
+  updateInputDraft(draft: string) {
+    this.context.inputDraft = draft;
+    this.saveToDocument();
   }
   
   // ========================= WORK =========================

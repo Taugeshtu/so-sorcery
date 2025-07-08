@@ -121,6 +121,30 @@ export async function activate(context: vscode.ExtensionContext) {
     })
   );
   
+  // Override undo command
+  context.subscriptions.push(
+    vscode.commands.registerCommand('undo', async () => {
+      const focusedPanel = sorceryEditorProvider.getCurrentlyFocusedPanel();
+      if (focusedPanel && focusedPanel.active) {
+        focusedPanel.webview.postMessage({ command: 'executeUndo' });
+        return;
+      }
+      return vscode.commands.executeCommand('default:undo');
+    })
+  );
+  
+  // Override redo command
+  context.subscriptions.push(
+    vscode.commands.registerCommand('redo', async () => {
+      const focusedPanel = sorceryEditorProvider.getCurrentlyFocusedPanel();
+      if (focusedPanel && focusedPanel.active) {
+        focusedPanel.webview.postMessage({ command: 'executeRedo' });
+        return;
+      }
+      return vscode.commands.executeCommand('default:redo');
+    })
+  );
+  
   context.subscriptions.push(
     vscode.window.registerCustomEditorProvider(
       SorceryEditorProvider.viewType,

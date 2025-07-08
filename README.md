@@ -72,15 +72,16 @@ Therefore, Sorcery is:
 
 Polish:
 - [ ] Docs/readme of some kind, or a tutorial
+- [ ] Some kind of persisting ordering for psyche buttons :D
 
 Function:
-- [ ] Undo/Redo (VS Code's built-in document undo should work?)
 - [ ] Parsing & making jumpable `[[wikilinks]]`, obsidian-style, for IDs and files
 - [ ] Better tool ecosystem (interpreter, tree, maybe bash/cmd?)
 
 Bugs:
+- [ ] Do we have a problem when PA still runs when there's work for other agents and we "Run"?
+- [ ] Work for Patcher for some reason has a gray header
 - [ ] the way "run" button blocks between "run" and "+ & Run" is somehow different
-    - this won't be a big deal once the "work for agent" system (`@`) is implemented; then "run" kind of loses its meaning? Either you @ someone, or you don't; then it's just work dispatch...
 - [ ] work CAN get stuck in "running" state, and there's no way to recover from that. One maybe-fix would be to drop work down to "cold" when we're opening a file?
 
 Refactoring:
@@ -115,6 +116,7 @@ Maybes:
 ## Release Notes
 
 ### 0.15.x
+- [x] Undo/Redo (VS Code's built-in document undo should work?)
 - [x] "Sidebar" psyche - Opus that only knows its own work, for one-offs
 - [x] When running patcher, not cool that the whole content gets chucked into the work item :D
 - [x] Maybe forking should drop the "spent-on-session" counter?.. Since that spend was already accounted for in the parent session...

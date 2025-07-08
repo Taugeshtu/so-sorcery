@@ -160,6 +160,12 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
           vscode.window.showErrorMessage(`Work item execution failed: ${error}`);
         }
         break;
+      
+      case 'updateDraft':
+        if (sessionController) {
+          sessionController.updateInputDraft(message.draft);
+        }
+        break;
     }
   }
   

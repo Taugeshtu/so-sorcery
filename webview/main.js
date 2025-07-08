@@ -6,6 +6,7 @@ import { FileManager } from './ui/files.js';
 import { ItemsManager } from './ui/items.js';
 import { SearchManager } from './ui/search.js';
 import { WorkerManager } from './ui/workers.js';
+import { InputManager } from './ui/input-manager.js';
 
 class SorceryWebview {
     constructor() {
@@ -20,6 +21,7 @@ class SorceryWebview {
         this.itemsManager = new ItemsManager(this.messageHandler, this.stateManager);
         this.workerManager = new WorkerManager(this.messageHandler, this.stateManager);
         this.searchManager = new SearchManager(this.fileManager);
+        this.inputManager = new InputManager(this.messageHandler, this.stateManager);
         
         this.init();
     }
@@ -32,14 +34,23 @@ class SorceryWebview {
     setupMessageHandlers() {
         this.messageHandler.on('updateState', (message) => {
             this.handleStateUpdate(message.context, message.psycheStates);
+            this.inputManager.loadDraftFromContext(message.context);
         });
         
         this.messageHandler.on('updateFiles', (message) => {
             this.handleFilesUpdate(message.availableFiles);
         });
-
+        
         this.messageHandler.on('setAgentRunning', (message) => {
             this.buttonManager.setAgentRunning(message.running);
+        });
+        
+        this.messageHandler.on('executeUndo', () => {
+            this.inputManager.undo();
+        });
+        
+        this.messageHandler.on('executeRedo', () => {
+            this.inputManager.redo();
         });
     }
 
