@@ -1,7 +1,7 @@
 {
   "name": "patcher",
   "displayName": "Patcher",
-  "description": "Integrates snippets, patches, whole updates into existing files. Expects work to be presented as filepath on the first line, followed by the blocks of changes to make. Snippets can be supplemented by small extra context helping locate the place of change. ONLY ONE WORK ITEM PER FILE, but can contain multiple blocks to change.",
+  "description": "Integrates snippets, patches, whole updates into existing files. Expects work to be presented as filepath on the first line, followed by the blocks of changes to make. Snippets can be supplemented by small extra context helping locate the place of change. ONLY ONE WORK ITEM PER FILE, but can contain multiple blocks to change. CANNOT generate new content, content for integration MUST be provided. CAN create new files if supplied with a path to a new file and content.",
   "model": "claude-sonnet-4-20250514",
   "maxTokens": 20000,
   "system": null,

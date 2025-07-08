@@ -1,3 +1,5 @@
+import { ImageContent } from './llm/types';
+
 export interface ContextItemMetadata {
   timestamp: number;
   collapsed: boolean;
@@ -56,6 +58,7 @@ export interface ContextAwareness {
   parentOutput?: boolean;
   projectStructure?: boolean;
   files?: boolean;
+  images?: boolean;
 }
 
 export interface GatheredContext {
@@ -65,6 +68,7 @@ export interface GatheredContext {
   parentOutput?: string;
   projectStructure?: string;
   files?: string;
+  images?: ImageContent[];
 }
 
 export type AutoRunMode = 'never' | 'on-run' | 'always';

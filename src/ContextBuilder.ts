@@ -6,6 +6,7 @@ import { Knowledge, WorkItem, SessionContext } from './types';
 import { getAvailableFiles, ContextAwareness, GatheredContext as GatheredContext } from './types';
 import { toolRegistry } from './tools/ToolRegistry';
 import { psycheRegistry } from './PsycheRegistry';
+import { ImageContent, Messages, MessageSide } from './llm/types';
 
 export async function gatherContext(
   awareness: ContextAwareness,
@@ -19,11 +20,30 @@ export async function gatherContext(
   if (awareness.psyches) assembled.psyches = buildPsychesContext(awareness.psyches);
   if (awareness.projectStructure) assembled.projectStructure = buildProjectStructureContext();
   if (awareness.files) assembled.files = await buildFilesContext(context);
+  if (awareness.images) assembled.images = await buildImagesContext(context);
   if (awareness.knowledge || awareness.work) {
     assembled.items = buildItemsContext(awareness, context, executorName, currentWorkItem);
   }
   if (awareness.parentOutput && parentOutput) assembled.parentOutput = `<previous_agent_output>\n${parentOutput}\n</previous_agent_output>`;
   return assembled;
+}
+
+export function buildMessages(context: GatheredContext): Messages {
+  const textParts: string[] = [];
+  if (context.tools) textParts.push(context.tools);
+  if (context.psyches) textParts.push(context.psyches);
+  if (context.projectStructure) textParts.push(context.projectStructure);
+  if (context.files) textParts.push(context.files);
+  if (context.items) textParts.push(context.items);
+  if (context.parentOutput) textParts.push(context.parentOutput);
+  
+  const message = {
+    side: MessageSide.User,
+    content: textParts.join('\n\n'),
+    images: context.images // Attach images to the message
+  };
+  
+  return [message];
 }
 
 export function bakeContext(context: GatheredContext): string {
@@ -98,12 +118,19 @@ export function buildProjectStructureContext(): string {
   return `Project Files index:\n${availableFiles.join('\n')}`;
 }
 
+// Common image extensions
+const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.svg'];
+
 export async function buildFilesContext(context: SessionContext): Promise<string> {
   const parts: string[] = [];
   
   for (const item of context.items) {
     if(item.type !== 'knowledge') continue;
     if(item.sourceType !== 'file') continue;
+    
+    const fileExtension = path.extname(item.sourceName).toLowerCase();
+    const isImageFile = imageExtensions.includes(fileExtension);
+    if( isImageFile ) continue;
     
     let content = item.content;
     try {
@@ -119,6 +146,37 @@ export async function buildFilesContext(context: SessionContext): Promise<string
     parts.push(`<file>[${item.id}] at: ${item.sourceName}\n${content}\n</file>`);
   }
   return parts.join('\n\n');
+}
+
+export async function buildImagesContext(context: SessionContext): Promise<ImageContent[]> {
+  const images: ImageContent[] = [];
+  
+  for (const item of context.items) {
+    if(item.type !== 'knowledge') continue;
+    if(item.sourceType !== 'file') continue;
+    
+    const fileExtension = path.extname(item.sourceName).toLowerCase();
+    const isImageFile = imageExtensions.includes(fileExtension);
+    if (!isImageFile) continue;
+    
+    try {
+      const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+      if (workspaceRoot) {
+        const fullPath = path.join(workspaceRoot, item.sourceName);
+        const imageBytes = await fs.readFile(fullPath);
+        const isPNG = fileExtension === '.png';
+        
+        images.push({
+          imageBytes: new Uint8Array(imageBytes),
+          isPNG
+        });
+      }
+    } catch (error) {
+      console.warn(`Failed to read image file ${item.sourceName}:`, error);
+    }
+  }
+  
+  return images;
 }
 
 export function buildItemsContext(

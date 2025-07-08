@@ -80,6 +80,8 @@ Bugs:
 - [ ] When running patcher, not cool that the whole content gets chucked into the work item :D
 - [ ] the way "run" button blocks between "run" and "+ & Run" is somehow different
     - this won't be a big deal once the "work for agent" system (`@`) is implemented; then "run" kind of loses its meaning? Either you @ someone, or you don't; then it's just work dispatch...
+- [ ] Guard against prompt being too long :D
+- [ ] Check against Claude/OAI docs for images, do we need to downsize ourselves or what?
 
 Refactoring:
 
@@ -93,7 +95,7 @@ Big && / || faraway items:
 - [ ] Docs/readme of some kind, or a tutorial
 - [~] user-informed extra context, on the level of working dir/user themselves (like preferences, maybe info that's general about project, etc... altho project stuff coooould be a file; and maybe the way to do that would be to "pin" it in the tree, so it auto-adds to every new session, but can be picked out? and maybe we also have a way to "memorize" a particular bit of knowledge...)
 - [ ] When files are added/removed, we need to be aware of this...
-- [ ] Images handling
+- [ ] Tool for partial replacement instead of full re-write
 - [ ] Add a button somewhere in the UI to fork a session?
 - [ ] Make completed work auto-disappears? (at least for Tool ops?) (I do like being able to see what's going on... provide an event log?) Maybe it becomes omitted?
 
@@ -111,6 +113,9 @@ Maybes:
 ---
 
 ## Release Notes
+
+### 0.15.0
+- [x] Images handling
 
 ### 0.14.13
 - [x] "Patcher" psyche

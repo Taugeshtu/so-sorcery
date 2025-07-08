@@ -7,7 +7,7 @@
     "url": "https://github.com/Taugeshtu/so-sorcery.git"
   },
   "homepage": "https://github.com/Taugeshtu/so-sorcery#readme",
-  "version": "0.14.13",
+  "version": "0.15.0",
   "engines": {
     "vscode": "^1.100.0"
   },
@@ -51,7 +51,15 @@
           "type": "array",
           "description": "White-list of file extensions",
           "items": { "type": "string" },
-          "default": [".cs", ".txt", ".md", ".shader", ".compute", ".hlsl", ".glsl", ".c", ".cpp", ".h", ".hpp", ".ts", ".js", ".css"]
+          "default": [
+            ".txt", ".md", ".csv",
+            ".py", ".js", ".ts", ".json",
+            ".c", ".cpp", ".h", ".hpp",
+            ".cs", ".java",
+            ".html", ".css", ".scss",
+            ".yml", ".yaml", ".xml",
+            ".jpg", ".jpeg", ".png"
+          ]
         },
         "sorcery.autoRunDelay": {
           "type": "number",

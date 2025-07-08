@@ -1,9 +1,9 @@
 import { Knowledge, WorkItem, WorkResult, ContextAwareness } from './types'
-import { WorkerDescriptor, PsycheDescriptor, ToolDescriptor } from './types'
+import { WorkerDescriptor, PsycheDescriptor } from './types'
 import { SessionController } from './session';
 import { psycheRegistry } from './PsycheRegistry';
 import { Models } from './llm/models';
-import { gatherContext, bakeContext } from './ContextBuilder';
+import { gatherContext, buildMessages } from './ContextBuilder';
 import { workspaceController } from './workspace';
 import { extract } from './Extractor';
 import { BackendResponse } from './llm/types';
@@ -100,15 +100,14 @@ export class PsycheWorker extends Worker {
         psyche.name,
         chaining?.parentOutput
       );
-      const bakedContext = bakeContext(gatheredContext);
+      const messages = buildMessages(gatheredContext);
       
-      // Core LLM execution - this is what we're primarily guarding
-      llmResponse = await model.backend.run(
+      // Use runWithMessages instead of run to support images
+      llmResponse = await model.backend.runWithMessages(
         model,
         psyche.maxTokens,
         system,
-        bakedContext,
-        psyche.priming,
+        messages,
         psyche.terminators
       );
       

@@ -17,7 +17,8 @@
     "projectStructure": true,
     "knowledge": true,
     "work": "all",
-    "files": true
+    "files": true,
+    "images": true
   },
   "post": {
     "psyche": "extractor",
