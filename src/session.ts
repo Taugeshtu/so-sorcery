@@ -425,8 +425,59 @@ ${context ? `**Context:** ${context}` : ''}
     });
   }
   
+  private async preparePatcherContext(workItem: WorkItem): Promise<string> {
+    // Parse the work item content to extract file path
+    // Expected format: first line is file path, rest is the patch instructions
+    const lines = workItem.content.trim().split('\n');
+    if (lines.length === 0) {
+      throw new Error('Empty patcher work item content');
+    }
+    
+    const filePath = lines[0].trim();
+    const patchInstructions = lines.slice(1).join('\n').trim();
+    
+    // Check if file exists in available files
+    const fileExists = getAvailableFiles().includes(filePath);
+    
+    if (fileExists) {
+      // Existing file - read current content
+      try {
+        const fs = require('fs');
+        const path = require('path');
+        const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+        if (!workspaceRoot) {
+          throw new Error('No workspace folder found');
+        }
+        
+        const fullPath = path.join(workspaceRoot, filePath);
+        const currentContent = fs.readFileSync(fullPath, 'utf8');
+        
+        // Format the enhanced work item content for Patcher
+        return `**Target File:** ${filePath}
+
+**Current Content:**
+\`\`\`
+${currentContent}
+\`\`\`
+
+**Requested Changes:**
+${patchInstructions || workItem.content}`;
+      
+      } catch (error) {
+        throw new Error(`Failed to read file ${filePath}: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    } else {
+      // New file - indicate no existing content
+      return `**Target File:** ${filePath}
+**File Status:** NEW FILE (does not exist yet)
+
+**Requested Content:**
+${patchInstructions || workItem.content}`;
+    }
+  }
+  
   public async executeWorkItem(workItemId: number): Promise<boolean> {
-    const workItem = this.context.items.find(item => item.type === 'work' && item.id === workItemId) as WorkItem;
+    let workItem = this.context.items.find(item => item.type === 'work' && item.id === workItemId) as WorkItem;
     if (!workItem || workItem.status === 'running' || workItem.status === 'done') {
       return false;
     }
@@ -445,6 +496,17 @@ ${context ? `**Context:** ${context}` : ''}
     try {
       workItem.status = 'running';
       this.saveToDocument();
+      
+      // Special handling for patcher - inject file content
+      if (workItem.executor === 'patcher') {
+        try {
+          const patcherWorkContent = await this.preparePatcherContext(workItem);
+          workItem.content = patcherWorkContent;
+        } catch (patcherError) {
+          const errorMessage = patcherError instanceof Error ? patcherError.message : String(patcherError);
+          this.handleExecutionError(workItem, errorMessage, 'Failed to prepare patcher context');
+        }
+      }
       
       const result = await executor.execute(workItem);
       if (result.knowledges) {

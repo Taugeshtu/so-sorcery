@@ -75,16 +75,16 @@ Polish:
 Function:
 - [ ] Undo/Redo (VS Code's built-in document undo should work?)
 - [~] File read tool (done, untested)
-- [~] File write tool (done, untested)
-- [ ] "Patcher" psyche
 
 Bugs:
+- [ ] When running patcher, not cool that the whole content gets chucked into the work item :D
 - [ ] the way "run" button blocks between "run" and "+ & Run" is somehow different
     - this won't be a big deal once the "work for agent" system (`@`) is implemented; then "run" kind of loses its meaning? Either you @ someone, or you don't; then it's just work dispatch...
 
 Refactoring:
 
 Big && / || faraway items:
+- [ ] Maybe forking should drop the "spent-on-session" counter?.. Since that spend was already accounted for in the parent session...
 - [ ] @ mentions having a pop-up with selection on the frontend?
 - [ ] Settings: custom additional ignore
 - [ ] Parsing & making jumpable `[[wikilinks]]`, obsidian-style, for IDs and files
@@ -106,12 +106,15 @@ Maybes:
 - [ ] Reference arrows (this is the big visual feature!)
 - [ ] building PA input with graph pull
 - [ ] ?? Remove collapse button if item is short enough to fit
+- [ ] Unify context awareness & "post" between tools and psyches, allowing tools to call psyches and the other way around
 
 ---
 
 ## Release Notes
 
-### 0.10.x
+### 0.14.13
+- [x] "Patcher" psyche
+- [x] File write tool
 - [x] "Go" button for work items actually working
 - [x] Work items showing their status with color??..
 - [x] parsing "@" in user inputs, and converting items into work if this is the case

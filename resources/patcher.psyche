@@ -1,0 +1,22 @@
+{
+  "name": "patcher",
+  "displayName": "Patcher",
+  "description": "Integrates snippets, patches, whole updates into existing files. Expects work to be presented as filepath on the first line, followed by the blocks of changes to make. Snippets can be supplemented by small extra context helping locate the place of change. ONLY ONE WORK ITEM PER FILE, but can contain multiple blocks to change.",
+  "model": "claude-sonnet-4-20250514",
+  "maxTokens": 20000,
+  "system": null,
+  "priming": null,
+  "terminators": ["=patching_complete="],
+  "autoRun": {
+    "mode": "never",
+    "delay": 0
+  },
+  "awareness": {
+    "tools": ["file_write"],
+    "psyches": false,
+    "projectStructure": true,
+    "knowledge": false,
+    "work": "current",
+    "files": false
+  }
+}

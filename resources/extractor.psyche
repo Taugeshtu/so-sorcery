@@ -8,8 +8,8 @@
   "priming": null,
   "terminators": ["=extraction_complete="],
   "awareness": {
-    "tools": true,
-    "psyches": true,
+    "tools": ["!file_write"],
+    "psyches": ["patcher"],
     "projectStructure": true,
     "parentOutput": true
   }

@@ -13,7 +13,7 @@
   },
   "awareness": {
     "tools": ["!file_write"],
-    "psyches": true,
+    "psyches": ["patcher"],
     "projectStructure": true,
     "knowledge": true,
     "work": "all",
