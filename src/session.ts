@@ -621,7 +621,7 @@ ${patchInstructions || workItem.content}`;
     const eligibleExecutors = new Set<string>();
     
     for (const item of this.context.items) {
-      if (item.type === 'work' && (item as WorkItem).status === 'cold') {
+      if (item.type === 'work' && ((item as WorkItem).status === 'cold' || (item as WorkItem).status === 'failed')) {
         const workItem = item as WorkItem;
         const executor = this.executors.get(workItem.executor);
         

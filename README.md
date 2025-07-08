@@ -76,10 +76,9 @@ Polish:
 
 Function:
 - [ ] Parsing & making jumpable `[[wikilinks]]`, obsidian-style, for IDs and files
-- [ ] Better tool ecosystem (interpreter, tree, maybe bash/cmd?)
+- [ ] Better tool ecosystem (interpreter, web scraping, tree, maybe bash/cmd?)
 
 Bugs:
-- [ ] Do we have a problem when PA still runs when there's work for other agents and we "Run"?
 - [ ] the way "run" button blocks between "run" and "+ & Run" is somehow different
 - [ ] work CAN get stuck in "running" state, and there's no way to recover from that. One maybe-fix would be to drop work down to "cold" when we're opening a file?
 - [ ] When "+ & Run", the input field didn't clear :D uhhh.. something to do with undo I'm sure
