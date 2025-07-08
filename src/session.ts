@@ -477,7 +477,7 @@ ${patchInstructions || workItem.content}`;
   }
   
   public async executeWorkItem(workItemId: number): Promise<boolean> {
-    let workItem = this.context.items.find(item => item.type === 'work' && item.id === workItemId) as WorkItem;
+    const workItem = this.context.items.find(item => item.type === 'work' && item.id === workItemId) as WorkItem;
     if (!workItem || workItem.status === 'running' || workItem.status === 'done') {
       return false;
     }
@@ -493,22 +493,30 @@ ${patchInstructions || workItem.content}`;
       return false;
     }
     
-    try {
-      workItem.status = 'running';
-      this.saveToDocument();
-      
-      // Special handling for patcher - inject file content
-      if (workItem.executor === 'patcher') {
-        try {
-          const patcherWorkContent = await this.preparePatcherContext(workItem);
-          workItem.content = patcherWorkContent;
-        } catch (patcherError) {
-          const errorMessage = patcherError instanceof Error ? patcherError.message : String(patcherError);
-          this.handleExecutionError(workItem, errorMessage, 'Failed to prepare patcher context');
-        }
+    workItem.status = 'running';
+    this.saveToDocument();
+    
+    // Special handling for patcher - create enhanced work item for execution
+    let actualWorkItem = workItem;
+    if (workItem.executor === 'patcher') {
+      try {
+        const patcherWorkContent = await this.preparePatcherContext(workItem);
+        actualWorkItem = {
+          ...workItem,
+          content: patcherWorkContent
+        };
+      } catch (patcherError) {
+        const errorMessage = patcherError instanceof Error ? patcherError.message : String(patcherError);
+        this.handleExecutionError(workItem, errorMessage, 'Failed to prepare patcher context');
+        this.saveToDocument();
+        return false;
       }
+    }
+    
+    try {
+      const result = await executor.execute(actualWorkItem);
       
-      const result = await executor.execute(workItem);
+      // Process results
       if (result.knowledges) {
         for (const knowledge of result.knowledges) {
           this.addItem(knowledge);
@@ -521,7 +529,7 @@ ${patchInstructions || workItem.content}`;
         }
       }
       
-      // Update work item status
+      // Update original work item status (not the actualWorkItem)
       if (result.error) {
         this.handleExecutionError(workItem, result.error, 'Executor returned error result');
       } else {
@@ -530,6 +538,7 @@ ${patchInstructions || workItem.content}`;
       
       this.saveToDocument();
       return true;
+      
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       this.handleExecutionError(workItem, errorMessage, 'Exception during execution');
