@@ -170,19 +170,22 @@
 
 /* Executor type header gradients */
 .work-item-card.executor-user .work-item-header {
-  background-color: var(--vscode-badge-background); /* Keep current solid background */
+  /* background-color: var(--vscode-badge-background); */
+  background: linear-gradient(to left, 
+    transparent 0%, 
+    rgba(235, 235, 0, 0.75) 100%);
 }
 
 .work-item-card.executor-agent .work-item-header {
   background: linear-gradient(to right, 
     transparent 0%, 
-    rgba(128, 128, 128, 0.5) 100%);
+    rgba(0, 122, 204, 0.5) 100%);
 }
 
 .work-item-card.executor-tool .work-item-header {
   background: linear-gradient(to right, 
     transparent 0%, 
-    rgba(0, 122, 204, 0.5) 100%);
+    rgba(128, 128, 128, 0.5) 100%);
 }
 
 /* Reference arrows */

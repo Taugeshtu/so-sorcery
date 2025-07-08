@@ -71,28 +71,25 @@ Therefore, Sorcery is:
 ## Known Issues / TODO
 
 Polish:
+- [ ] Docs/readme of some kind, or a tutorial
 
 Function:
 - [ ] Undo/Redo (VS Code's built-in document undo should work?)
-- [~] File read tool (done, untested)
+- [ ] Parsing & making jumpable `[[wikilinks]]`, obsidian-style, for IDs and files
+- [ ] Better tool ecosystem (interpreter, tree, maybe bash/cmd?)
 
 Bugs:
-- [ ] When running patcher, not cool that the whole content gets chucked into the work item :D
 - [ ] the way "run" button blocks between "run" and "+ & Run" is somehow different
     - this won't be a big deal once the "work for agent" system (`@`) is implemented; then "run" kind of loses its meaning? Either you @ someone, or you don't; then it's just work dispatch...
+
+Refactoring:
+- [ ] When running patcher, not cool that the whole content gets chucked into the work item :D
 - [ ] Guard against prompt being too long :D
 - [ ] Check against Claude/OAI docs for images, do we need to downsize ourselves or what?
 
-Refactoring:
-
 Big && / || faraway items:
-- [ ] Maybe forking should drop the "spent-on-session" counter?.. Since that spend was already accounted for in the parent session...
 - [ ] @ mentions having a pop-up with selection on the frontend?
-- [ ] Settings: custom additional ignore
-- [ ] Parsing & making jumpable `[[wikilinks]]`, obsidian-style, for IDs and files
 - [ ] psyche editor (ideally storing them into user-global storage but not settings)
-- [ ] Better tool ecosystem (interpreter, tree, maybe bash/cmd?)
-- [ ] Docs/readme of some kind, or a tutorial
 - [~] user-informed extra context, on the level of working dir/user themselves (like preferences, maybe info that's general about project, etc... altho project stuff coooould be a file; and maybe the way to do that would be to "pin" it in the tree, so it auto-adds to every new session, but can be picked out? and maybe we also have a way to "memorize" a particular bit of knowledge...)
 - [ ] When files are added/removed, we need to be aware of this...
 - [ ] Tool for partial replacement instead of full re-write
@@ -100,11 +97,13 @@ Big && / || faraway items:
 - [ ] Make completed work auto-disappears? (at least for Tool ops?) (I do like being able to see what's going on... provide an event log?) Maybe it becomes omitted?
 
 Maybes:
+- [~] File read tool (done, untested, don't really see a massive need since multiread is working already?)
 - [ ] Folders on top in files tree
 - [ ] A way to navigate focus from files search to results
 - [ ] more detailed format for submitting knowledge, allowing UPDATING as well (is a scratchpad, you see?)
 - [ ] streaming support?
 - [ ] Knowledge auto-naming & summary (Haiku to the rescue?)
+- [ ] Session-wide summary?
 - [ ] Reference arrows (this is the big visual feature!)
 - [ ] building PA input with graph pull
 - [ ] ?? Remove collapse button if item is short enough to fit
@@ -113,6 +112,11 @@ Maybes:
 ---
 
 ## Release Notes
+
+### 0.15.x
+- [ ] Maybe forking should drop the "spent-on-session" counter?.. Since that spend was already accounted for in the parent session...
+- [x] Settings: custom additional ignore
+
 
 ### 0.15.0
 - [x] Images handling

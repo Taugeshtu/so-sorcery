@@ -7,7 +7,7 @@
     "url": "https://github.com/Taugeshtu/so-sorcery.git"
   },
   "homepage": "https://github.com/Taugeshtu/so-sorcery#readme",
-  "version": "0.15.0",
+  "version": "0.15.1",
   "engines": {
     "vscode": "^1.100.0"
   },
@@ -60,6 +60,12 @@
             ".yml", ".yaml", ".xml",
             ".jpg", ".jpeg", ".png"
           ]
+        },
+        "sorcery.customIgnorePatterns": {
+          "type": "array",
+          "description": "Additional ignore patterns to append to workspace root .gitignore (gitignore syntax)",
+          "items": { "type": "string" },
+          "default": []
         },
         "sorcery.autoRunDelay": {
           "type": "number",

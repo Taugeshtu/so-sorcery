@@ -40,6 +40,28 @@ export async function getFilteredFilePaths(): Promise<string[]> {
 async function loadAllGitIgnoreRules(rootPath: string): Promise<GitIgnoreRule[]> {
   const rules: GitIgnoreRule[] = [];
   
+  // Always load custom ignore patterns from configuration
+  const customPatterns = vscode.workspace.getConfiguration('sorcery')
+    .get<string[]>('customIgnorePatterns') || [];
+  
+  for (const pattern of customPatterns) {
+    if (pattern.trim()) {
+      const isNegation = pattern.startsWith('!');
+      let cleanPattern = isNegation ? pattern.substring(1) : pattern;
+      const isDirectory = cleanPattern.endsWith('/');
+      if (isDirectory) {
+        cleanPattern = cleanPattern.substring(0, cleanPattern.length - 1);
+      }
+      
+      rules.push({
+        pattern: cleanPattern,
+        isNegation,
+        isDirectory,
+        repoRoot: rootPath // Use workspace root as repo root for custom patterns
+      });
+    }
+  }
+  
   // Find all .gitignore files recursively
   const gitIgnoreFiles = await findGitIgnoreFiles(rootPath);
   
@@ -141,8 +163,12 @@ async function walkDirectory(
         }
         
         if (entry.isDirectory()) {
-          // Check if directory should be ignored
-          if (!isIgnored(relativePath + '/', gitIgnoreRules, workspaceRoot, true)) {
+          // Check if directory should be ignored AND has no negation rules
+          const dirIgnored = isIgnored(relativePath + '/', gitIgnoreRules, workspaceRoot, true);
+          const hasNegations = hasNegationRulesForPath(relativePath, gitIgnoreRules);
+          
+          // Recurse if directory is not ignored OR if it has potential negation rules
+          if (!dirIgnored || hasNegations) {
             await walkRecursive(fullPath);
           }
         } else if (entry.isFile()) {
@@ -189,23 +215,29 @@ function isIgnored(
     const pathFromRepoRoot = path.relative(rule.repoRoot, fileFullPath).replace(/\\/g, '/');
     
     if (matchesGitIgnorePattern(pathFromRepoRoot, rule.pattern, rule.isDirectory, isDirectory)) {
-      if (rule.isNegation) {
-        ignored = false; // Negation rules un-ignore
-      } else {
-        ignored = true;  // Normal rules ignore
-      }
+      ignored = !rule.isNegation; // Negation rules un-ignore, normal rules ignore
     }
   }
   
   return ignored;
 }
 
-function matchesGitIgnorePattern(filePath: string, pattern: string, ruleIsDirectory: boolean, fileIsDirectory: boolean): boolean {
-  // If rule is for directories only, but file is not a directory, no match
-  if (ruleIsDirectory && !fileIsDirectory) {
-    return false;
-  }
+function hasNegationRulesForPath(dirPath: string, gitIgnoreRules: GitIgnoreRule[]): boolean {
+  const normalizedDirPath = dirPath.replace(/\\/g, '/');
   
+  return gitIgnoreRules.some(rule => {
+    if (!rule.isNegation) return false;
+    
+    // Check if this negation rule could apply to files in this directory
+    const rulePattern = rule.pattern.replace(/\\/g, '/');
+    
+    // If the negation pattern starts with or contains this directory path
+    return rulePattern.startsWith(normalizedDirPath) || 
+           simpleGlobMatch(normalizedDirPath, rulePattern.split('/')[0]);
+  });
+}
+
+function matchesGitIgnorePattern(filePath: string, pattern: string, ruleIsDirectory: boolean, fileIsDirectory: boolean): boolean {
   // Convert gitignore pattern to regex-like matching
   // This is a simplified version - full gitignore matching is quite complex
   
@@ -213,26 +245,36 @@ function matchesGitIgnorePattern(filePath: string, pattern: string, ruleIsDirect
   if (pattern.startsWith('/')) {
     pattern = pattern.substring(1);
     // Match from root only
-    return simpleGlobMatch(filePath, pattern);
+    return matchesPattern(filePath, pattern, ruleIsDirectory, fileIsDirectory);
+  }
+  
+  // Try matching the pattern against the full path
+  if (matchesPattern(filePath, pattern, ruleIsDirectory, fileIsDirectory)) {
+    return true;
   }
   
   // Handle patterns that should match anywhere in the path
   const pathParts = filePath.split('/');
   
-  // Try matching the pattern against the full path
-  if (simpleGlobMatch(filePath, pattern)) {
-    return true;
-  }
-  
   // Try matching against each path segment and its trailing path
   for (let i = 0; i < pathParts.length; i++) {
     const subPath = pathParts.slice(i).join('/');
-    if (simpleGlobMatch(subPath, pattern)) {
+    if (matchesPattern(subPath, pattern, ruleIsDirectory, fileIsDirectory)) {
       return true;
     }
   }
   
   return false;
+}
+
+function matchesPattern(filePath: string, pattern: string, ruleIsDirectory: boolean, fileIsDirectory: boolean): boolean {
+  // If rule is for a directory and target is a file, check if file is inside the directory
+  if (ruleIsDirectory && !fileIsDirectory) {
+    return filePath.startsWith(pattern + '/') || simpleGlobMatch(filePath, pattern);
+  }
+  
+  // Standard glob matching
+  return simpleGlobMatch(filePath, pattern);
 }
 
 function simpleGlobMatch(text: string, pattern: string): boolean {
