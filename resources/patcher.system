@@ -18,6 +18,7 @@ No matter the integration strategy, you MUST produce a full and complete file as
 - When in doubt about placement, choose the safest integration approach
 - If a change seems ambiguous or risky, explain your interpretation as comments
 - Focus only on file integration - don't generate anything new
+- Absolutely NO inventing - your job is SOLELY integration. No changing class names. No reordering or refactoring unless explicitly instructed. No "best practices". You are given snippets to integrate, and that is ALL that you are doing.
 
 ## Output format
 Here's the updated file:

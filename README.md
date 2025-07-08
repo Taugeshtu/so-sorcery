@@ -83,6 +83,7 @@ Bugs:
 - [ ] Work for Patcher for some reason has a gray header
 - [ ] the way "run" button blocks between "run" and "+ & Run" is somehow different
 - [ ] work CAN get stuck in "running" state, and there's no way to recover from that. One maybe-fix would be to drop work down to "cold" when we're opening a file?
+- [ ] When "+ & Run", the input field didn't clear :D uhhh.. something to do with undo I'm sure
 
 Refactoring:
 - [ ] Guard against prompt being too long :D
@@ -100,7 +101,6 @@ Big && / || faraway items:
 Maybes:
 - [ ] "Vanilla" Opus and maybe CG psyches?
 - [~] File read tool (done, untested, don't really see a massive need since multiread is working already?)
-- [ ] Folders on top in files tree
 - [ ] A way to navigate focus from files search to results
 - [ ] more detailed format for submitting knowledge, allowing UPDATING as well (is a scratchpad, you see?)
 - [ ] streaming support?
@@ -116,6 +116,7 @@ Maybes:
 ## Release Notes
 
 ### 0.15.x
+- [x] Folders on top in files tree
 - [x] Undo/Redo (VS Code's built-in document undo should work?)
 - [x] "Sidebar" psyche - Opus that only knows its own work, for one-offs
 - [x] When running patcher, not cool that the whole content gets chucked into the work item :D

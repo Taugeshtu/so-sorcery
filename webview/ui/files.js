@@ -102,10 +102,21 @@ export class FileManager {
     }
 
     renderFileTree(tree, container, depth = 0) {
-        Object.keys(tree).sort().forEach(key => {
-            if (key.startsWith('_')) return; // Skip metadata
-            
-            const item = tree[key];
+        // Separate folders and files, then sort each group
+        const entries = Object.keys(tree)
+            .filter(key => !key.startsWith('_')) // Skip metadata
+            .map(key => ({ key, item: tree[key] }));
+        
+        // Separate into folders and files
+        const folders = entries.filter(entry => !entry.item._isFile);
+        const files = entries.filter(entry => entry.item._isFile);
+        
+        // Sort each group alphabetically
+        folders.sort((a, b) => a.key.localeCompare(b.key));
+        files.sort((a, b) => a.key.localeCompare(b.key));
+        
+        // Render folders first, then files
+        [...folders, ...files].forEach(({ key, item }) => {
             const div = document.createElement('div');
             div.className = item._isFile ? 'file-item' : 'folder-item';
             div.style.paddingLeft = (depth * 20) + 'px';
