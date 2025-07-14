@@ -40,9 +40,14 @@ export async function getFilteredFilePaths(): Promise<string[]> {
 async function loadAllGitIgnoreRules(rootPath: string): Promise<GitIgnoreRule[]> {
   const rules: GitIgnoreRule[] = [];
   
-  // Always load custom ignore patterns from configuration
-  const customPatterns = vscode.workspace.getConfiguration('sorcery')
-    .get<string[]>('customIgnorePatterns') || [];
+  // Load custom ignore patterns from both user and workspace settings
+  const config = vscode.workspace.getConfiguration('sorcery');
+  const inspection = config.inspect<string[]>('customIgnorePatterns');
+  
+  // Merge user-level and workspace-level patterns
+  const userPatterns = inspection?.globalValue || [];
+  const workspacePatterns = inspection?.workspaceValue || [];
+  const customPatterns = [...userPatterns, ...workspacePatterns];
   
   for (const pattern of customPatterns) {
     if (pattern.trim()) {
@@ -199,12 +204,9 @@ function isIgnored(
 ): boolean {
   let ignored = false;
   
-  // Normalize ALL paths to forward slashes for consistent matching
-  const normalizedPath = normalizePath(filePath);
-  
   for (const rule of gitIgnoreRules) {
     // Check if this rule applies to this file's location
-    const fileFullPath = path.resolve(workspaceRoot, normalizedPath);
+    const fileFullPath = normalizePath(path.resolve(workspaceRoot, filePath));
     const ruleApplies = fileFullPath.startsWith(rule.repoRoot);
     
     if (!ruleApplies) {

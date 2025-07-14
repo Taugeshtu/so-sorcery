@@ -114,6 +114,8 @@ Maybes:
 ## Release Notes
 
 ### 0.15.x
+- [x] fix custom user ignore - allow workspace settings to append to user-level
+- [x] fix gitignore for windows
 - [x] Windows paths support
 - [x] Work for Patcher for some reason has a gray header
 - [x] Folders on top in files tree
