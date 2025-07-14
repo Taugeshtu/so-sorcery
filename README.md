@@ -114,6 +114,7 @@ Maybes:
 ## Release Notes
 
 ### 0.15.x
+- [x] Windows paths support
 - [x] Work for Patcher for some reason has a gray header
 - [x] Folders on top in files tree
 - [x] Undo/Redo (VS Code's built-in document undo should work?)

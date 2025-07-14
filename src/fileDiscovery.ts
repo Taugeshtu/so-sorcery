@@ -57,7 +57,7 @@ async function loadAllGitIgnoreRules(rootPath: string): Promise<GitIgnoreRule[]>
         pattern: cleanPattern,
         isNegation,
         isDirectory,
-        repoRoot: rootPath // Use workspace root as repo root for custom patterns
+        repoRoot: normalizePath(rootPath) // Use workspace root as repo root for custom patterns
       });
     }
   }
@@ -130,7 +130,7 @@ async function parseGitIgnoreFile(gitIgnoreFile: string, repoRoot: string): Prom
         pattern: line,
         isNegation,
         isDirectory,
-        repoRoot
+        repoRoot: normalizePath(repoRoot)
       });
     }
     
@@ -155,7 +155,7 @@ async function walkDirectory(
       
       for (const entry of entries) {
         const fullPath = path.join(currentPath, entry.name);
-        const relativePath = path.relative(workspaceRoot, fullPath);
+        const relativePath = normalizePath(path.relative(workspaceRoot, fullPath));
         
         // Skip .git directories entirely
         if (entry.name === '.git') {
@@ -199,23 +199,23 @@ function isIgnored(
 ): boolean {
   let ignored = false;
   
-  // Convert to forward slashes for consistent matching
-  const normalizedPath = filePath.replace(/\\/g, '/');
+  // Normalize ALL paths to forward slashes for consistent matching
+  const normalizedPath = normalizePath(filePath);
   
   for (const rule of gitIgnoreRules) {
     // Check if this rule applies to this file's location
-    const fileFullPath = path.resolve(workspaceRoot, filePath);
+    const fileFullPath = path.resolve(workspaceRoot, normalizedPath);
     const ruleApplies = fileFullPath.startsWith(rule.repoRoot);
     
     if (!ruleApplies) {
       continue;
     }
     
-    // Get path relative to this rule's repo root
-    const pathFromRepoRoot = path.relative(rule.repoRoot, fileFullPath).replace(/\\/g, '/');
+    // Get path relative to this rule's repo root and normalize
+    const pathFromRepoRoot = path.relative(rule.repoRoot, fileFullPath);
     
     if (matchesGitIgnorePattern(pathFromRepoRoot, rule.pattern, rule.isDirectory, isDirectory)) {
-      ignored = !rule.isNegation; // Negation rules un-ignore, normal rules ignore
+      ignored = !rule.isNegation;
     }
   }
   
@@ -223,15 +223,13 @@ function isIgnored(
 }
 
 function hasNegationRulesForPath(dirPath: string, gitIgnoreRules: GitIgnoreRule[]): boolean {
-  const normalizedDirPath = dirPath.replace(/\\/g, '/');
+  const normalizedDirPath = normalizePath(dirPath);
   
   return gitIgnoreRules.some(rule => {
     if (!rule.isNegation) return false;
     
-    // Check if this negation rule could apply to files in this directory
-    const rulePattern = rule.pattern.replace(/\\/g, '/');
+    const rulePattern = normalizePath(rule.pattern);
     
-    // If the negation pattern starts with or contains this directory path
     return rulePattern.startsWith(normalizedDirPath) || 
            simpleGlobMatch(normalizedDirPath, rulePattern.split('/')[0]);
   });
@@ -288,4 +286,8 @@ function simpleGlobMatch(text: string, pattern: string): boolean {
   
   const regex = new RegExp(`^${regexPattern}$`);
   return regex.test(text);
+}
+
+export function normalizePath(filePath: string): string {
+  return filePath.replace(/\\/g, '/');
 }
