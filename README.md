@@ -114,7 +114,7 @@ Maybes:
 ## Release Notes
 
 ### 0.15.x
-- [ ] When picking a file and search wasn't empty, focus input on the search bar
+- [x] When picking a file and search wasn't empty, focus input on the search bar
 - [x] Multiread shouldn't report already added files as an error
 - [x] Multiread shouldn't report anything at all maybe? If it has errors, errors will be reported via general worker-error-handling pipeline anyway..
 - [x] fix custom user ignore - allow workspace settings to append to user-level

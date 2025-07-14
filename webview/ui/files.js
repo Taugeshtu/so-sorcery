@@ -145,7 +145,13 @@ export class FileManager {
     addFileToContext(filePath) {
         this.messageHandler.send('addFileToContext', { filePath });
         const searchInput = document.getElementById('fileSearchInput');
+        const hadSearchTerm = searchInput.value.trim() !== '';
         searchInput.value = '';
+        
+        // If there was a search term, focus back on the search input
+        if (hadSearchTerm) {
+            searchInput.focus();
+        }
     }
 
     removeFile(id) {
