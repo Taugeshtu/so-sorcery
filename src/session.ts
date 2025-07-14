@@ -150,9 +150,10 @@ export class SessionController {
     return knowledge;
   }
   
-  public emitFileKnowledge(filePath: string): Knowledge | null {
+  // returns false if the path is not in available files; true if already added; and new KnowledgeItem if neither of those
+  public emitFileKnowledge(filePath: string): Knowledge | Boolean {
     if (!getAvailableFiles().includes(filePath)) {
-      return null;
+      return false;
     }
     
     const existingKnowledge = this.context.items.find(item => 
@@ -160,8 +161,7 @@ export class SessionController {
     ) as Knowledge;
     
     if (existingKnowledge) {
-      // return existingKnowledge; // UH-OH! NOT SURE THIS IS CORRECT, TODO: CHECK!!
-      return null;
+      return true;
     }
     
     return this.emitKnowledge('file', filePath, '');

@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { getFilteredFilePaths } from './fileDiscovery';
 import { SessionController } from './session';
 import { getWebviewHtml } from './webview/htmlTemplate';
-import { updateAvailableFiles, getAvailableFiles } from './types';
+import { updateAvailableFiles, getAvailableFiles, ContextItem } from './types';
 import { updateCostDisplay } from './extension'
 
 export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
@@ -101,11 +101,14 @@ export class SorceryEditorProvider implements vscode.CustomTextEditorProvider {
       
       case 'addFileToContext':
         try {
-          const knowledge = sessionController.emitFileKnowledge( message.filePath );
-          if (knowledge) {
-            sessionController.addItem( knowledge );
+          const knowledge = sessionController.emitFileKnowledge(message.filePath);
+          if (knowledge === false) {
+            const errorKnowledge = sessionController.emitKnowledge('system', 'system', `Requested file ${message.filePath} is not in available files`);
+            sessionController.addItem(errorKnowledge);
+          } else if (knowledge === true) {
+            // File already exists in context, no action needed
           } else {
-            vscode.window.showErrorMessage(`Failed to include file: ${message.filePath}`);
+            sessionController.addItem(knowledge as ContextItem);
           }
         } catch (error) {
           vscode.window.showErrorMessage(`Error including file: ${error}`);

@@ -1,5 +1,5 @@
 import { Tool } from '../worker';
-import { WorkItem, WorkResult, ToolDescriptor } from '../types';
+import { WorkItem, WorkResult, ToolDescriptor, ContextItem } from '../types';
 
 export class MultiReadTool extends Tool {
   static getDescriptor(): ToolDescriptor {
@@ -23,44 +23,20 @@ export class MultiReadTool extends Tool {
         };
       }
 
-      const results: string[] = [];
-      const errors: string[] = [];
-
-      // Process each file path
+      // Process each file path silently
       for (const filePath of filePaths) {
-        try {
-          const knowledge = this.session.emitFileKnowledge(filePath);
-          if (knowledge) {
-            this.session.addItem( knowledge );
-            results.push(`Added ${filePath} to context (ID: ${knowledge.id})`);
-          } else {
-            errors.push(`File not available or already in context: ${filePath}`);
-          }
-        } catch (error) {
-          errors.push(`Failed to add ${filePath}: ${error instanceof Error ? error.message : String(error)}`);
+        const knowledge = this.session.emitFileKnowledge(filePath);
+        if (knowledge === false) {
+          return {
+            error: `Requested file ${filePath} is not in available files`
+          };
+        } else if (knowledge === true) {
+          // File already exists in context, no action needed
+        } else {
+          this.session.addItem(knowledge as ContextItem);
         }
       }
-
-      // Create summary knowledge
-      const summaryParts: string[] = [];
-      if (results.length > 0) {
-        summaryParts.push(`Successfully added ${results.length} files to context:`);
-        summaryParts.push(...results.map(r => `- ${r}`));
-      }
-      if (errors.length > 0) {
-        summaryParts.push(`\nErrors (${errors.length}):`);
-        summaryParts.push(...errors.map(e => `- ${e}`));
-      }
-
-      const summaryKnowledge = this.createKnowledge(
-        summaryParts.join('\n'),
-        'system'
-      );
-
-      return {
-        knowledges: [summaryKnowledge],
-        error: errors.length > 0 ? `${errors.length} files failed to load` : undefined
-      };
+      return {};
 
     } catch (error) {
       return {
