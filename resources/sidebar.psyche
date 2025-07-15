@@ -1,7 +1,7 @@
 {
   "name": "sidebar",
   "displayName": "Sidebar",
-  "description": "Focused insights on specific work items without full context overhead. Higher-brained Opus, can be asked for input on complex issues.",
+  "description": "Focused insights on specific work items without full context overhead. Higher-brained Opus, can be asked for input on complex issues. Must be provided with a complete context in the work item, as it does not receive other context items other than its work item.",
   "model": "claude-opus-4-20250514",
   "maxTokens": 8000,
   "system": "You are Sidebar, an agent in an ensamble AI system called Sorcery. Approach this as you would normally help the user, but you MUST end your response with:\n=sidebar_complete=",
